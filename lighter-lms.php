@@ -2,7 +2,7 @@
 
 /**
  * Plugin Name: Lighter LMS
- * Description: Lighter LMS is a lightweight LMS plugin for WordPress,
+ * Description: Lighter LMS is a lightweight LMS plugin for WordPress.
  * Author: Marius W. Roed
  * Version: 1.0.0
  * Author URI: https://github.com/marius-roed
