@@ -103,7 +103,7 @@ class API
 
 		if ($only_content) {
 			$supported_builders = [
-				'elementor' => 'handle_elemenetor_content',
+				'elementor' => 'handle_elementor_content',
 				'beaver-builder' => 'handle_beaver_builder_content',
 				'divi' => 'handle_divi_content',
 				'gutenberg' => 'handle_gutenberg_content',
@@ -116,7 +116,8 @@ class API
 			setup_postdata($lesson);
 
 			if ($builder && isset($supported_builders[$builder])) {
-				$content = [Lesson_Content::class, $supported_builders[$builder]];
+				$func = [Lesson_Content::class, $supported_builders[$builder]];
+				$content = call_user_func($func, $id, $lesson);
 			} else {
 				$content = Lesson_Content::get_content($lesson);
 			}

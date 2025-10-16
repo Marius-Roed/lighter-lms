@@ -27,17 +27,27 @@ class Lesson_Content
 		return 'classic-editor';
 	}
 
-	public static function handle_elementor_content($post_id, $post)
+	public static function handle_elementor_content($post_id, $req_post)
 	{
 		if (!class_exists('\Elementor\Plugin')) {
-			return self::get_content($post);
+			return self::get_content($req_post);
 		}
 
 		if (!did_action('elementor/loaded')) {
-			return self::get_content($post);
+			return self::get_content($req_post);
 		}
 
 		try {
+			$elementor_data = get_post_meta($post_id, '_elementor_data', true);
+			if (empty($elementor_data)) {
+				return self::get_content($req_post);
+			}
+
+			global $post;
+			$original_post = $post;
+			$post = $saved_post = get_post($post_id);
+			setup_postdata($saved_post);
+
 			$elementor = \Elementor\Plugin::instance();
 
 			if (!$elementor->frontend) {
@@ -46,10 +56,13 @@ class Lesson_Content
 
 			$content = $elementor->frontend->get_builder_content($post_id, true);
 
-			return $content ?: self::get_content($post);
+			wp_reset_postdata();
+			$post = $original_post;
+
+			return $content ?: self::get_content($req_post);
 		} catch (\Exception $e) {
 			error_log('Elementor content error: ' . $e->getMessage());
-			return self::get_content($post);
+			return self::get_content($req_post);
 		}
 	}
 

@@ -25,7 +25,7 @@ $topics = array_map(function ($row) {
         'key' => $row->topic_key,
         'title' => $row->title,
         'sortOrder' => $row->sort_order,
-        'courseId' => $row->course_id,
+        'courseId' => $row->post_id,
     ];
 }, $topics_raw);
 
