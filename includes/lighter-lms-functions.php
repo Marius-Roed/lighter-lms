@@ -25,7 +25,7 @@ if (!function_exists('lighter_get_path')) {
 	}
 }
 
-if (! function_exists('lighter_inlcude')) {
+if (! function_exists('lighter_include')) {
 	function lighter_include($relpath = '', $args = [])
 	{
 		if (strpos($relpath, LIGHTER_LMS_PATH) !== 0) {

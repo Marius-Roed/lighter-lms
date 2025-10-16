@@ -31,8 +31,6 @@ if ($post_type == lighter_lms()->lesson_post_type) {
 	$post_link = $parent ? esc_url(get_permalink($parent[0]->ID) . '?lesson=' . strtolower($post_title)) : false;
 }
 
-$trash_nonce = wp_create_nonce('lighter_trash');
-
 ?>
 <div class="lighter-header">
 	<div class="inner">
@@ -50,7 +48,6 @@ $trash_nonce = wp_create_nonce('lighter_trash');
 			<?php endif; ?>
 		</div>
 		<div class="actions row">
-			<? /** <a href="<?= esc_attr(esc_url("/post.php?post={$post->ID}&action=trash&wpnonce={$trash_nonce}")) ?>" class="lighter-btn danger">Trash</a> */?>
 			<?php if ($post_link): ?>
 				<a href="<?= esc_attr(esc_url($post_link)) ?>" class="lighter-btn transparent"><?= __('View') ?></a>
 			<?php endif; ?>

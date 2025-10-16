@@ -30,8 +30,8 @@ $topic_db = new Topics();
 
 $topics_raw = $topic_db->get_by_course($post->ID);
 
-$topics = array_map(function($row) use ($lessons) {
-	$access = array_values(array_map(fn($l) => $l->ID, array_filter($lessons, function($les) use ($row) { 
+$topics = array_map(function ($row) use ($lessons) {
+	$access = array_values(array_map(fn($l) => $l->ID, array_filter($lessons, function ($les) use ($row) {
 		return get_post_meta($les->ID, '_lighter_parent_topic', true) === $row->topic_key;
 	})));
 
@@ -44,55 +44,55 @@ $topics = array_map(function($row) use ($lessons) {
 	];
 }, $topics_raw);
 
-$topic_keys = array_map(function($row) {
+$topic_keys = array_map(function ($row) {
 	return $row->topic_key;
 }, $topics_raw);
 
-$lesson_data = array_values(array_filter($lesson_data, function($lesson) use ($topic_keys) {
+$lesson_data = array_values(array_filter($lesson_data, function ($lesson) use ($topic_keys) {
 	return in_array($lesson['parentTopicKey'], $topic_keys);
 }));
 
 wp_nonce_field('lighter_course_topics', '_lighter_course_content');
 ?>
 
-<input type="hidden" name="topics_length" value="<?= count($topics) ?>" />
+<input type="hidden" name="topics_length" value="<?= count($topics); ?>" />
 <div id="lighter-course-mount"
-	data-course="<?= esc_attr($post->ID) ?>"
-	data-topics="<?= esc_attr(json_encode($topics)) ?>"
-	data-lessons="<?= esc_attr(json_encode($lesson_data)) ?>">
-	<div class="lighter-topics-wrap<?= empty($topics) ? ' empty' : '' ?>">
+	data-course="<?= esc_attr($post->ID); ?>"
+	data-topics="<?= esc_attr(json_encode($topics)); ?>"
+	data-lessons="<?= esc_attr(json_encode($lesson_data)); ?>">
+	<div class="lighter-topics-wrap<?= empty($topics) ? ' empty' : ''; ?>">
 		<div class="lighter-no-topics">
-			<h3><?= esc_html__('This course has no topics yet.', 'lighterlms') ?></h3>
-			<button type="button" class="lighter-btn"><?= esc_html__('Add the first topic', 'lighterlms') ?></button>
+			<h3><?= esc_html__('This course has no topics yet.', 'lighterlms'); ?></h3>
+			<button type="button" class="lighter-btn"><?= esc_html__('Add the first topic', 'lighterlms'); ?></button>
 		</div>
 		<ol class="topics-wrap">
-		<?php foreach($topics as $i => $topic) : ?>
-			<li class="lighter-course-module" id="<?= esc_attr($topic->key) ?>">
-				<div class="module-wrap">
-					<div class="module-data hidden"></div>
-					<div class="head">
-						<div class="drag-handle">
-							<? lighter_icon("six-dots"); ?>
-						</div>
-						<div class="title">
-							<h3 class="editable-text module-title"><?= esc_html($topic->title) ?></h3>
-						</div>
-						<div class="actions">
-							<div class="add">
-								<button type="button" class="add-lesson"><? lighter_icon("plus") ?></button>
+			<?php foreach ($topics as $i => $topic) : ?>
+				<li class="lighter-course-module" id="<?= esc_attr($topic->key); ?>">
+					<div class="module-wrap">
+						<div class="module-data hidden"></div>
+						<div class="head">
+							<div class="drag-handle">
+								<?php lighter_icon("six-dots"); ?>
 							</div>
-							<div class="expand">
-								<button type="button" class="expand-module"><? lighter_icon("chevron-down") ?></button>
+							<div class="title">
+								<h3 class="editable-text module-title"><?= esc_html($topic->title); ?></h3>
+							</div>
+							<div class="actions">
+								<div class="add">
+									<button type="button" class="add-lesson"><?php lighter_icon("plus"); ?></button>
+								</div>
+								<div class="expand">
+									<button type="button" class="expand-module"><?php lighter_icon("chevron-down"); ?></button>
+								</div>
 							</div>
 						</div>
+						<div class="lighter-lesson-wrap"></div>
 					</div>
-					<div class="lighter-lesson-wrap"></div>
-				</div>
-			</li>
-		<? endforeach; ?>
+				</li>
+			<?php endforeach; ?>
 		</ol>
 		<div class="foot">
-			<button type="submit" name="action" value="add_topic" formaction="/wp-admin/admin-post.php" class="lighter-btn transparent"><?= lighter_icon('plus') ?>Add topic</button>
+			<button type="submit" name="action" value="add_topic" formaction="/wp-admin/admin-post.php" class="lighter-btn transparent"><?php lighter_icon('plus'); ?>Add topic</button>
 		</div>
 	</div>
 </div>
