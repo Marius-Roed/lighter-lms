@@ -1,0 +1,1 @@
+// LighterLMS global object

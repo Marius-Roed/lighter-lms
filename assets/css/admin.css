@@ -1,0 +1,1452 @@
+@layer lighter-reset {
+    :where(#lighter-lms-mount, .lighter .wrap) {
+        padding: 0 20px;
+        margin: 0 0 0 -20px;
+        border: 0;
+        font: inherit;
+        vertical-align: baseline;
+        line-height: 1;
+        box-sizing: border-box;
+
+        * {
+            box-sizing: border-box;
+        }
+        /* Basic CSS Reset */
+        html, body, div, span, applet, object, iframe,
+        h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+        a, abbr, acronym, address, big, cite, code,
+        del, dfn, em, img, ins, kbd, q, s, samp,
+        small, strike, strong, sub, sup, tt, var,
+        b, u, i, center,
+        dl, dt, dd, ol, ul, li,
+        fieldset, form, label, legend,
+        table, caption, tbody, tfoot, thead, tr, th, td,
+        article, aside, canvas, details, embed,
+        figure, figcaption, footer, header, hgroup,
+        menu, nav, output, ruby, section, summary,
+        time, mark, audio, video {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            font-size: 100%;
+            font: inherit;
+            vertical-align: baseline;
+            line-height: 1;
+        }
+        /* HTML5 display-role reset for older browsers */
+        article, aside, details, figcaption, figure,
+        footer, header, hgroup, menu, nav, section {
+            display: block;
+        }
+        body {
+            line-height: 1;
+        }
+        ol, ul {
+            list-style: none;
+        }
+        blockquote, q {
+            quotes: none;
+        }
+        blockquote:before, blockquote:after,
+        q:before, q:after {
+            content: '';
+            content: none;
+        }
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+    }
+
+    :where(.postbox) {
+        button {
+            background: none;
+            border: none;
+
+            &:hover {
+                cursor: pointer;
+            }
+        }
+
+        .postbox-header {
+            padding: 1.25em 0.75em;
+
+            .handle-order-higher,
+            .handle-order-lower {
+                display: none;
+            }
+        }
+    }
+}
+
+@property --admin-bar {
+    syntax: "<length>";
+    inherits: true;
+    initial-value: 32px;
+}
+
+@layer lighter-globals {
+    .col {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+    }
+
+    .row {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+    }
+
+    .wrap {
+        flex-wrap: wrap;
+    }
+
+    .grid {
+        display: grid;
+    }
+
+    .height-content {
+        height: fit-content;
+    }
+
+    .lighter.dia-editor {
+        --admin-bar: 0px;
+    }
+
+    .lighter-btn {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        gap: .625em;
+        padding: 0.875em 1.375em;
+        text-align: center;
+        text-transform: uppercase;
+        background-image: linear-gradient(135deg, #9d50bb 0%, rebeccapurple 55%, #9d50bb 100%);
+        background-size: 220% auto;
+        color: white;
+        box-shadow: 0 0 20px #eee;
+        border-radius: .625em;
+        outline: none;
+        border: none;
+        transition: 375ms;
+
+        &.transparent {
+            background-image: unset;
+            background:
+                linear-gradient(#fff, #fff) padding-box,
+                linear-gradient(135deg, #9d50bb 0%, rebeccapurple 55%, #9d50bb 100%) border-box;
+            border: 2px solid transparent;
+
+            &.wp-background {
+                color: rebeccapurple;
+                background:
+                    linear-gradient(#f0f0f1, #f0f0f1) padding-box,
+                    linear-gradient(135deg, #9d50bb 0%, rebeccapurple 55%, #9d50bb 100%) border-box;
+            }
+        }
+
+        &.danger {
+            background-image: unset;
+            background: oklch(0.6808 0.2525 29.65);
+            color: #fff;
+        }
+
+        &:focus {
+            border-color: #77BB99;
+            box-shadow: unset;
+            box-shadow: 0 0 0 1px #77BB99;
+        }
+
+        &:hover {
+            background-position: 8% center;
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+            scale: 1.015;
+        }
+    }
+
+    .lighter-switch {
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+        gap: 0.5em;
+        user-select: none;
+
+        input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .lighter-slider {
+            position: relative;
+            display: inline-block;
+            width: 50px; 
+            height: 28px;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 28px;
+
+            &::before {
+                position: absolute;
+                content: "";
+                height: 22px;
+                width: 22px;
+                left: 3px;
+                bottom: 3px;
+                background-color: #fff;
+                transition: .3s;
+                border-radius: 50%;
+            }
+        }
+
+        input:checked + .lighter-slider {
+            background-color: #663399;
+        }
+        input:checked + .lighter-slider::before {
+            transform: translateX(22px);
+        }
+
+        input:focus + .lighter-slider {
+            box-shadow: 0 0 0 2px rgba(21, 156, 228, 0.4);
+        }
+    }
+
+    .edit-lesson-dia {
+        width: 92vw;
+        height: 92vh;
+        border: none;
+        border-radius: 1.5em;
+    }
+
+    .lighter-editor-skeleton {
+        position: absolute;
+        width: 100%;
+        height: 90%;
+        background-color: #fff;
+        z-index: 1000;
+
+        &::before {
+            content: "";
+            position: absolute;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='%23000000' version='1.1' id='Capa_1' width='800px' height='800px' viewBox='0 0 479.461 479.461' xml:space='preserve'%3E%3Cg%3E%3Cpath d='M342.236,207.155C256.918,94.897,276.324,0,276.324,0C-24.458,254.8,110.686,382.955,121.363,393.564 c25.529,25.363,45.805,41.529,46.055,85.896c18.998-18.998,81.77-61.174,23.126-154.471c0,0-52.378-73.133,42.372-141.769 c-3.079,156.009,115.921,136.509,44.007,295.527C276.924,478.748,497.338,411.23,342.236,207.155z'/%3E%3C/g%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            height: 100%;
+            width: 100%;
+        }
+    }
+
+    .text-warn {
+        text-decoration: oklch(57.7% 0.245 27.325) dashed underline 2px;
+        text-underline-offset: .25em;
+    }
+
+    [popover]:popover-open {
+        display: inline-flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 1em;
+        border-radius: 1em;
+        gap: .625em;
+        border: 1px solid #D2C8E1;
+        box-shadow: 0 1px 9px -3px oklch( 0 0 0 / .25);
+
+        button {
+            align-self: end;
+        }
+    }
+
+    .lighter button:has(>.icon-wrapper) {
+        transition: .2s ease-in-out;
+    }
+
+    .hl { background-color: oklch(0.85 0.04 303.81 / 0.56); }
+
+    body[data-scroll-lock] {
+        overflow: hidden !important;
+        overscroll-behavior: contain;
+        position: relative !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+}
+
+@layer lighter-utils {
+    .lighter #adminmenumain {
+        position: relative;
+    }
+    .lighter #wpcontent {
+        position: relative;
+        z-index: 1;
+    }
+
+    .lighter-header {
+        position: sticky;
+        top: var(--admin-bar);
+        height: 4em;
+        margin-left: -20px;
+        padding: 2em;
+        background-color: white;
+        border-bottom: 1px solid oklch(0.8492 0.0346 303.37);
+        box-shadow: 0 2px 12px -9px;
+        z-index: 99998;
+
+        .inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content {
+            display: flex;
+            gap: .5em;
+            align-items: center;
+
+            #title-prompt-text {
+                display: none;
+            }
+        }
+
+        .actions {
+            gap: 1em;
+        }
+    }
+
+    #lighter-no-script .content-wrapper {
+        background: red;
+        border-radius: 1rem;
+        color: #fff;
+        padding: 1.5em;
+
+        h2 {
+            color: #fff !important;
+        }
+    }
+
+    .lighter-tooltip {
+        position: absolute;
+        background: #555;
+        color: white;
+        border-radius: .5em;
+        padding: .5em;
+        width: fit-content;
+        height: fit-content;
+        opacity: 1;
+        transform: translateX(-50%) rotate(0);
+        transform-origin: bottom left;
+        scale: 1;
+        pointer-events: none;
+        z-index: 100;
+
+        transition: 180ms ease-in;
+
+        &:before {
+            content: "";
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border: 5px solid transparent;
+            border-top-color: #555;
+        }
+    }
+
+    .pagination-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-block-start: 1em;
+        gap: .5em;
+
+        .pagination {
+            display: flex;
+            font-size: 16px;
+            gap: .75em;
+            align-items: center;
+
+            .lighter-btn { padding: .625em; }
+        }
+
+        .pagination button:first-of-type >div {
+            transform: rotate(90deg);
+        }
+
+        .pagination button:last-of-type >div {
+            transform: rotate(-90deg);
+        }
+    }
+
+    .menu-wrap {
+        display: none;
+    }
+
+    .menu-wrap:popover-open {
+        position: fixed;
+        top: anchor(bottom);
+        left: anchor(right);
+        transform: translateX(-100%);
+
+        display: flex;
+        flex-direction: column;
+        padding: 0.375em;
+        border-radius: 0.75em;
+        gap: 0.25em;
+        min-width: 155px;
+        border: 1px solid #D2C8E1;
+
+        overflow: visible;
+        box-shadow: 0 1px 11px -3px oklch(0 0 0 / 0.1);
+        z-index: 100;
+
+        button {
+            text-decoration: none;
+            padding: .75em 1em;
+            border-radius: .5em;
+            border: none;
+            background: transparent;
+            text-align: left;
+
+            &:hover {
+                background: oklch(0.957 0.0272 303.37);
+            }
+        }
+
+        button.active { background-color: oklch(0.87 0.051 303.4); }
+
+        .submenu-panel {
+            bottom: anchor(bottom);
+            left: calc(anchor(right) + 0.25em);
+
+            display: flex;
+            flex-direction: column;
+            padding: 0.375em;
+            border-radius: 0.75em;
+            gap: 0.25em;
+            border: 1px solid #D2C8E1;
+
+            overflow: visible;
+            box-shadow: 0 1px 11px -3px oklch(0 0 0 / 0.1);
+            z-index: 100;
+        }
+    }
+
+    .action-menu:has(.menu-wrap:not(:popover-open)) > button:has(.icon-wrapper.warn)::after {
+        content: "!";
+        position: absolute;
+        top: -1lh;
+        right: -.5lh;
+        background: oklch(57.7% 0.245 27.325);
+        color: #fff;
+        height: 1lh;
+        width: 1lh;
+        padding: .125em;
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 50vw;
+    }
+
+    .lighter-modal-delete:open {
+        display: grid;
+    }
+
+    .lighter-modal-delete {
+        border: none;
+        border-radius: 8px;
+        min-width: 30vw;
+        min-height: 25dvh;
+
+        footer {
+            display: flex;
+            justify-content: center;
+            gap: 2.5em;
+            align-self: end;
+        }
+    }
+
+    .settings-tabs {
+        display: flex;
+        gap: 2em;
+
+        li {
+            cursor: pointer;
+            padding: 0.75em 0.5em;
+            font-weight: bold;
+            font-size: 16px;
+            border-radius: 0.25em;
+
+            &:hover {
+                background: oklch(0.85 0.04 303.81 / 0.56);
+            }
+        }
+
+        .active span {
+            padding-block: .25em;
+            border-bottom: 2px solid rebeccapurple;
+        }
+
+        &:not(:has(+.downloads)) {
+            border-bottom: 1px solid #A7A7A74A;
+        }
+    }
+
+    #datetime {
+        position-anchor: --publish-date;
+        position: fixed;
+        top: auto;
+        bottom: calc(anchor(top) + 2em);
+        justify-self: anchor-center;
+
+        padding: 1em;
+        overflow: visible;
+        border-radius: .5em;
+        border: 1px solid #D2C8E1;
+        box-shadow: 0 1px 9px -3px oklch( 0 0 0 / .25);
+
+        &:popover-open {
+            display: block;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-around;
+            margin-block-end: 1em;
+            align-items: center;
+            gap: .5em;
+
+            button {
+                display: flex;
+                padding: .75em;
+                border-radius: .5em;
+
+                &:hover {
+                    background-color: #ECECEC;
+                }
+            }
+
+            button:first-of-type {
+                transform: rotate(90deg);
+            }
+
+            button:last-of-type {
+                transform: rotate(-90deg);
+            }
+        }
+
+        .time {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5em;
+            margin-block-start: .5em;
+        }
+    }
+
+    .datetime-picker {
+        position: relative;
+
+        &::before {
+            position: absolute;
+            content: "";
+            bottom: -4em;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border: 1.5em solid #D2C8E1;
+            border-left-color: transparent;
+            border-bottom-color: transparent;
+            border-right-color: transparent;
+            transform: translateX(-50%);
+            z-index: 999;
+        }
+    }
+
+    [popovertarget="post-filters"] {
+        anchor-name: --post-filters;
+    }
+
+    #post-filters {
+        position-anchor: --post-filters;
+        position: fixed;
+        top: auto;
+        top: calc(anchor(bottom) + .5em);
+        justify-self: anchor-center;
+        overflow: visible;
+        user-select: none;
+        -webkit-user-select: none;
+
+        .status.cbs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: .625em;
+        }
+
+        &> *:not(button) {
+            width: 100%;
+        }
+
+        .publish-date {
+            display: grid;
+            gap: .5em;
+        }
+
+        .publish-date button {
+            background: none;
+            border: none;
+        }
+
+        .publish-date .header button:first-of-type {
+            rotate: 90deg;
+        }
+        .publish-date .header button:last-of-type {
+            rotate: 270deg;
+        }
+    }
+
+    #post-filters .tag-search {
+        position: relative;
+        width: 100%;
+        overflow: visible;
+    }
+}
+
+@layer lighter-styles {
+    .lighter .gen-top {
+        gap: 2em;
+    }
+
+    .lighter .sidebar-modal:open {
+        right: 0;
+        height: 100dvh;
+        max-height: 100dvh;
+        margin-inline-end: 0;
+        border: none;
+        min-width: 28rem;
+        max-width: 28rem;
+        display: grid;
+        padding: 0;
+        grid-template-rows: 1fr 4rem;
+        transition: .3s ease-out;
+
+        @starting-style {
+            right: -12rem;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1em;
+            right: 1em;
+            height: 1.85lh;
+            background: #fff;
+            padding: .5rem;
+            border-radius: 50vw;
+            box-shadow: 0px 1px 8px -4px rgb(0 0 0 /0.3),
+                        -2px 2px 4px -2px rgb(0 0 0 /0.1);
+
+            &>div { rotate: 45deg; }
+        }
+
+        .content-wrap {
+            overflow: auto;
+            padding: 2.5rem 1rem 1rem;
+        }
+
+        .modal-footer {
+            align-self: end;
+            align-items: center;
+            height: 4rem;
+            display: flex;
+            flex-direction: row-reverse;
+            border: 1px solid #D2C8E1;
+            box-shadow: -2px 0 5px -3px;
+            padding-inline: 1rem;
+        }
+    }
+
+    .lighter .sidebar-modal::backdrop {
+        background: oklch(0 0 0 /0.25);
+        backdrop-filter: blur(2.5px);
+    }
+
+    .tag-search { position: relative; }
+
+    .tag-search .search-wrap {
+        display: inline-flex;
+        flex-direction: row;
+        gap: .5em;
+        padding: .25em .75em;
+        width: 250px;
+        border: 1px solid #d0d5dd;
+        box-shadow: 0 1px 2px oklch(10% 0 0 / .1);
+        border-radius: .625em;
+        overflow-x: scroll;
+        text-wrap: nowrap;
+        align-items: baseline;
+        scrollbar-width: thin;
+        scrollbar-color: #663399 #f4f4f4aa;
+    }
+
+    .tag-search .selected-tags {
+        display: inline-flex;
+        gap: .5em;
+
+        .remove-tag {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            border: none;
+        }
+
+        .tag {
+            border-radius: 0.25em;
+            border: 1px solid #A270DDCC;
+            background: #D2C8E190;
+            padding: .25em;
+
+            button:hover { cursor: pointer; }
+        }
+    }
+
+    .tag-search .dropdown {
+        position: absolute;
+        background: white;
+        border-radius: .5em;
+        padding: 4px !important;
+        width: 100%;
+        top: 102%;
+        left: 0;
+        box-shadow: 0 1px 9px -3px oklch( 0 0 0 / .25);
+        border: 1px solid #D2C8E1;
+    }
+
+    .calendar .cells, .weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: .25em;
+        text-align: center;
+    }
+
+    .calendar .weekdays .weekday {
+        font-weight: bold;
+    }
+
+    .calendar .cells .cell {
+        padding: .5em;
+        border-radius: .25em;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &.outside {
+            color: #AAA;
+
+            &:hover {
+                color: #666;
+            }
+        }
+
+        &.selected-part {
+            background-color: oklch(0.9 0.04 303.4);
+
+            &.outside { color: #666; }
+        }
+
+        &:hover {
+            cursor: pointer;
+            background-color: oklch(0.85 0.04 303.81 / 0.56);
+        }
+
+        &.selected {
+            background-color: oklch(0.741 0.119 303.4);
+
+            &.outside { color: #333; }
+        }
+    }
+
+    .lighter .course-access-wrap hr {
+        margin-block: 1rem;
+    }
+
+    .lighter .course-access-selectors {
+        display: grid;
+        gap: 1.5em;
+    }
+
+    .lighter .multi-select {
+        display: grid;
+        max-width: 800px;
+        border: 1px solid #D2C8E1;
+        border-radius: .5em;
+        padding: 1.25em;
+
+        .multi-select-trig {
+            display: flex;
+            flex-wrap: nowrap;
+            font-size: 14px;
+            font-weight: 600;
+            justify-content: space-between;
+        }
+
+        .select-info {
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+
+        .select-group {
+            font-weight: 400;
+            font-size: 12px;
+            color: #777;
+        }
+
+        .multi-select-sub {
+            display: grid;
+            gap: 0.75em;
+            padding-block-start: 0.75em;
+        }
+
+        .cb-middle > label {
+            display: flex;
+            flex-grow: 1;
+            justify-content: space-between;
+
+            &:hover { cursor: pointer }
+        }
+    }
+
+    .no-downloads {
+        width: 100%;
+        border: 1px solid oklch(0.85 0.04 303.81 / 0.56);
+        border-radius: .5em;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+    }
+
+    table.lighter-downloads {
+        width: 100%;
+        border-collapse: separate;
+        border: 1px solid oklch(0.85 0.04 303.81 / 0.56);
+        border-radius: .75em;
+    }
+
+    .lighter-downloads thead td {
+        padding: 1em;
+    }
+
+    .lighter-downloads tbody td {
+        border-top: 1px solid oklch(0.85 0.04 303.81 / 0.56);
+        padding: .5em;
+
+        &:first-child {
+            width: 15%;
+
+            span {word-break: break-word;}
+        }
+
+        &:nth-child(2) {
+            width: 60%;
+        }
+
+        &:last-child {
+            width: 150px;
+        }
+    }
+}
+
+#post-filters p { margin: 0; }
+
+.lighter-downloads tbody input[type="text"] {
+    width: 100%;
+}
+
+.lighter-downloads thead td {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.tag-search .dropdown li {
+    padding: .75em;
+    border-radius: .5em;
+    margin: 0;
+
+    &:hover { cursor: pointer;}
+}
+
+.tag-search p {
+    margin: 0;
+    line-height: 1.8;
+    font-size: 14px;
+
+    b {
+        display: inline-block;
+        margin-block-end: .75em;
+    }
+}
+
+div.tag-search .search-wrap input.search {
+    display: inline;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+}
+
+ul.settings-tabs {
+    padding-inline: 2em;
+}
+
+a.lighter-btn,
+button.lighter-btn {
+    color: white;
+    text-decoration: none;
+    transition: 375ms;
+
+    &.transparent {
+        color: rebeccapurple;
+        font-weight: 600;
+    }
+
+    &.danger {
+        font-weight: 600;
+    }
+}
+
+.lighter input:is([type=text], [type=search], [type=number]),
+.lighter textarea,
+.lighter select {
+    height: 36px;
+    padding-inline: 12px;
+    background-color: #fff;
+    border-color: #d0d5dd;
+    box-shadow: 0 1px 2px oklch(10% 0 0 / .1);
+    border-radius: .625em;
+    color: #333;
+    min-width: calc-size(fit-content, size + 2em);
+    box-sizing: border-box;
+
+    &:focus {
+        border-color: rebeccapurple;
+        box-shadow: unset;
+        box-shadow: 0 0 0 1px rebeccapurple;
+    }
+}
+
+.lighter select:is(:hover, :focus) {
+    color: rebeccapurple;
+}
+
+.lighter input[type=checkbox] {
+    -webkit-appearance: checkbox;
+    accent-color: rebeccapurple;
+}
+.lighter input[type=checkbox]:checked::before {
+    content: unset;
+}
+
+.lighter #coursesettingsdiv dialog h2 {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    padding: 0;
+    margin-block-end: 0.9em;
+}
+
+.lighter .multi-select .cb-middle input { margin: auto 0; }
+
+.lighter .lighter-downloads input {
+    min-width: fit-content;
+}
+
+.lighter .box.selling .product-select {
+    display: flex;
+    gap: 2.5em;
+    align-items: center;
+    flex-wrap: wrap;
+
+    .product-search-container {
+        position: relative;
+        flex: 1;
+        height: fit-content;
+        anchor-name: --search-products;
+
+        input { width: 400px; max-width: 85vw; }
+    }
+
+    .product-search-wrap {
+        position-anchor: --search-products;
+        position: fixed;
+        top: calc(anchor(bottom) - 1px);
+        min-height: 50vh;
+        max-height: 50vh;
+        width: 402px;
+        max-width: 85vw;
+        padding: .5em;
+        border-bottom-right-radius: .75em;
+        border-bottom-left-radius: .75em;
+        border: 1px solid #D2C8E1;
+        background-color: #fff;
+        box-shadow: 0 3px 9px -3px oklch( 0 0 0 / .25);
+        z-index: 100;
+        overflow: scroll;
+
+        .product-item {
+            display: flex;
+            flex-wrap: nowrap;
+            padding: .5em;
+            border-radius: .5em;
+            scroll-margin: .5em;
+
+            h2 {
+                font-weight: bold;
+                padding: 0 !important;
+            }
+
+            div:first-of-type {
+                flex: 1 75%;
+            }
+
+            div:last-of-type {
+                flex: 1 25%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    aspect-ratio: 1;
+                }
+            }
+
+            &:hover { background-color: oklch(0.867 0.085 303.4); }
+        }
+
+        .center-text {
+            hiehgt: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        position-try-fallbacks: --fallback-top;
+    }
+}
+
+@position-try --fallback-top {
+    top: unset;
+    bottom: calc(anchor(top) - 5px);
+}
+
+.lighter.dia-editor .lighter-header {
+    --admin-bar: 0px;
+}
+
+.lighter .box.selling .sell-container {
+    margin-block-start: 2em;
+
+    .top {
+        display: flex;
+        flex-wrap: nowrap;
+    }
+
+    .general {
+        flex-grow: 1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1em;
+
+        &>div {
+            display: flex;
+            flex-direction: column;
+            gap: .5em;
+        }
+    }
+
+    .img {
+        flex-shrink: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-end;
+
+        .prod-img-wrap {
+            width: 180px;
+            height: 180px;
+
+            img {
+                width: 100%;
+                height: 100%;
+                aspect-ratio: 1;
+                object-fit: cover;
+            }
+        }
+    }
+
+    textarea {
+        width: 100%;
+        border-radius: 0;
+    }
+
+    h4 {
+        margin-block: 0 .5em;
+    }
+
+    @media screen and (max-width: 767px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.lighter .subsubsub {
+    display: none;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.lighter .wp-list-table {
+    margin: 0;
+    border-radius: .5em;
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 1px 3px oklch(0.149 0.054 303.4 / .25);
+
+    :is(thead, tfoot) :is(td, th) {
+        font-weight: 500;
+        background: #F9FAFB;
+        border-color: #eaecf0;
+
+        a { color: #333; }
+    }
+
+    thead th {
+        width: calc(33% - 33px);
+    }
+
+    tbody :is(td, th) {
+        background: #fff;
+        height: 5em;
+
+        a { color: rebeccapurple; }
+    }
+}
+
+.lighter .tablenav.bottom {
+    display: none;
+    margin: 0;
+    padding: 0;
+}
+
+#datetime .header select {
+    height: fit-content;
+    min-width: calc-size(fit-content, size + 1em);
+
+    &:hover {
+        color: rebeccapurple;
+    }
+}
+
+#datetime .time input {
+    height: fit-content;
+    min-width: 35px;
+    text-align: center;
+    -moz-appearance: textfield;
+    appearance: textfield;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+}
+
+.lighter-header #title {
+    height: 2.8em;
+    font-size: 16px;
+}
+
+.lighter h1.wp-heading-inline {
+    display: none;
+}
+.lighter h1.wp-heading-inline+.page-title-action {
+    display: none;
+}
+
+.is-dragging-metaboxes .metabox-holder .postbox-container .meta-box-sortables,
+.is-dragging-metaboxes #post-body #acf_after_title-sortables{
+    outline: 1.5px dashed #646970;
+    border-radius: .5em;
+}
+
+#coursecontentdiv .inside {
+    margin: 0;
+    padding: 2em;
+    background: #f0f0f1;
+    border: 8px solid #fff;
+    border-radius: 1em;
+
+    .lighter-btn.transparent {
+        background:
+            linear-gradient(#f0f0f1, #f0f0f1) padding-box,
+            linear-gradient(135deg, #9d50bb 0%, rebeccapurple 55%, #9d50bb 100%) border-box;
+    }
+}
+
+#coursecontentdiv .lighter-topics-wrap {
+    display: grid;
+    gap: 2em;
+    justify-items: center;
+
+    .lighter-no-topics {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    &.empty .topics-wrap,
+    &.empty .foot {
+        display: none;
+    }
+
+    &.empty .lighter-no-topics {
+        display: flex;
+    }
+}
+
+#coursecontentdiv .topics-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2em;
+    margin: 0;
+    width: 100%;
+    list-style-type: none;
+
+    .lighter-course-module {
+        margin: 0;
+        position: relative;
+
+        .module-wrap {
+            width: 98%;
+        }
+
+        .head {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 1em;
+            background: #fff;
+            width: 100%;
+            min-height: 75px;
+            padding: 1.5em;
+            border-radius: 4px 4px 0 0;
+            z-index: 5;
+            transition: width 250ms ease-out;
+
+            .title {
+                flex-grow: 1;
+            }
+
+            .editable-text .icon-wrapper {
+                opacity: 0;
+
+                &:focus { opacity: 1; }
+            }
+
+            &:hover .editable-text .icon-wrapper {
+                opacity: 1;
+            }
+
+            .actions {
+                display: flex;
+                gap: 0.875em;
+            }
+        }
+
+        .editable-text {
+            margin: 0;
+            display: inline-flex;
+            max-width: 100%;
+            min-width: 120px;
+            gap: 2em;
+        }
+
+        .expand-module {
+            transition: 0.2s ease;
+            transform-origin: center;
+        }
+
+        .lighter-lesson-wrap {
+            border-radius: 0 0 4px 4px;
+            overflow: hidden;
+            width: 100%;
+            transition: width 250ms ease-out;
+        }
+
+        .delete-topic {
+            position: absolute;
+            right: -1.3em;
+            top: 2.4em;
+            z-index: 1;
+            background: transparent;
+            border: none;
+            color: #333;
+
+            &:hover {
+                cursor: pointer;
+                color: oklch(0.6808 0.2525 29.65);
+            }
+        }
+    }
+
+
+    .module-wrap:not(:has(.lighter-lesson-wrap.expanded)) .head {
+        border-radius: 4px;
+    }
+}
+
+#coursecontentdiv .lighter-lesson {
+    background: #fff;
+    padding: 1em;
+    border-left: 4px solid rebeccapurple;
+
+    .lesson-title {
+        display: flex;
+        gap: 1em;
+        align-items: center;
+    }
+
+    h4 {
+        margin: 0;
+
+        .icon-wrapper {
+            opacity: 0;
+
+            &:focus { opacity: 1; }
+        }
+    }
+
+    &:hover h4 .icon-wrapper { opacity: 1; }
+
+    .edit-container .lighter-btn { padding: .5em 1.25em; }
+}
+
+#coursecontentdiv .menu-wrap button {
+    color: #333;
+}
+
+#coursecontentdiv .edit-container header {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+
+    button {
+        padding: 1em;
+        border: none;
+        background: transparent;
+
+        .icon-wrapper {
+            rotate: 45deg;
+            scale: 1.15;
+        }
+
+        &:hover { cursor: pointer; }
+    }
+}
+
+#coursecontentdiv .edit-lesson-dia section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 92.5%;
+}
+
+#coursecontentdiv { overflow: hidden; }
+
+#coursecontentdiv,
+#coursesettingsdiv,
+#lessonsettingsdiv {
+    border: none;
+    border-radius: 1em;
+
+    h2 {
+        color: #555;
+    }
+
+    .toggle-indicator::before {
+        content: "";
+        display: inline-flex;
+        width: 14px;
+        height: 14px;
+        background-color: currentColor;
+        border: none;
+        border-radius: 0;
+        mask-size: contain;
+        mask-repeat: no-repeat;
+        mask-position: center;
+        mask-image: url("data:image/svg+xml,%3Csvg width='14' height='9' viewBox='0 0 14 9' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13 7.05524L6.98258 1.05524L1 7.05524' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A");
+
+        transition: transform 180ms ease-in-out;
+    }
+
+    &.closed .toggle-indicator::before {
+        transform: rotate(180deg);
+    }
+    &.closed .postbox-header {
+        border-bottom: none;
+    }
+}
+
+
+#coursesettingsdiv, #lessonsettingsdiv {
+    .postbox-header {
+        border-bottom: none;
+        padding-block-end: 0;
+    }
+
+    &.closed .postbox-header {
+        padding-block-end: .75em;
+    }
+
+    .inside {
+        margin-block-start: 0;
+        min-height: 250px;
+    }
+
+    .box {
+        padding: 1em;
+    }
+}
+
+#coursesettingsdiv .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5em;
+}
+
+#coursesettingsdiv .box.downloads {
+    padding: 0;
+    display: grid;
+    gap: 2em;
+    justify-items: center;
+}
+
+#course-description {
+    width: 100%;
+    min-height: 96px;
+    padding-block: 12px;
+}
+
+#coursesettingsdiv #lighter-settings-mount .open-date {
+    anchor-name: --publish-date;
+}
+
+.mce-toolbar-grp.mce-container.mce-panel.mce-first.mce-last[style*="position: fixed"] {
+    top: calc(105px + var(--admin-bar)) !important;
+}

@@ -1,0 +1,11 @@
+body.dia-editor :is(#wpadminbar, #adminmenuwrap, #adminmenuback) {
+    display: none !important;
+}
+
+body.dia-editor #wpcontent {
+    margin: 0;
+}
+
+html:has( body.dia-editor ) {
+    padding: 0 !important;
+}

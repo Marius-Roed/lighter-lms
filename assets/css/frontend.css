@@ -1,0 +1,301 @@
+@layer lighter-reset {
+    :where(#lighter-lms-mount, .lighter .wrap) {
+        padding: 0 20px;
+        margin: 0 0 0 -20px;
+        border: 0;
+        font: inherit;
+        vertical-align: baseline;
+        line-height: 1;
+        box-sizing: border-box;
+
+        * {
+            box-sizing: border-box;
+        }
+        /* Basic CSS Reset */
+        html, body, div, span, applet, object, iframe,
+        h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+        a, abbr, acronym, address, big, cite, code,
+        del, dfn, em, img, ins, kbd, q, s, samp,
+        small, strike, strong, sub, sup, tt, var,
+        b, u, i, center,
+        dl, dt, dd, ol, ul, li,
+        fieldset, form, label, legend,
+        table, caption, tbody, tfoot, thead, tr, th, td,
+        article, aside, canvas, details, embed,
+        figure, figcaption, footer, header, hgroup,
+        menu, nav, output, ruby, section, summary,
+        time, mark, audio, video {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            font-size: 100%;
+            font: inherit;
+            vertical-align: baseline;
+            line-height: 1;
+        }
+        /* HTML5 display-role reset for older browsers */
+        article, aside, details, figcaption, figure,
+        footer, header, hgroup, menu, nav, section {
+            display: block;
+        }
+        body {
+            line-height: 1;
+        }
+        ol, ul {
+            list-style: none;
+        }
+        blockquote, q {
+            quotes: none;
+        }
+        blockquote:before, blockquote:after,
+        q:before, q:after {
+            content: '';
+            content: none;
+        }
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+    }
+
+    :where(.postbox) {
+        button {
+            background: none;
+            border: none;
+
+            &:hover {
+                cursor: pointer;
+            }
+        }
+
+        .postbox-header {
+            padding: 1.25em 0.75em;
+
+            .handle-order-higher,
+            .handle-order-lower {
+                display: none;
+            }
+        }
+    }
+}
+
+@layer lighter-globals {
+    .col {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: nowrap;
+    }
+
+    .row {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+    }
+
+    .wrap {
+        flex-wrap: wrap;
+    }
+
+    .grid {
+        display: grid;
+    }
+
+    .lighter-btn {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        gap: .625em;
+        padding: 0.875em 1.375em;
+        text-align: center;
+        text-transform: uppercase;
+        background-image: linear-gradient(135deg, #9d50bb 0%, rebeccapurple 55%, #9d50bb 100%);
+        background-size: 220% auto;
+        color: white;
+        box-shadow: 0 0 20px #eee;
+        border-radius: .625em;
+        outline: none;
+        border: none;
+        transition: 375ms;
+
+        &.transparent {
+            background-image: unset;
+            background:
+                linear-gradient(#fff, #fff) padding-box,
+                linear-gradient(135deg, #9d50bb 0%, rebeccapurple 55%, #9d50bb 100%) border-box;
+            border: 2px solid transparent;
+
+            &.wp-background {
+                color: rebeccapurple;
+                background:
+                    linear-gradient(#f0f0f1, #f0f0f1) padding-box,
+                    linear-gradient(135deg, #9d50bb 0%, rebeccapurple 55%, #9d50bb 100%) border-box;
+            }
+        }
+
+        &.danger {
+            background-image: unset;
+            background: oklch(0.6808 0.2525 29.65);
+            color: #fff;
+        }
+
+        &:focus {
+            border-color: #77BB99;
+            box-shadow: unset;
+            box-shadow: 0 0 0 1px #77BB99;
+        }
+
+        &:hover {
+            background-position: 8% center;
+            color: #fff;
+            text-decoration: none;
+            cursor: pointer;
+            scale: 1.015;
+        }
+    }
+
+    .lighter-switch {
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+        gap: 0.5em;
+        user-select: none;
+
+        input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .lighter-slider {
+            position: relative;
+            display: inline-block;
+            width: 50px; 
+            height: 28px;
+            background-color: #ccc;
+            transition: 0.3s;
+            border-radius: 28px;
+
+            &::before {
+                position: absolute;
+                content: "";
+                height: 22px;
+                width: 22px;
+                left: 3px;
+                bottom: 3px;
+                background-color: #fff;
+                transition: .3s;
+                border-radius: 50%;
+            }
+        }
+
+        input:checked + .lighter-slider {
+            background-color: #663399;
+        }
+        input:checked + .lighter-slider::before {
+            transform: translateX(22px);
+        }
+
+        input:focus + .lighter-slider {
+            box-shadow: 0 0 0 2px rgba(21, 156, 228, 0.4);
+        }
+    }
+}
+
+@layer lighter-styles {
+    .single-lighter_courses main {
+        display: flex;
+        width: 100%;
+        gap: 2em;
+
+        .the-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+
+            .lesson-wrap {
+                width: 100%;
+                padding-inline-end: 2em;
+            }
+        }
+    }
+
+    .lighterlms.course-sidebar {
+        min-height: 85vh;
+        width: 100%;
+        max-width: 335px;
+        border-right: 1px solid #555;
+
+        .course-topics {
+            list-style-type: none;
+            padding: 0;
+            margin-block-start: 0;
+
+            &>li {
+                background-color: oklch(0.768 0.101 303.4);
+
+                h1, h3 {
+                    padding: 1rem 1.25rem;
+                }
+            }
+
+            h1, h3 {
+                word-break: break-word;
+                margin: 0;
+            }
+
+            .course-lessons {
+                background-color: oklch(0.840 0.067 303.4);
+
+                li {
+                    padding: 1rem 1.25rem;
+                }
+            }
+        }
+
+        .course-topics>li button {
+            background-color: transparent;
+            border: none;
+            font-size: inherit;
+            font-weight: inherit;
+            width: 100%;
+            text-align: left;
+            position: relative;
+
+            &:hover {
+                cursor: pointer;
+            }
+
+            &::after {
+                content: "";
+                position: absolute;
+                display: inline-flex;
+                width: .5em;
+                height: .5em;
+                mask-size: contain;
+                mask-repeat: no-repeat;
+                mask-position: center;
+                mask-image: url("data:image/svg+xml,%3Csvg width='20' viewBox='-1 -2 16 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13 7.05524L6.98258 1.05524L1 7.05524' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E%0A"); 
+                background-color: black;
+                top: 50%;
+                right: 5%;
+                transform: translateY(-50%) rotate(90deg);
+            }
+        }
+
+        .course-topics>li button[aria-expanded="true"]::after {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        .course-lessons {
+            display: none;
+            list-style-type: none;
+            padding-inline-start: .5em;
+        }
+
+        .course-lessons.open {
+            display: block;
+        }
+    }
+}
