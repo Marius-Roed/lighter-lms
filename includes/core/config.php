@@ -5,7 +5,18 @@ namespace LighterLMS\Core;
 if (! defined('ABSPATH')) {
 	exit;
 }
-
+/**
+ * @property string $path
+ * @property string $url
+ * @property string $version
+ * @property string $course_post_type
+ * @property string $lesson_post_type
+ * @property string[] $post_types
+ * @property string $admin_page_path
+ * @property string $admin_url
+ * @property bool $development
+ * @property string $connected_store
+ */
 class Config
 {
 
@@ -42,9 +53,17 @@ class Config
 			'version' => LIGHTER_LMS_VERSION,
 			'course_post_type' => $course_post_type,
 			'lesson_post_type' => $lesson_post_type,
+			'post_types' => [$course_post_type, $lesson_post_type],
 			'admin_page_path' => 'admin.php?page=' . $admin_url,
 			'admin_url' => $admin_url,
+			'development' => false,
+			'connected_store' => 'woocommerce'
 		];
+	}
+
+	public function defaults()
+	{
+		return Defaults::get_instance();
 	}
 
 	public function __get($key)

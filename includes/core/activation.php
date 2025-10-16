@@ -2,6 +2,9 @@
 
 namespace LighterLMS\Core;
 
+use LighterLMS\Topics;
+use LighterLMS\Lessons;
+
 class Activation
 {
 	public static function register_hooks()
@@ -10,7 +13,23 @@ class Activation
 		register_deactivation_hook(LIGHTER_LMS__FILE__, [__CLASS__, 'on_deactivation']);
 	}
 
-	public static function on_activation() {}
+	public static function on_activation()
+	{
+		global $wpdb;
 
-	public static function on_deactivation() {}
+		$topics = new Topics();
+		$lessons = new Lessons();
+
+		$topics->install();
+		$lessons->install();
+
+		flush_rewrite_rules();
+	}
+
+	public static function on_deactivation()
+	{
+		global $wpdb;
+
+		$wpdb->query("ALTER TABLE {$wpdb->posts} DROP INDEX post_title_fulltext");
+	}
 }

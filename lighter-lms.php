@@ -15,7 +15,7 @@
  */
 
 if (! defined('ABSPATH')) {
-    exit;
+	exit;
 }
 
 define('LIGHTER_LMS__FILE__', __FILE__);

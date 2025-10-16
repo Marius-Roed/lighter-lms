@@ -3,6 +3,8 @@
 namespace LighterLMS\Core;
 
 use LighterLMS\Admin\Admin;
+use LighterLMS\API\API;
+use LighterLMS\Assets;
 use LighterLMS\Post_Types;
 
 class Lighter_LMS
@@ -37,6 +39,20 @@ class Lighter_LMS
 	 */
 	public $admin;
 
+	/**
+	 * All registered assets
+	 *
+	 * @var object
+	 */
+	private $_assets;
+
+	/**
+	 * Api class object
+	 *
+	 * @var object
+	 */
+	private $_api;
+
 	public static function get_instance()
 	{
 		if (null == self::$_instance) {
@@ -55,7 +71,9 @@ class Lighter_LMS
 		// $this->_course = new Course();
 		// $this->_lesson = new Lesson();
 		$this->admin = new Admin();
+		$this->_assets = new Assets();
 		$this->_post_types = new Post_Types();
+		$this->_api = new API();
 	}
 
 	/**
