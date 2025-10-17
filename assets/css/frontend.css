@@ -214,9 +214,10 @@
             justify-content: center;
             width: 100%;
 
-            .lesson-wrap {
+            .lighter-lesson-wrap {
                 width: 100%;
                 padding-inline-end: 2em;
+                padding-block: 2em;
             }
         }
     }

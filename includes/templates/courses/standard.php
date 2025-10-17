@@ -114,7 +114,7 @@ foreach ($topics as $topic) {
     </div>
     <div class="the-content" id="the-content">
         <?php if (isset($_GET['lesson'])) {
-            echo '<div class="lesson-wrap">';
+            echo '<div class="lighter-lesson-wrap">';
             foreach ($lesson_data as $lesson) {
                 if (strtolower(sanitize_key($lesson['title'])) == $_GET['lesson']) {
                     $args = [
