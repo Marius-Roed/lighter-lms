@@ -80,7 +80,7 @@ class Lesson_Content
 			defined('ELEMENTOR_DEBUG') && ELEMENTOR_DEBUG ||
 			(isset($_GET['action']) && $_GET['action'] === 'elementor') ||
 			(isset($_POST['action']) && strpost($_POST['action'], 'elementor') !== false) ||
-			(\Elementor\Plugin::instance && \Elementor\Plugin::instance->editor->is_edit_mode())
+			(\Elementor\Plugin::$instance && \Elementor\Plugin::$instance->editor->is_edit_mode())
 		);
 	}
 

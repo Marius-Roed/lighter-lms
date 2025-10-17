@@ -135,7 +135,7 @@ foreach ($topics as $topic) {
             }
             echo '</div>';
         } else { ?>
-            <h1><? esc_html(the_title()); ?></h1>
+            <h1><?= esc_html(the_title()); ?></h1>
         <?php } ?>
     </div>
 </main>
