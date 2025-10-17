@@ -38,7 +38,7 @@ class sidebarBtn {
         this.buttons = document.querySelectorAll(selector);
         this.state = new Map();
         this.cache = new Map();
-        this.staleTime = 0;
+        this.staleTime = 2 * 60 * 1000; // 2 Minutes
         this.cacheTime = 60 * 60 * 1000;
         this.attachListeners();
     }
@@ -60,7 +60,7 @@ class sidebarBtn {
     }
 
     isStale(entry) {
-        return Date.now - entry.timestamp >= this.staleTime;
+        return Date.now() - entry.timestamp >= this.staleTime;
     }
 
     async getLesson(id) {
@@ -110,19 +110,6 @@ class sidebarBtn {
         return lesson;
     }
 
-    /*
-    async fetchContent(button) {
-        const apiFetch = window.wp.apiFetch;
-        const id = button.dataset.lessonId;
-        if (!apiFetch) throw new Error('Could not load apiFetch');
-
-        return apiFetch({
-            path: `lighterlms/v1/lesson/${id}?content_only=true`,
-            method: 'GET',
-        });
-    }
-    */
-
     handleMouseDown(e) {
         if (!e.isTrusted) return;
         const button = e.currentTarget;
@@ -146,31 +133,47 @@ class sidebarBtn {
         const btnState = this.state.get(btn);
         const id = btn.dataset.lessonId;
 
-        if (!btnState) {
+        let entry = this.cache.get(id);
+        if (entry && !this.isStale(entry) && entry.status === 'success') {
+            const lesson = entry.data;
             try {
-                const lesson = await this.getLesson(id);
                 await this.handleLessonSuccess(lesson, id, btn);
             } catch (err) {
                 this.handleLessonError(err, id, btn);
+                this.insertContent('', '', id);
             } finally {
+                if (btnState) this.state.delete(btn);
                 this.gcCache();
             }
             return;
         }
 
-        try {
-            let lesson;
+        let fetchPromise;
+        if (btnState) {
             if (btnState.resolvedContent) {
-                lesson = btnState.resolvedContent;
+                fetchPromise = Promise.resolve(btnState.resolvedContent);
             } else {
-                lesson = await btnState.fetchPromise;
+                fetchPromise = btnState.fetchPromise;
             }
+        } else {
+            fetchPromise = this.getLesson(id);
+        }
 
+        if (!entry || entry.status !== "loading") {
+            const now = Date.now();
+            this.cache.set(id, { data: null, timestamp: now, status: "loading" });
+        }
+
+        this.insertContent('', '', id);
+
+        try {
+            const lesson = await fetchPromise;
             await this.handleLessonSuccess(lesson, id, btn);
         } catch (err) {
             this.handleLessonError(err, id, btn);
+            this.insertContent('', '', id);
         } finally {
-            this.state.delete(btn);
+            if (btnState) this.state.delete(btn);
             this.gcCache();
         }
     }
@@ -232,12 +235,16 @@ class sidebarBtn {
         const entry = this.cache.get(id);
         let content = html;
 
-        if (entry && entry.status == "loading") {
-            content = '<div class="loading">Loading...</div>';
-        } else if (entry && entry.status == "error") {
-            content = '<div class="fetch-err">Error loading lesson. Please try again</div>';
+        if (html === '' || html == null) {
+            if (entry && entry.status == "loading") {
+                content = '<div class="lighter-loading">Loading...</div>';
+            } else if (entry && entry.status == "error") {
+                content = '<div class="lighter-fetch-err">Error loading lesson. Please try again</div>';
+            } else {
+                content = '';
+            }
         }
 
-        contentArea.innerHTML = '<div class="lesson-wrap">' + content + '</div>';
+        contentArea.innerHTML = '<div class="lighter-lesson-wrap">' + content + '</div>';
     }
 }
