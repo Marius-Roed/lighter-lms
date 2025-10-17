@@ -326,19 +326,21 @@ class Post_Types
 			'show_ui' => true,
 			'show_in_rest' => true,
 			'show_in_menu' => lighter_lms()->admin_url,
-			'qeury_var' => true,
+			'query_var' => true,
 			'rewrite' => ['slug' => 'lektioner'],
 			'menu_icon' => 'dashicons-list-view',
 			'capability_type' => 'post',
-			'has_acrhive' => false,
+			'has_archive' => false,
 			'hierarchical' => false,
 			'menu_position' => null,
-			'supports' => ['editor'],
+			'supports' => ['editor', 'custom_fields'],
 			'exclude_from_search' => true,
 			'register_meta_box_cb' => [$this, 'lesson_mbs'],
 		];
 
 		register_post_type($this->lesson_post_type, $args);
+
+		$this->_handle_third_party_support($this->lesson_post_type);
 	}
 
 	/**
@@ -386,6 +388,55 @@ class Post_Types
 		   update_post_meta($post_id, '_lighter_sort_order', $sort_order);
 		   update_post_meta($post_id, '_lighter_course_parent', $course_parent);
 		*/
+	}
+
+	private function _handle_third_party_support($post_type)
+	{
+		if ($post_type === $this->lesson_post_type) {
+			if (!did_action('elementor/loaded')) {
+				return;
+			}
+
+			add_post_type_support($post_type, 'elementor');
+
+			register_post_meta($post_type, '_elementor_data', [
+				'type' => 'string',
+				'description' => 'Elementor layout data',
+				'single' => true,
+				'show_in_rest' => true,
+				'schema' => [
+					'type' => 'array',
+					'context' => ['view', 'edit'],
+					'required' => false,
+					'arg_options' => [
+						'sanitize_callback' => null,
+					],
+				],
+				'auth_callback' => function ($attr, $request, $meta_key) {
+					return current_user_can('edit_post', $request['id'] ?? 0);
+				},
+			]);
+
+			$elementor_meta_keys = [
+				'_elementor_page_settings',
+				'_elementor_css',
+				'_elementor_version',
+				'_elementor_edit_mode',
+				'_elementor_controls_usage'
+			];
+			foreach ($elementor_meta_keys as $key) {
+				register_post_meta($post_type, $key, [
+					'type' => 'object',
+					'description' => $key . ' for Elementor',
+					'single' => true,
+					'show_in_rest' => true,
+					'schema' => [
+						'type' => 'object',
+						'context' => ['view', 'edit'],
+					],
+				]);
+			}
+		}
 	}
 
 	public function course_mbs()

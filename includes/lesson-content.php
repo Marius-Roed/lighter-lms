@@ -29,6 +29,10 @@ class Lesson_Content
 
 	public static function handle_elementor_content($post_id, $req_post)
 	{
+		if (self::is_elementor_edit_mode()) {
+			return '';
+		}
+
 		if (!class_exists('\Elementor\Plugin')) {
 			return self::get_content($req_post);
 		}
@@ -64,6 +68,20 @@ class Lesson_Content
 			error_log('Elementor content error: ' . $e->getMessage());
 			return self::get_content($req_post);
 		}
+	}
+
+	private static function is_elementor_edit_mode()
+	{
+		if (function_exists('elementor_is_edit_mode')) {
+			return elementor_is_edit_mode();
+		}
+
+		return (
+			defined('ELEMENTOR_DEBUG') && ELEMENTOR_DEBUG ||
+			(isset($_GET['action']) && $_GET['action'] === 'elementor') ||
+			(isset($_POST['action']) && strpost($_POST['action'], 'elementor') !== false) ||
+			(\Elementor\Plugin::instance && \Elementor\Plugin::instance->editor->is_edit_mode())
+		);
 	}
 
 	public static function handle_gutenberg_content($post_id, $post)

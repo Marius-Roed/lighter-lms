@@ -18,7 +18,7 @@ $parents = get_posts([
 if (empty($parents)) {
 	$parent_key = get_post_meta($post->ID, '_lighter_parent_topic', true);
 	$parent = $topic_db->get($parent_key);
-	$parents = [$parent->title];
+	$parents = $parent ? [$parent->title] : [];
 }
 
 ?>
