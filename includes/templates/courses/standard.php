@@ -67,9 +67,11 @@ if (get_post_meta($post->ID, '_course_display_theme_sidebar', true)) {
 
 $course_sidebar = [['title' => $post->post_title, 'href' => get_permalink($post)]];
 foreach ($topics as $topic) {
+    $filtered = array_filter($lesson_data, fn($lesson) => $lesson['parentTopicKey'] === $topic['key']);
+    usort($filtered, fn($a, $b) => (int)$a['sortOrder'] - (int)$b['sortOrder']);
     $course_sidebar[] = [
         'title' => $topic['title'],
-        'lessons' => array_values(array_filter($lesson_data, fn($lesson) => $lesson['parentTopicKey'] === $topic['key'])),
+        'lessons' => array_values($filtered),
     ];
 }
 ?>

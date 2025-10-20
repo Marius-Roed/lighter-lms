@@ -379,6 +379,12 @@
         }
     }
 
+    .icon-wrapper {
+        color: var(--icon-color, currentColor);
+        width: var(--icon-size, 1em);
+        aspect-ratio: 1;
+    }
+
     .menu-wrap {
         display: none;
     }
