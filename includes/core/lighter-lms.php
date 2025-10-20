@@ -120,9 +120,9 @@ class Lighter_LMS
 			return $transient;
 		}
 
-		$remote_url = "https://api.github.com/repos/Marius-Roed/lighter-lms/releases/latest";
+		$remote_url = "https://api.github.com/repos/Marius-Roed/lighter-lms/releases";
 
-		$resp = wp_remote_get($remote_url, [
+		$releases = wp_remote_get($remote_url, [
 			'timeout' => 10,
 			'sslverify' => true,
 			'headers' => [
@@ -130,33 +130,54 @@ class Lighter_LMS
 			],
 		]);
 
-		if (is_wp_error($resp)) {
-			error_log('LighterLMS update check: API Error - ' . $resp->get_error_message());
+		if (is_wp_error($releases)) {
+			error_log('LighterLMS update check: API Error - ' . $releases->get_error_message());
 			return $transient;
 		}
 
-		$resp_code = wp_remote_retrieve_response_code($resp);
-		if ($resp_code !== 200) {
-			error_log('LighterLMS update check: Non-200 response (' . $resp_code . ')');
+		$releases_code = wp_remote_retrieve_response_code($releases);
+		if ($releases_code !== 200) {
+			error_log('LighterLMS update check: Non-200 response (' . $releases_code . ')');
 			return $transient;
 		}
 
-		$resp_body = wp_remote_retrieve_body($resp);
-		$resp_data = json_decode($resp_body, true);
+		$releases_body = wp_remote_retrieve_body($releases);
+		$releases_data = json_decode($releases_body, true);
 
-		if (!isset($resp_data['tag_name']) || !isset($resp_data['zipball_url'])) {
-			error_log('LighterLMS update check: Invalid GitHub response');
+		$latest = $releases_data[0];
+
+		if (!isset($latest['tag_name']) || !isset($latest['assets']) || empty($latest['assets'])) {
+			error_log('LighterLMS update check: Invalid GitHub response - no tag or assets');
 			return $transient;
 		}
 
-		$remote_version = preg_replace('/^v/', '', $resp_data['tag_name']);
+		$remote_version = preg_replace('/^v/', '', $latest['tag_name']);
+
+		$package_url = null;
+		foreach ($latest['assets'] as $asset) {
+			if (
+				strpos($asset['name'], 'lighter-lms') !== false &&
+				strpos($asset['name'], $remote_version) !== false &&
+				pathinfo($asset['name'], PATHINFO_EXTENSION) === 'zip' &&
+				$asset['content-type'] === 'application/zip'
+			) {
+
+				$package_url = $asset['browser_download_url'];
+				break;
+			}
+		}
+
+		if (!$package_url) {
+			error_log('LighterLMS update check: No valid or matching zip found in release');
+			return $transient;
+		}
 
 		if (version_compare($remote_version, $installed_ver, '>')) {
 			$update_data = (object)[
 				'slug' => $plugin_slug,
 				'new_version' => $remote_version,
 				'url' => 'https://github.com/marius-roed/lighter-lms',
-				'package' => $resp_data['zipball_url'],
+				'package' => $package_url,
 				'tested' => '6.8.3',
 				'requires' => '5.3',
 				'requires_php' => '8.2',
