@@ -3,6 +3,7 @@
     import Topic from "$components/Topic.svelte";
     import DeleteModal from "$components/DeleteModal.svelte";
     import Icon from "$components/Icon.svelte";
+    import EditModal from "$components/EditModal.svelte";
 
     let { screen, wpData } = $props();
 
@@ -33,4 +34,5 @@
         </button>
     </div>
     <DeleteModal />
+    <EditModal />
 </div>

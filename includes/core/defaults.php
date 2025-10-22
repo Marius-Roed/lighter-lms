@@ -16,6 +16,7 @@ if (! defined('ABSPATH')) {
  * @property bool $course_hide_theme_header
  * @property bool $course_hide_theme_sidebar
  * @property bool $course_hide_theme_footer
+ * @property string $editor
  */
 class Defaults
 {
@@ -44,7 +45,8 @@ class Defaults
 			'course_show_progress' => true,
 			'course_hide_theme_header' => true,
 			'course_hide_theme_sidebar' => false,
-			'course_hide_theme_footer' => true
+			'course_hide_theme_footer' => true,
+			'editor' => get_option('lighter_lms_default_builder', 'classic-editor')
 		];
 	}
 

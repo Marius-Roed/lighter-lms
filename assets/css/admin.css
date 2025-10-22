@@ -215,7 +215,7 @@
         }
     }
 
-    .edit-lesson-dia {
+    .lighter-modal-edit {
         width: 92vw;
         height: 92vh;
         border: none;
@@ -1341,19 +1341,23 @@ button.lighter-btn {
 
     &:hover h4 .icon-wrapper { opacity: 1; }
 
-    .edit-container .lighter-btn { padding: .5em 1.25em; }
+    .lighter-modal-edit .lighter-btn { padding: .5em 1.25em; }
 }
 
 #coursecontentdiv .menu-wrap button {
     color: #333;
 }
 
-#coursecontentdiv .edit-container header {
+#coursecontentdiv .lighter-modal-edit header {
     display: flex;
     width: 100%;
     justify-content: space-between;
 
-    button {
+    .change-lesson {
+        padding: .5em;
+    }
+
+    .dia-close {
         padding: 1em;
         border: none;
         background: transparent;
@@ -1367,7 +1371,7 @@ button.lighter-btn {
     }
 }
 
-#coursecontentdiv .edit-lesson-dia section {
+#coursecontentdiv .lighter-modal-edit section {
     display: flex;
     align-items: center;
     justify-content: center;

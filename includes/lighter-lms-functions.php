@@ -68,6 +68,20 @@ if (! function_exists('lighter_icon')) {
 	}
 }
 
+if (! function_exists('lighter_attrify')) {
+	/**
+	 * Parses a string as an attribute. "Lighter LMS" -> "lighter-lms"
+	 *
+	 * @param mixed $value The input to parse
+	 * @param string $seperator="-" The string to use as a seperator
+	 * @return string The attributified string
+	 */
+	function lighter_attrify($value, $seperator = "-")
+	{
+		return strtolower(preg_replace(["/\s/", "/_/", "/-/"], $seperator, $value));
+	}
+}
+
 if (! function_exists('lighter_save_product')) {
 	/**
 	 * Save product
@@ -230,6 +244,7 @@ if (! function_exists('lighter_get_course_settings')) {
 			'displayFooter' => get_post_meta($post_id, '_course_display_theme_footer', true) ?: lighter_lms()->defaults()->course_hide_theme_footer,
 			'product' => lighter_get_course_product($product_id),
 			'store' => lighter_lms()->connected_store,
+			'editor' => lighter_lms()->defaults()->editor,
 		];
 
 		if ($settings['store'] === "woocommerce") {

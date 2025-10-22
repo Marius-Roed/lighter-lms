@@ -29,7 +29,7 @@ class Admin
 
 	public function admin_menu()
 	{
-		global $menu;
+		global $menu, $submenu;
 
 		if (current_user_can('edit_posts')) {
 			$menu[] = ['', 'read', 'separator-lighter', '', 'wp-menu-separator lighter'];
@@ -39,10 +39,19 @@ class Admin
 			__('Lighter LMS', 'lighterlms'),
 			__('Lighter LMS', 'lighterlms'),
 			'edit_posts',
-			'lighter-lms',
+			lighter_lms()->admin_url,
 			[$this, 'app'],
 			'dashicons-book-alt',
 			38
+		);
+
+		add_submenu_page(
+			lighter_lms()->admin_url,
+			__('Settings'),
+			__('Settings'),
+			'edit_others_posts',
+			'lighter-lms-settings',
+			[$this, 'settings'],
 		);
 	}
 
@@ -59,6 +68,11 @@ class Admin
 ?>
 		<div id="lighter-lms-mount" data-screen="<?= esc_attr(get_current_screen()->id) ?>"></div>
 <?php
+	}
+
+	public function settings()
+	{
+		Settings::render();
 	}
 
 	/**
@@ -127,15 +141,31 @@ class Admin
 
 	public function menu_order($menu)
 	{
+		global $submenu;
+
 		$lighter_order = [];
+		$temp = null;
 
 		$lighter_seperator = array_search('separator-lighter', $menu, true);
 
 		foreach ($menu as $index => $item) {
-			if ('lighter-lms' === $item) {
+			if (lighter_lms()->admin_url === $item) {
 				$lighter_order[] = 'separator-lighter';
 				$lighter_order[] = $item;
 				unset($menu[$lighter_seperator]);
+
+				foreach ($submenu[$item] as $idx => $sub) {
+					if ('lighter-lms-settings' === $sub[2]) {
+						$temp = [$idx, $sub];
+						break;
+					}
+				}
+
+				if ($temp) {
+					list($idx, $tab) = $temp;
+					$submenu[$item][] = $tab;
+					unset($submenu[$item][$idx]);
+				}
 			} elseif (! in_array($item, ['separator-lighter'], true)) {
 				$lighter_order[] = $item;
 			}
@@ -171,7 +201,11 @@ class Admin
 			'lighter_lessons' => [
 				'entry' => 'lesson',
 				'dev' => 'src/screens/lessons/main.js',
-			]
+			],
+			// 'lighter-lms-settings' => [
+			//	'entry' => 'settings',
+			//	'dev' => 'src/screens/settings/main.js',
+			//]
 		];
 
 		$screen_id = function_exists('get_current_screen') ? get_current_screen()->id : $hook_suffix;

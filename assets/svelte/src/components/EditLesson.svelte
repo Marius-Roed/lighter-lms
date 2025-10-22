@@ -7,6 +7,7 @@
 
     import Icon from "./Icon.svelte";
     import lighterFetch from "$lib/lighterFetch";
+    import { editLesson, updateLesson } from "$lib/state.svelte.js";
 
     /** @type {EditLessonProps} */
     let { text, lesson, ...props } = $props();
@@ -31,8 +32,19 @@
                 method: "GET",
             });
 
-            console.log(post);
-            // lesson.status = post.lesson.post_status;
+            if (lesson.id !== post.lesson.ID) {
+                throw new Error(
+                    `Lesson fetched ID (${post.lesson.ID}) and the current lesson ID (${lesson.id}) did not match`,
+                );
+            }
+
+            const data = {
+                title: post.lesson.post_title,
+                status: post.lesson.post_status,
+            };
+
+            updateLesson(lesson.key, data);
+            console.log("Updated lesson", lesson.key);
         } catch (err) {
             console.warn("Failed to update lesson:", err);
         }
@@ -144,7 +156,7 @@
     <button
         type="button"
         class="lighter-btn transparent"
-        onclick={openDialog}
+        onclick={() => editLesson(lesson.key)}
         {...props}>{text}</button
     >
     {#if isEditing}
@@ -158,10 +170,32 @@
             }}
         >
             <header>
-                <h3>Edit {lesson.title}</h3>
-                <button type="button" onclick={closeDialog}
-                    ><Icon name="plus" /></button
-                >
+                <div class="lighter-dia-info">
+                    <h3>Edit {lesson.title}</h3>
+                </div>
+                <div class="lighter-dia-actions">
+                    <button
+                        type="button"
+                        class="change-lesson"
+                        title="Previous lesson"
+                        style="rotate:90deg;"
+                    >
+                        <Icon name="chevron" />
+                    </button>
+                    <button
+                        type="button"
+                        class="change-lesson"
+                        title="Next lesson"
+                        style="rotate:-90deg"
+                    >
+                        <Icon name="chevron" />
+                    </button>
+                    <button
+                        type="button"
+                        class="dia-close"
+                        onclick={closeDialog}><Icon name="plus" /></button
+                    >
+                </div>
             </header>
             <section>
                 {#await lessonPromise}

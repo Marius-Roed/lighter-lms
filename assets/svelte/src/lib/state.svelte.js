@@ -22,6 +22,10 @@ import lighterFetch from "./lighterFetch";
  * @property {Array} [access=[]]
  */
 
+/** @typedef {Topic | Lesson} HierarchicalItem
+ * @description Union type for flattened output
+ */
+
 /** @typedef {Topic & {lessons: Lesson[] }} TopicWithLessons */
 
 /**
@@ -65,6 +69,44 @@ export function initState({ courseNum: initCourse, topicsData: initTopics, lesso
 
     topics.splice(0, topics.length, ...initTopics);
     lessons.splice(0, lessons.length, ...initLessons);
+}
+
+/**
+ * Gets a flattened, ordered array.
+ * @returns {HierarchicalItem[]}
+ */
+function flattenOrder() {
+    const sortedTopics = [...topics].sort((a, b) => {
+        const orderDiff = (a.sortOrder ?? Infinity) - (b.sortOrder ?? Infinity);
+        return orderDiff !== 0 ? orderDiff : a.key.localeCompare(b.key);
+    });
+
+    const lessonByTopic = new Map();
+    lessons.forEach(lesson => {
+        const { parentTopicKey: parent } = lesson;
+        if (parent && !lessonByTopic.has(parent)) {
+            lessonByTopic.set(parent, []);
+        }
+        if (parent) {
+            lessonByTopic.get(parent).push(lesson);
+        }
+    });
+
+    lessonByTopic.forEach((lessonList, _) => {
+        lessonList.sort((a, b) => {
+            const orderDiff = (a.sortOrder ?? Infinity) - (b.sortOrder ?? Infinity);
+            return orderDiff !== 0 ? orderDiff : a.key.compareLocale(b.key);
+        });
+    });
+
+    const flattened = [];
+    sortedTopics.forEach(topic => {
+        flattened.push(topic);
+        const topicLessons = lessonByTopic.get(topic.key) || [];
+        flattened.push(...topicLessons);
+    });
+
+    return flattened;
 }
 
 /**
@@ -201,11 +243,32 @@ export function addLesson(topicKey, title = "New lesson") {
         title,
         status: "draft",
         parentTopicKey: topicKey,
-        sortOrder: topicLessonLength(topicKey) + 1,
+        sortOrder: (topicLessonLength(topicKey) + 1) + "",
     }
     lessons.push(newLesson);
 
     topics.filter((t) => t.key === topicKey)?.[0].access.push(newLesson.key);
+}
+
+/**
+ *
+ * @param {string} key 
+ * @param {Partial<Lesson>} [data={}] - The new data to insert
+ */
+export function updateLesson(key, data = {}) {
+    const idx = getLesson(key);
+
+    if (idx < 0) return;
+
+    const existing = lessons[idx];
+    if (!existing) return;
+
+    const updated = {
+        ...existing,
+        ...data
+    };
+
+    lessons[idx] = updated;
 }
 
 /**
@@ -236,6 +299,27 @@ export async function deleteLesson(id, key, idx = -1) {
          * the ui should still reflect the update.
          */
     }
+}
+
+/**
+ * @param {string} key 
+ */
+export async function syncLesson(key) {
+    const idx = getLesson(key);
+    /** @type Partial<Lesson> */
+    const synced = {};
+
+    const resp = await lighterFetch({
+        'url': '/wp-json/wp/v2/lighter_lessons/' + lessons[idx].id,
+    });
+
+    for (const key of Object.keys(lessons[idx])) {
+        if (key in resp) {
+            synced[key] = resp[key].rendered ?? resp[key];
+        }
+    }
+
+    lessons[idx] = { ...lessons[idx], ...Object.fromEntries(Object.entries(synced)) };
 }
 
 /**
@@ -280,6 +364,43 @@ export function moveTopic(sourceIndex, targetIndex) {
     topics.forEach((t, i) => {
         t.sortOrder = i;
     });
+}
+
+export const editModal = $state({
+    open: false,
+    key: null,
+    lesson: null,
+});
+
+export function editLesson(key) {
+    const idx = getLesson(key);
+    if (idx < 0) return; // TODO: Show error; Tried to open lesson.
+
+    const lesson = lessons[idx];
+
+    editModal.open = true;
+    editModal.key = lesson.key;
+    editModal.lesson = lesson;
+}
+
+export function editNextLesson() {
+    const allLessons = flattenOrder().filter(item => !item.courseId);
+    const idx = allLessons.findIndex((l) => l.key === editModal.key);
+
+    if (idx < 0 || idx + 1 > allLessons.length - 1) return;
+
+    editModal.key = allLessons[idx + 1].key;
+    editModal.lesson = allLessons[idx + 1];
+}
+
+export function editPrevLesson() {
+    const allLessons = flattenOrder().filter(item => !item.courseId);
+    const idx = allLessons.findIndex((l) => l.key === editModal.key);
+
+    if (idx < 0 || idx - 1 < 0) return;
+
+    editModal.key = allLessons[idx - 1].key;
+    editModal.lesson = allLessons[idx - 1];
 }
 
 /** @type {DeleteModal} */

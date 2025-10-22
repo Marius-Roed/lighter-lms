@@ -19,8 +19,8 @@ class API
 		add_action('rest_api_init', [$this, 'register_topic_routes']);
 		add_action('rest_api_init', [$this, 'register_course_routes']);
 
-		$course = lighter_lms()->course_post_type;
-		add_filter("rest_{$course}_query", [$this, 'course_rest'], 10, 2);
+		add_filter('rest_' . lighter_lms()->course_post_type . '_query', [$this, 'course_rest'], 10, 2);
+		add_filter('rest_prepare_' . lighter_lms()->lesson_post_type, [$this, 'ensure_fields'], 10, 3);
 	}
 
 	public function register_lesson_routes()
@@ -596,5 +596,27 @@ class API
 		$columns['date'] = __('Date');
 
 		return apply_filters("manage_{$post_type}_posts_columns", $columns);
+	}
+
+	/**
+	 * Ensures title is always on rest requets.
+	 *
+	 * @param \WP_REST_Response $response
+	 * @param \WP_Post $post
+	 * @param \WP_REST_Request $request
+	 */
+	public function ensure_fields($response, $post, $request)
+	{
+		if ($post->post_type !== lighter_lms()->lesson_post_type) {
+			return $response;
+		}
+
+		file_put_contents(LIGHTER_LMS_PATH . '/log.log', var_export($response, true));
+
+		if (empty($response->data['title'])) {
+			$response->data['title'] = ['rendered' => get_the_title($post) ?: ''];
+		}
+
+		return $response;
 	}
 }

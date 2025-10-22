@@ -24,6 +24,33 @@ class Config
 
 	private $_settings = [];
 
+	private $_builders = [
+		"Beaver Builder Plugin",
+		"Beaver Builder Plugin (Lite Version)",
+		"Brizy",
+		"Breakdance",
+		"Classic Editor",
+		"Cornerstone Page Builder",
+		"Divi Builder",
+		"Elementor",
+		"Elementor Pro",
+		"Gutenberg",
+		"GeneratePress",
+		"Fusion Builder",
+		"Flatsome UX Builder",
+		"KingComposer",
+		"Live Composer",
+		"Layers WP",
+		"MotoPress Content Editor",
+		"Oxygen Builder",
+		"SiteOrigin Page Builder",
+		"Spectra",
+		"Thrive Architect",
+		"Visual Composer Website Builder",
+		"WPBakery Page Builder",
+		"Yellow Pencil",
+	];
+
 	public static function get_instance()
 	{
 		if (null === self::$_instance) {
@@ -56,7 +83,7 @@ class Config
 			'post_types' => [$course_post_type, $lesson_post_type],
 			'admin_page_path' => 'admin.php?page=' . $admin_url,
 			'admin_url' => $admin_url,
-			'development' => false,
+			'development' => $this->detect_dev(),
 			'connected_store' => 'woocommerce'
 		];
 	}
@@ -79,5 +106,33 @@ class Config
 	public function all()
 	{
 		return $this->_settings;
+	}
+
+	private function detect_dev()
+	{
+		if ($_SERVER['SERVER_ADDR'] == '127.0.0.1' || $_SERVER['REMOTE_ADDR'] == '127.0.0.1' || strpos($_SERVER['SERVER_NAME'], '.local') !== false) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public function get_builders()
+	{
+		if (!current_user_can('manage_options')) return [];
+
+		$plugins = get_option('active_plugins');
+		$builders = [];
+
+		foreach ($plugins as $plugin) {
+			$plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin);
+			$name = $plugin_data['Name'];
+
+			if (in_array($name, $this->_builders)) {
+				$builders[] = $name;
+			}
+		}
+
+		return $builders;
 	}
 }

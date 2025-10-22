@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     new sidebarBtn('.course-lesson');
-    document.querySelectorAll('.course-nav li:not(:first-of-type)').forEach(topic => new sidebarTopic(topic));
+    document.querySelectorAll('.course-topics > li:not(:first-of-type)').forEach(topic => new sidebarTopic(topic));
 });
 
 onpopstate = (e) => {

@@ -6,6 +6,7 @@ use LighterLMS\Admin\Admin;
 use LighterLMS\API\API;
 use LighterLMS\Assets;
 use LighterLMS\Post_Types;
+use LighterLMS\Admin\Settings;
 
 class Lighter_LMS
 {
@@ -69,6 +70,7 @@ class Lighter_LMS
 		do_action('lighter_lms_before_load');
 
 		add_action('init', [$this, 'init_update_checker'], 5);
+		add_action('admin_post_save_lighter_lms_settings', [Settings::class, 'save']);
 
 		// $this->_course = new Course();
 		// $this->_lesson = new Lesson();
