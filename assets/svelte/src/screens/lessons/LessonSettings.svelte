@@ -1,4 +1,5 @@
 <script>
+    import Editable from "$components/Editable.svelte";
     import FetchSearch from "$components/FetchSearch.svelte";
     import { lessonSettings } from "$lib/lesson-state.svelte";
 
@@ -45,12 +46,27 @@
     {@render hiddenInput(normSettings)}
 </div>
 
-<div class="parents">
-    <h2>Linked courses</h2>
-    <FetchSearch
-        url="/wp-json/lighterlms/v1/topic?q="
-        multi={true}
-        bind:value={lessonSettings.parents}
-        placeholder="Link to course"
-    />
+<div class="settings-wrap">
+    <div class="slug">
+        <h2>Lesson slug</h2>
+        <p>
+            {window.location.origin}/my-course?lesson=<Editable
+                bind:value={lessonSettings.slug}
+                placeholder="new-lesson"
+                tag="b"
+                sanitize={(/** @type {string} */ v) => {
+                    return v.replaceAll(" ", "-").toLowerCase();
+                }}
+            />
+        </p>
+    </div>
+    <div class="parents">
+        <h2>Linked courses</h2>
+        <FetchSearch
+            url="/wp-json/lighterlms/v1/topic?q="
+            multi={true}
+            bind:value={lessonSettings.parents}
+            placeholder="Link to course"
+        />
+    </div>
 </div>

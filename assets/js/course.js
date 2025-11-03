@@ -187,7 +187,7 @@ class sidebarBtn {
         }
 
         const url = new URL(window.location.href);
-        url.searchParams.set('lesson', lesson.title.toLowerCase());
+        url.searchParams.set('lesson', lesson.slug?.toLowerCase());
         window.history.pushState({ lesson: lesson.title, lessonId: lesson.id }, "", url);
 
         this.insertContent(lesson.content, lesson.builder, id);

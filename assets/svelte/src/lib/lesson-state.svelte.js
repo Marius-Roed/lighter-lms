@@ -1,6 +1,7 @@
 
 /**
  * @typedef {Object} LessonSettings
+ * @property {string} slug
  * @property {array} parents
  */
 

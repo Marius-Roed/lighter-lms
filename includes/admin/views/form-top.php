@@ -28,7 +28,8 @@ if ($post_type == lighter_lms()->lesson_post_type) {
 		'lesson_parent' => $post->ID,
 		'suppress_filters' => false
 	]) ?: 0;
-	$post_link = $parent ? esc_url(get_permalink($parent[0]->ID) . '?lesson=' . strtolower($post_title)) : false;
+
+	$post_link = $parent ? esc_url(get_permalink($parent[0]->ID) . '?lesson=' . $post->post_name) : false;
 }
 
 ?>

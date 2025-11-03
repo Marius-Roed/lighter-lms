@@ -127,6 +127,7 @@ class API
 			return rest_ensure_response([
 				'id' => $lesson->ID,
 				'title' => get_the_title($lesson),
+				'slug' => $lesson->post_name,
 				'content' => $content,
 				'builder' => $builder,
 				'styles' => Lesson_Content::get_styles($id, $builder),
@@ -614,7 +615,7 @@ class API
 		file_put_contents(LIGHTER_LMS_PATH . '/log.log', var_export($response, true));
 
 		if (empty($response->data['title'])) {
-			$response->data['title'] = ['rendered' => get_the_title($post) ?: ''];
+			$response->data['title'] = ['rendered' => get_post_field('post_title', $post, 'raw') ?: '']; // NOTE: raw value as Svelte will escape it.
 		}
 
 		return $response;

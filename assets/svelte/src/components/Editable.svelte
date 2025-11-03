@@ -5,6 +5,7 @@
     ```html
     <Editable value="Edit me" placeholder="Undefined" tag="h1" />
     ```
+- Notes: You can sanitize the value with the "sanitize" attribute, which requires a callback.
 -->
 <script>
     import { tooltip } from "$lib/tooltip";
@@ -16,6 +17,7 @@
      * @property {string} [className] - Classes to add to the element
      * @property {string} [placeholder] - The placeholder to show
      * @property {string} [tag] - The default tag to render
+     * @property {function} [sanitize] - A callback to sanitize the value with after editing.
      */
 
     /** @type {EditableProps} */
@@ -24,6 +26,7 @@
         className = "",
         placeholder = "Untitled",
         tag = "span",
+        sanitize = (val) => val,
         ...restProps
     } = $props();
 
@@ -39,6 +42,7 @@
 
     function finishEdit() {
         isEditing = false;
+        value = sanitize(value);
     }
 
     function cancelEdit() {

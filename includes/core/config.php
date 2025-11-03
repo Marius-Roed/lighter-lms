@@ -110,7 +110,7 @@ class Config
 
 	private function detect_dev()
 	{
-		if ($_SERVER['SERVER_ADDR'] == '127.0.0.1' || $_SERVER['REMOTE_ADDR'] == '127.0.0.1' || strpos($_SERVER['SERVER_NAME'], '.local') !== false) {
+		if ($_SERVER['REMOTE_ADDR'] == '127.0.0.1' || strpos($_SERVER['SERVER_NAME'], '.local')) {
 			return true;
 		}
 

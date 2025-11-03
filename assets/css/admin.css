@@ -277,13 +277,16 @@
 }
 
 @layer lighter-utils {
+    /*
     .lighter #adminmenumain {
         position: relative;
+        z-index: 1;
     }
     .lighter #wpcontent {
         position: relative;
         z-index: 1;
     }
+    */
 
     .lighter-header {
         position: sticky;

@@ -195,11 +195,11 @@ class Admin
 				'dev' => 'src/screens/pages/main.js',
 			],
 			'lighter_courses' => [
-				'entry' => 'course',
+				'entry' => 'courses',
 				'dev' => 'src/screens/courses/main.js',
 			],
 			'lighter_lessons' => [
-				'entry' => 'lesson',
+				'entry' => 'lessons',
 				'dev' => 'src/screens/lessons/main.js',
 			],
 			// 'lighter-lms-settings' => [
