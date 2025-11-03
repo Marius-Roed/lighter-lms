@@ -8,12 +8,14 @@
         filterEndDate = $state(null);
     let showCalendar = $state(false);
 
+    let rendered = $derived(filterDate);
+
     let popover;
     let courseStore = getContext("course-list");
 
-    let currentYear = $derived(filterDate.getFullYear());
-    let currentMonth = $derived(filterDate.getMonth());
-    let selectedDay = $derived(filterDate.getDate());
+    let currentYear = $derived(rendered.getFullYear());
+    let currentMonth = $derived(rendered.getMonth());
+    let selectedDay = $derived(rendered.getDate());
 
     const years = Array.from({ length: 55 }, (_, i) => i + 1985);
     const months = Array.from({ length: 12 }, (_, i) => {
@@ -48,7 +50,7 @@
      * @param {number} month
      */
     function changeMonth(month) {
-        filterDate = new Date(currentYear, month, selectedDay);
+        rendered = new Date(currentYear, month, selectedDay);
     }
 
     /**
@@ -57,7 +59,7 @@
      * @param {number} year
      */
     function changeYear(year) {
-        filterDate = new Date(year, currentMonth, selectedDay);
+        rendered = new Date(year, currentMonth, selectedDay);
     }
 </script>
 
@@ -126,7 +128,10 @@
                             if (e.shiftKey) {
                                 changeYear(currentYear - 1);
                             } else {
-                                changeMonth((currentMonth + 11) % 12);
+                                const prev = (currentMonth + 11) % 12;
+                                if (prev > currentMonth)
+                                    changeYear(currentYear - 1);
+                                changeMonth(prev);
                             }
                         }}
                     >
@@ -158,7 +163,10 @@
                             if (e.shiftKey) {
                                 changeYear(currentYear + 1);
                             } else {
-                                changeMonth((currentMonth + 1) % 12);
+                                const next = (currentMonth + 1) % 12;
+                                if (next < currentMonth)
+                                    changeYear(currentYear + 1);
+                                changeMonth(next);
                             }
                         }}
                     >
@@ -169,6 +177,7 @@
                     bind:date={filterDate}
                     bind:endDate={filterEndDate}
                     range
+                    {rendered}
                 />
             {/if}
         </div>

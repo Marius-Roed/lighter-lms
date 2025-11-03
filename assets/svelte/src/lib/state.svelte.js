@@ -93,10 +93,13 @@ function flattenOrder() {
     });
 
     lessonByTopic.forEach((lessonList, _) => {
-        lessonList.sort((a, b) => {
-            const orderDiff = (a.sortOrder ?? Infinity) - (b.sortOrder ?? Infinity);
-            return orderDiff !== 0 ? orderDiff : a.key.compareLocale(b.key);
-        });
+        lessonList.sort(
+            ( /** @type {Lesson} */ a,
+            /** @type {Lesson} */ b) => {
+                const orderDiff = (a.sortOrder ?? Infinity) - (b.sortOrder ?? Infinity);
+                return orderDiff !== 0 ? orderDiff : a.key.localeCompare(b.key);
+            }
+        );
     });
 
     const flattened = [];
@@ -137,10 +140,10 @@ function topicLessonLength(topicId) {
  * @param {string} key - The key of the topic
  *
  * @returns {object}
- */
 function getTopicIdx(key) {
     return topics.findIndex((t) => t.key === key);
 };
+*/
 
 /**
  * Add a new topic
@@ -372,6 +375,11 @@ export const editModal = $state({
     lesson: null,
 });
 
+/**
+ * Opens edit lesson modal to lesson with key
+ *
+ * @param {string} key - The key of the lesson to open the modal with
+ */
 export function editLesson(key) {
     const idx = getLesson(key);
     if (idx < 0) return; // TODO: Show error; Tried to open lesson.

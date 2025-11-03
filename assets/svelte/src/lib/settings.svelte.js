@@ -29,7 +29,7 @@
 /** @type {LighterLMS} */
 window.LighterLMS;
 
-const raw = window.LighterLMS.course.settings;
+const raw = window.LighterLMS.course?.settings || {};
 
 const parseProduct = (raw) => {
     if (isEmpty(raw)) return {};

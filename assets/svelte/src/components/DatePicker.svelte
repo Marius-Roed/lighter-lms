@@ -21,12 +21,14 @@
         value = new Date(value);
     }
 
-    let currentYear = $derived(value.getFullYear());
-    let currentMonth = $derived(value.getMonth());
-    let selectedDay = $derived(value.getDate());
+    let rendered = $derived(value);
 
-    let hours = $derived(value.getHours().toString().padStart(2, "0"));
-    let minutes = $derived(value.getMinutes().toString().padStart(2, "0"));
+    let currentYear = $derived(rendered.getFullYear());
+    let currentMonth = $derived(rendered.getMonth());
+    let selectedDay = $derived(rendered.getDate());
+
+    let hours = $derived(rendered.getHours().toString().padStart(2, "0"));
+    let minutes = $derived(rendered.getMinutes().toString().padStart(2, "0"));
 
     const years = Array.from({ length: 55 }, (_, i) => i + 1985);
     const months = Array.from({ length: 12 }, (_, i) => {
@@ -35,12 +37,12 @@
     });
 
     /**
-     * changes the current date value
+     * changes the current date rendered
      *
      * @param {Date} date
      */
     function changeDay(date) {
-        value = new Date(
+        rendered = new Date(
             date.getFullYear(),
             date.getMonth(),
             date.getDate(),
@@ -55,7 +57,7 @@
      * @param {number} month
      */
     function changeMonth(month) {
-        value = new Date(
+        rendered = new Date(
             currentYear,
             month,
             selectedDay,
@@ -70,7 +72,7 @@
      * @param {number} year
      */
     function changeYear(year) {
-        value = new Date(
+        rendered = new Date(
             year,
             currentMonth,
             selectedDay,
@@ -86,7 +88,7 @@
      * @param {number} m - The minutes
      */
     function changeTime(h, m) {
-        value = new Date(currentYear, currentMonth, selectedDay, h, m);
+        rendered = new Date(currentYear, currentMonth, selectedDay, h, m);
     }
 
     /**
@@ -109,7 +111,9 @@
                 if (e.shiftKey) {
                     changeYear(currentYear - 1);
                 } else {
-                    changeMonth((currentMonth + 11) % 12);
+                    const prev = (currentMonth + 11) % 12;
+                    if (prev > currentMonth) changeYear(currentYear - 1);
+                    changeMonth(prev);
                 }
             }}
         >
@@ -141,14 +145,16 @@
                 if (e.shiftKey) {
                     changeYear(currentYear + 1);
                 } else {
-                    changeMonth((currentMonth + 1) % 12);
+                    const next = (currentMonth + 1) % 12;
+                    if (next < currentMonth) changeYear(currentYear + 1);
+                    changeMonth(next);
                 }
             }}
         >
             <Icon name="chevron" size="0.75em" />
         </button>
     </div>
-    <Calendar bind:date={value} class="cal-1" {startMonday} />
+    <Calendar bind:date={value} class="cal-1" {rendered} {startMonday} />
     <div class="time">
         <input
             type="number"

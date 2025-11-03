@@ -49,8 +49,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         dashboard: path.resolve(__dirname, 'src/screens/dashboard/main.js'),
-        courses: path.resolve(__dirname, 'src/screens/course/main.js'),
-        lessons: path.resolve(__dirname, 'src/screens/lesson/main.js'),
+        courses: path.resolve(__dirname, 'src/screens/courses/main.js'),
+        lessons: path.resolve(__dirname, 'src/screens/lessons/main.js'),
         tablelist: path.resolve(__dirname, 'src/screens/pages/main.js'),
         hooks: path.resolve(__dirname, 'src/hooks.js'),
       },

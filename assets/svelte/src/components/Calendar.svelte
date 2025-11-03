@@ -2,11 +2,13 @@
     /**
      * @typedef {Object} CalendarProps
      * @property {Date} date
+     * @property {Date} rendered
      * @property {Date} [endDate]
      * @property {boolean} [range=false]
      * @property {boolean} [startMonday=true]
      * @property {string} [locale]
      * @property {string} [class]
+     * @property {Object} [restProps]
      */
 
     import { SvelteDate } from "svelte/reactivity";
@@ -15,6 +17,7 @@
     let {
         date: selected = $bindable(),
         endDate: endSelected = $bindable(),
+        rendered = selected,
         range = false,
         startMonday = true,
         locale = "",
@@ -40,11 +43,11 @@
     let toPick = range ? "endSelected" : "selected";
 
     let daysInMonth = $derived(
-        new Date(selected.getFullYear(), selected.getMonth() + 1, 0).getDate(),
+        new Date(rendered.getFullYear(), rendered.getMonth() + 1, 0).getDate(),
     );
 
     let firstDay = $derived(
-        new Date(selected.getFullYear(), selected.getMonth(), 1).getDay(),
+        new Date(rendered.getFullYear(), rendered.getMonth(), 1).getDay(),
     );
 
     let weekdays = $derived.by(() => {
@@ -61,8 +64,8 @@
     let calendarDays = $derived.by(() => {
         const offset = (firstDay - +startMonday + 7) % 7;
         const prevMonthDays = new Date(
-            selected.getFullYear(),
-            selected.getMonth(),
+            rendered.getFullYear(),
+            rendered.getMonth(),
             0,
         ).getDate();
 
@@ -70,55 +73,43 @@
 
         for (let i = offset - 1; i >= 0; i--) {
             const day = prevMonthDays - i;
-            const datetime = new Date(
-                selected.getFullYear(),
-                selected.getMonth() - 1,
-                day,
-                selected.getHours(),
-                selected.getMinutes(),
-            );
-            const selectedPart =
-                range &&
-                datetime.getTime() >= selected.getTime() &&
-                datetime.getTime() <= endSelected.getTime();
+            const { datetime, selectedPart } = generateCellInfo(day, -1);
+
             cells.push({ day, datetime, outside: true, selectedPart });
         }
 
         for (let i = 1; i <= daysInMonth; i++) {
-            const datetime = new Date(
-                selected.getFullYear(),
-                selected.getMonth(),
-                i,
-                selected.getHours(),
-                selected.getMinutes(),
-            );
-            const selectedPart =
-                range &&
-                datetime.getTime() >= selected.getTime() &&
-                datetime.getTime() <= endSelected.getTime();
+            const { datetime, selectedPart } = generateCellInfo(i);
 
             cells.push({ day: i, datetime, outside: false, selectedPart });
         }
 
         const remaining = 42 - cells.length;
         for (let i = 1; i <= remaining; i++) {
-            const datetime = new Date(
-                selected.getFullYear(),
-                selected.getMonth() + 1,
-                i,
-                selected.getHours(),
-                selected.getMinutes(),
-            );
-            const selectedPart =
-                range &&
-                datetime.getTime() >= selected.getTime() &&
-                datetime.getTime() <= endSelected.getTime();
+            const { datetime, selectedPart } = generateCellInfo(i, 1);
 
             cells.push({ day: i, datetime, outside: true, selectedPart });
         }
 
         return cells;
     });
+
+    function generateCellInfo(day, monthAdjust = 0) {
+        const datetime = new Date(
+            rendered.getFullYear(),
+            rendered.getMonth() + monthAdjust,
+            day,
+            rendered.getHours(),
+            rendered.getMinutes(),
+        );
+
+        const selectedPart =
+            range &&
+            datetime.getTime() >= selected.getTime() &&
+            datetime.getTime() <= endSelected.getTime();
+
+        return { datetime, selectedPart };
+    }
 
     /**
      * @param {Date} a
