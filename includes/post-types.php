@@ -47,9 +47,17 @@ class Post_Types
 
 		// TODO: Add user access check.
 
-		// NOTE: High priority due to breakdance override.
-		// TODO: Find a better solution.
-		add_filter('template_include', [$this, 'course_template'], 1000010);
+		add_action('plugins_loaded', function () {
+			$prio = 10;
+
+			// NOTE: High priority due to breakdance override.
+			// TODO: Find a better solution.
+			if (lighter_lms()->is_theme("breakdance-zero-theme-master")) {
+				$prio = 1000010;
+			}
+
+			add_filter('template_include', [$this, 'course_template'], $prio);
+		}, 20);
 	}
 
 	public function register_course_post_type()
@@ -244,7 +252,7 @@ class Post_Types
 			return $new;
 		}
 
-		$course_template = LIGHTER_LMS_PATH . 'includes/templates/courses/standard.php';
+		$course_template = lighter_lms()->standard_template;
 		return $course_template;
 	}
 
@@ -381,6 +389,15 @@ class Post_Types
 			$topic = $topics_db->get($parent);
 			$lesson = new Lessons(['lesson' => $post_id, 'parent' => $topic->post_id, 'topic' => $topic->ID]);
 			$lesson->save();
+		}
+
+		if (isset($settings['slug']) && ! empty($settings['slug'])) {
+			$slug = sanitize_title($settings['slug']);
+			if ($slug !== get_post_field('post_name', $post, 'raw')) {
+				// WARN: Maybe not the best way, but not removing the action causes recursion.
+				remove_action('save_post_' . $this->lesson_post_type, [$this, 'save_lesson']);
+				wp_update_post(['ID' => $post_id, 'post_name' => $slug]);
+			}
 		}
 
 		/* TODO: 

@@ -1,5 +1,6 @@
 <?php
 
+use LighterLMS\Lessons;
 use LighterLMS\Topics;
 
 if (! defined('ABSPATH')) {
@@ -17,6 +18,10 @@ if (! function_exists('lighter_lms')) {
 		return \LighterLMS\Core\Config::get_instance();
 	}
 }
+
+add_action('after_setup_theme', function () {
+	add_image_size('lighter_course_main', 450);
+});
 
 if (!function_exists('lighter_get_path')) {
 	function lighter_get_path($relpath = '')
@@ -256,9 +261,112 @@ if (! function_exists('lighter_get_course_settings')) {
 }
 
 if (!function_exists('lighterlms_course_sidebar')) {
-	function lighterlms_course_sidebar()
+	/**
+	 * Creates and prints the sidebar of a course to be viewed on the frontend.
+	 *
+	 * @param WP_Post|int $post The course to generate the sidebar of.
+	 * @param bool $display Whether to display the outout. Will return the generated HTML if false.
+	 *
+	 * @return string|null The generated HTML.
+	 */
+	function lighterlms_course_sidebar($course, $display = true)
 	{
-		return;
+		$post = get_post($course);
+
+		if (is_admin() || $post->post_type !== lighter_lms()->course_post_type) {
+			return;
+		}
+
+		$topic_db = new Topics();
+
+		$topics_raw = $topic_db->get_by_course($post->ID);
+		$topics = array_map(function ($row) {
+			return [
+				'key' => $row->topic_key,
+				'title' => $row->title,
+				'sortOrder' => $row->sort_order,
+				'courseId' => $row->post_id,
+			];
+		}, $topics_raw);
+
+		usort($topics, fn($a, $b) => (int)$a['sortOrder'] - (int)$b['sortOrder']);
+
+		$lessons = get_posts([
+			'post_type' => lighter_lms()->lesson_post_type,
+			'numberposts' => -1,
+			'lighter_course' => $post->ID,
+			'suppress_filters' => false
+		]);
+
+		// NOTE: There should be a better way to get the post and metadata
+		// directly in one query instead of mapping it after.
+		$lesson_data = array_map(function ($lesson) {
+			return [
+				'id' => $lesson->ID,
+				'key' => get_post_meta($lesson->ID, '_lighter_lesson_key', true),
+				'slug' => $lesson->post_name,
+				'title' => $lesson->post_title,
+				'sortOrder' => get_post_meta($lesson->ID, '_lighter_sort_order', true) ?: 0,
+				'parentTopicKey' => get_post_meta($lesson->ID, '_lighter_parent_topic', true),
+			];
+		}, $lessons);
+
+		$sb = [['title' => $post->post_title, 'href' => get_permalink($post)]];
+		foreach ($topics as $topic) {
+			$filtered = array_filter($lesson_data, fn($lesson) => $lesson['parentTopicKey'] === $topic['key']);
+			usort($filtered, fn($a, $b) => (int)$a['sortOrder'] - (int)$b['sortOrder']);
+			$sb[] = [
+				...$topic,
+				'lessons' => array_values($filtered),
+			];
+		}
+
+
+		if (!$display) {
+			ob_start();
+		}
+?>
+		<div class="lighterlms nav-wrap course-sidebar">
+			<?php do_action('lighter_lms_course_before_topics_nav'); ?>
+			<nav class="course-nav lighterlms">
+				<ul class="course-topics">
+					<?php foreach ($sb as $sb_item) :
+						if (array_key_exists('lessons', $sb_item)): ?>
+							<?php printf('<li class="lighter-topic" data-key="%s">', $sb_item['key']); ?>
+							<h3>
+								<button type="button" aria-expanded="true" aria-controls="<?= strtolower(esc_attr($sb_item['title'])) ?>-lessons" class="togglable-btn">
+									<?= esc_html($sb_item['title']) ?>
+								</button>
+							</h3>
+							<ul class="course-lessons open">
+								<?php foreach ($sb_item['lessons'] as $lesson) {
+									printf(
+										'<li><a href="?lesson=%1$s" class="course-lesson %1$s" data-lesson="%1$s" data-lesson-id="%2$s" data-key="%3$s" data-parent-key="%4$s">%5$s</a></li>',
+										strtolower(sanitize_key($lesson['slug'])),
+										$lesson['id'],
+										$lesson['key'],
+										$lesson['parentTopicKey'],
+										$lesson['title']
+									);
+								} ?>
+							</ul>
+							</li>
+						<?php else: ?>
+							<li>
+								<h1><a href="<?= esc_attr(esc_url($sb_item['href'])) ?>"><?= $sb_item['title'] ?></a></h1>
+							</li>
+					<?php endif;
+					endforeach;
+					?>
+				</ul>
+			</nav>
+			<?php do_action('lighter_lms_course_after_topics_nav'); ?>
+		</div>
+<?php
+		if (!$display) {
+			$out = ob_get_clean();
+			return $out;
+		}
 	}
 }
 
@@ -384,6 +492,7 @@ if (! function_exists('lighter_get_lesson_settings')) {
 
 		return [
 			'parents' => $parents ?? [],
+			'slug' => $post->post_name,
 		];
 	}
 }

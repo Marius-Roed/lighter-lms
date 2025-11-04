@@ -16,6 +16,7 @@ if (! defined('ABSPATH')) {
  * @property string $admin_url
  * @property bool $development
  * @property string $connected_store
+ * @property string $standard_template
  */
 class Config
 {
@@ -81,6 +82,7 @@ class Config
 			'course_post_type' => $course_post_type,
 			'lesson_post_type' => $lesson_post_type,
 			'post_types' => [$course_post_type, $lesson_post_type],
+			'standard_template' => LIGHTER_LMS_PATH . '/includes/templates/courses/standard.php',
 			'admin_page_path' => 'admin.php?page=' . $admin_url,
 			'admin_url' => $admin_url,
 			'development' => $this->detect_dev(),
@@ -106,6 +108,36 @@ class Config
 	public function all()
 	{
 		return $this->_settings;
+	}
+
+	/**
+	 * Determine whether the active theme is `$theme`.
+	 * Will return the theme name if `$theme` is not specified.
+	 *
+	 * @param string $theme The theme name to compare to.
+	 *
+	 * @return bool|string
+	 */
+	public function is_theme($theme = "")
+	{
+		$current_theme_name = '';
+		$current_theme = wp_get_theme();
+
+		if ($current_theme->exists() && $current_theme->parent()) {
+			$parent_theme = $current_theme->parent();
+
+			if ($parent_theme->exists()) {
+				$current_theme_name = $parent_theme->get_stylesheet();
+			}
+		} elseif ($current_theme->exists()) {
+			$current_theme_name = $current_theme->get_stylesheet();
+		}
+
+		if (!$theme || empty($theme)) {
+			return $current_theme_name;
+		}
+
+		return $theme === $current_theme_name;
 	}
 
 	private function detect_dev()
