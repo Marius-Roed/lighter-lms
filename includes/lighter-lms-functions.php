@@ -250,6 +250,8 @@ if (! function_exists('lighter_get_course_settings')) {
 			'product' => lighter_get_course_product($product_id),
 			'store' => lighter_lms()->connected_store,
 			'editor' => lighter_lms()->defaults()->editor,
+			'baseUrl' => 'kurser',
+			'slug' => $course->post_name
 		];
 
 		if ($settings['store'] === "woocommerce") {

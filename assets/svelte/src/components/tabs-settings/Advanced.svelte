@@ -1,7 +1,18 @@
 <script>
+    import Editable from "$components/Editable.svelte";
     import Switch from "$components/Switch.svelte";
     import { settings } from "$lib/settings.svelte";
 </script>
+
+<div class="course-slug">
+    <h3>Lesson url</h3>
+    {window.location.origin}/{settings.baseUrl}/<Editable
+        bind:value={settings.slug}
+        placeholder="new-course"
+        tag="b"
+        sanitize={(v) => v.replaceAll(" ", "-").toLowerCase()}
+    />
+</div>
 
 <div>
     <h3>Lesson settings</h3>

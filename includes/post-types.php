@@ -196,6 +196,12 @@ class Post_Types
 		update_post_meta($post_id, '_course_display_theme_sidebar', $sidebar);
 		update_post_meta($post_id, '_course_display_theme_footer', $footer);
 
+		if ($post->post_name !== $settings['slug']) {
+			// WARN: Maybe not the best way, but not removing the action causes recursion.
+			remove_action('save_post_' . $this->course_post_type, [$this, 'save_course']);
+			wp_update_post(['ID' => $post_id, 'post_name' => $settings['slug']]);
+		}
+
 		if (isset($_POST['topics'])) {
 			$topic_db = new Topics();
 			foreach ($_POST['topics'] as $topic) {
