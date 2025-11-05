@@ -184,6 +184,9 @@ class Post_Types
 		$product = $settings['product'];
 		if ($product) {
 			$saved_prod = lighter_save_product($product, $post_id);
+
+			$img_id = $product['images'][0]['id'] ?? false;
+			if ($img_id) set_post_thumbnail($post, $img_id);
 		}
 
 		update_post_meta($post_id, '_course_description', trim($course_description));

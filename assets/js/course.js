@@ -296,6 +296,8 @@ class Sidebar {
 
         contentArea.innerHTML = '<div class="lighter-lesson-wrap">' + content + '</div>';
 
-        window.scrollTo({ top: contentArea.getBoundingClientRect().y, behavior: 'smooth' });
+        if (entry.status == "success") {
+            window.scrollTo({ top: contentArea.getBoundingClientRect().y + window.scrollY - 20, behavior: 'smooth' });
+        }
     }
 }

@@ -161,6 +161,8 @@ export class CoursesStore {
         this.pagination = $state(courses.pagination);
         this.columns = $state(courses.columns);
         this.filterStatus = $state(courses.filters.post_stati)
+
+        this.pagination.currentPage = 1;
     }
 
     async loadPosts(page = 1) {

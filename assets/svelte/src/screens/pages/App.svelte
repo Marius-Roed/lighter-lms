@@ -11,6 +11,8 @@
 
     setContext("course-list", courseStore);
 
+    console.log(courseStore);
+
     let { actions } = lighterCourses;
 </script>
 
@@ -41,16 +43,18 @@
     {:else}
         <PostList posts={courseStore.courses} columns={courseStore.columns} />
     {/if}
-    {#if courseStore.totalPages}
+    {#if courseStore.pagination.totalPages}
         <div class="pagination-wrap">
-            {#if courseStore.totalPages}
+            {#if courseStore.pagination.totalPages}
                 <Pagination
-                    bind:currentPage={courseStore.currentPage}
-                    totalPages={courseStore.totalPages}
+                    bind:currentPage={courseStore.pagination.currentPage}
+                    totalPages={courseStore.pagination.totalPages}
                     onPageChange={courseStore.loadPosts}
                 />
             {/if}
-            <div class="total">Total courses ({courseStore.totalPosts})</div>
+            <div class="total">
+                Total courses ({courseStore.pagination.totalPosts})
+            </div>
         </div>
     {/if}
 </form>
