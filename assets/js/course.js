@@ -1,66 +1,109 @@
 document.addEventListener('DOMContentLoaded', () => {
-    new sidebarBtn('.course-lesson');
-    document.querySelectorAll('.course-topics > li:not(:first-of-type)').forEach(topic => new sidebarTopic(topic));
+    const sidebar = new Sidebar('.lighterlms.course-sidebar');
+    window.loadLesson = sidebar.loadLesson.bind(sidebar);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const initLesson = urlParams.get('lesson');
+    if (!initLesson) {
+        window.history.pushState({ lesson: null, lessonId: null }, '', window.location.href);
+    }
 });
 
-onpopstate = (e) => {
+window.onpopstate = async (e) => {
     if (e.state && e.state.lesson && e.state.lessonId) {
-        loadLesson(e.state.lessonId);
+        await loadLesson(e.state.lessonId);
     } else {
         // Fallback load default page
-        window.location.href = window.location.href;
+        const url = new URL(window.location.href);
+        url.searchParams.delete('lesson');
+        window.history.pushState({ lesson: null, lessonId: null }, '', url.toString());
+        window.location.reload();
     }
 };
 
-class sidebarTopic {
-    constructor(el) {
-        const btn = el.querySelector('button');
-        this.btn = btn;
-        this.isOpen = btn.ariaExpanded;
-        this.list = el.querySelector('.course-lessons');
+class Sidebar {
+    STALETIME = 120000; // 2 Minutes
+    CACHETIME = 3600000; // 60 Minutes
 
-        this.attachListeners();
-    }
+    /** @type {HTMLElement} */
+    el;
+    /** @type {Set<HTMLButtonElement>} */
+    topics;
+    /** @type {Set<HTMLAnchorElement>} */
+    lessons;
 
-    attachListeners() {
-        this.btn.addEventListener('click', this.toggleOpen.bind(this));
-    }
-
-    toggleOpen() {
-        this.isOpen = !this.isOpen;
-        this.list.classList.toggle('open');
-        this.btn.ariaExpanded = this.isOpen;
-    }
-}
-
-class sidebarBtn {
     constructor(selector) {
-        this.buttons = document.querySelectorAll(selector);
+        this.el = document.querySelector(selector);
+        if (!this.el) {
+            console.warn('Could not initialize sidebar. No sidebar found at selector', selector);
+            return;
+        }
+
+        this.topics = new Set(this.el.querySelectorAll('button'));
+        this.lessons = new Set(this.el.querySelectorAll('.course-lesson'));
         this.state = new Map();
         this.cache = new Map();
-        this.staleTime = 2 * 60 * 1000; // 2 Minutes
-        this.cacheTime = 60 * 60 * 1000;
-        this.attachListeners();
+
+        this.attachListener();
     }
 
-    attachListeners() {
-        this.buttons.forEach((btn) => {
-            btn.addEventListener('mousedown', this.handleMouseDown.bind(this));
-            btn.addEventListener('click', this.handleBtnClick.bind(this));
-        });
+    attachListener() {
+        this.el.addEventListener('mousedown', this.handleMousedown.bind(this));
+        this.el.addEventListener('click', this.handleClick.bind(this));
+    }
+
+    /** @param {MouseEvent} e */
+    handleMousedown(e) {
+        if (!e.isTrusted || !this.lessons.has(e.target)) return;
+        const button = e.target;
+        const id = button.dataset.lessonId;
+        if (!this.state.has(button)) {
+            const fetchPromise = this.getLesson(id)
+            this.state.set(button, { fetchPromise, resolvedContent: null });
+
+            document.addEventListener('mouseup', (mouseupE) => {
+                if (!button.contains(mouseupE.target)) {
+                    this.state.delete(button);
+                }
+            }, { once: true });
+        }
+    }
+
+    /** @param {PointerEvent} e */
+    handleClick(e) {
+        if (this.topics.has(e.target)) {
+            this.toggleTopic(e.target);
+            return;
+        }
+
+        if (!this.lessons.has(e.target)) {
+            return;
+        }
+
+        this.handleLessonClick(e, e.target);
+    }
+
+    /** @param {HTMLButtonElement} el  */
+    toggleTopic(el) {
+        const topicEl = el.closest('.lighter-topic')
+        const list = topicEl?.querySelector('.course-lessons');
+        if (!list) return;
+
+        list.classList.toggle('open');
+        el.ariaExpanded = !!list.classList.contains('open');
     }
 
     gcCache() {
         const now = Date.now();
         for (const [id, entry] of this.cache.entries()) {
-            if (now - entry.timestamp > this.cacheTime) {
+            if (now - entry.timestamp > this.CACHETIME) {
                 this.cache.delete(id);
             }
         }
     }
 
     isStale(entry) {
-        return Date.now() - entry.timestamp >= this.staleTime;
+        return Date.now() - entry.timestamp >= this.STALETIME;
     }
 
     async getLesson(id) {
@@ -110,26 +153,32 @@ class sidebarBtn {
         return lesson;
     }
 
-    handleMouseDown(e) {
-        if (!e.isTrusted) return;
-        const button = e.currentTarget;
-        const id = button.dataset.lessonId;
-        if (!this.state.has(button)) {
-            const fetchPromise = this.getLesson(id)
-            this.state.set(button, { fetchPromise, resolvedContent: null });
-
-            document.addEventListener('mouseup', (mouseupE) => {
-                if (!button.contains(mouseupE.target)) {
-                    this.state.delete(button);
-                }
-            }, { once: true });
+    /** @param {number} id */
+    async loadLesson(id) {
+        const btn = document.querySelector('[data-lesson-id="' + id + '"]');
+        const btnState = this.state.get(btn);
+        const entry = this.cache.get(id.toString());
+        if (entry && !this.isStale(entry) && entry.status === 'success') {
+            const lesson = entry.data;
+            try {
+                await this.handleLessonSuccess(lesson, id, btn);
+            } catch (err) {
+                this.handleLessonError(err, id);
+                this.insertContent('', '', id);
+            } finally {
+                if (btnState) this.state.delete(btn);
+                this.gcCache();
+            }
         }
+
+        // TODO: Fetch lesson if stale or no data.
     }
 
-    async handleBtnClick(e) {
+    /** @param {PointerEvent} e */
+    async handleLessonClick(e) {
         e.preventDefault();
 
-        const btn = e.currentTarget;
+        const btn = e.target;
         const btnState = this.state.get(btn);
         const id = btn.dataset.lessonId;
 
@@ -246,5 +295,7 @@ class sidebarBtn {
         }
 
         contentArea.innerHTML = '<div class="lighter-lesson-wrap">' + content + '</div>';
+
+        window.scrollTo({ top: contentArea.getBoundingClientRect().y, behavior: 'smooth' });
     }
 }
