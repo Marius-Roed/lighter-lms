@@ -42,7 +42,7 @@ class Post_Types
 		add_filter('get_user_option_screen_layout_' . $this->course_post_type, [$this, 'screen_layout'], 10, 1);
 		add_filter('post_class', [$this, 'post_class'], 10, 3);
 		add_filter('manage_' . $this->course_post_type . '_posts_columns', [$this, 'course_columns']);
-		add_filter('rest_' . $this->course_post_type . '_query', [$this, 'course_rest_query'], 10, 2);
+		add_filter('rest_' . $this->course_post_type . '_query', [$this, 'course_rest_query'], 20, 2);
 		add_filter('lighter_admin_object', [$this, 'js_objects'], 10, 2);
 
 		// TODO: Add user access check.
@@ -96,6 +96,7 @@ class Post_Types
 			'supports' => ['custom-fields'],
 			'show_in_menu' => lighter_lms()->admin_url,
 			'show_in_rest' => true,
+			'rest_controller_class' => 'WP_REST_Posts_Controller',
 			'rest_base' => 'lighter_courses',
 			'register_meta_box_cb' => [$this, 'course_mbs'],
 		];
@@ -296,21 +297,23 @@ class Post_Types
 	public function course_rest_query($args, $req)
 	{
 		$status_param = $req->get_param('filter_status');
+		$valid_stati = [];
 		if (! empty($status_param) && is_string($status_param)) {
 			$statuses = explode(',', $status_param);
-			$valid_stati = [];
 			foreach ($statuses as $status) {
 				$status = trim($status);
 				if (get_post_status_object($status)) {
 					$valid_stati[] = $status;
 				}
 			}
+		}
 
-			if (empty($valid_stati)) {
-				$valid_stati = ['publish', 'draft', 'future', 'private', 'auto-draft', 'pending'];
-			}
-		} else {
+		if (empty($valid_stati)) {
 			$valid_stati = ['publish', 'draft', 'future', 'private', 'auto-draft', 'pending'];
+		}
+
+		if (isset($req['status'])) {
+			$args['post_status'] = $req->get_param('status');
 		}
 
 		return $args;

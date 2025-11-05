@@ -11,8 +11,6 @@
 
     setContext("course-list", courseStore);
 
-    console.log(courseStore);
-
     let { actions } = lighterCourses;
 </script>
 
@@ -45,7 +43,7 @@
     {/if}
     {#if courseStore.pagination.totalPages}
         <div class="pagination-wrap">
-            {#if courseStore.pagination.totalPages}
+            {#if courseStore.pagination.totalPages > 1}
                 <Pagination
                     bind:currentPage={courseStore.pagination.currentPage}
                     totalPages={courseStore.pagination.totalPages}

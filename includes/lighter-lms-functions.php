@@ -463,8 +463,8 @@ if (! function_exists('lighter_postlist_js_obj')) {
 			'columns' => $column_headers,
 			'pagination' => [
 				'page' => isset($_GET['paged']) ? intval($_GET['paged']) : 1,
-				'totalPages' => ceil(intval($wp_query->post_count) / $per_page),
-				'totalPosts' => $wp_query->post_count,
+				'totalPages' => ceil(intval($wp_query->found_posts) / $per_page),
+				'totalPosts' => $wp_query->found_posts,
 			],
 			'posts' => lighter_normalise_posts($wp_query->posts),
 			'tags' => [

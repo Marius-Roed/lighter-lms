@@ -1,5 +1,3 @@
-import apiFetch from "@wordpress/api-fetch";
-
 /**
  * @typedef {Object} Post
  * @property {number} id - The ID of the post
@@ -60,6 +58,20 @@ function flatten(obj, delimiter = "_", parentKey = "", result = {}) {
     return result;
 }
 
+/** @param {any} v */
+function isFalsy(v) {
+    if (!v) return false;
+    if (typeof v === "object") {
+        if (v === null) return false;
+        if (Array.isArray(v)) return v.length > 0;
+        return Object.keys(v).length > 0;
+    }
+    return true;
+}
+
+/** 
+ * @param {Object} userArgs 
+ */
 function getSearchParams(userArgs) {
     const defaults = {
         page: 1,
@@ -73,8 +85,9 @@ function getSearchParams(userArgs) {
     };
 
     baseParams = flatten(baseParams);
+    baseParams = Object.entries(baseParams).filter(([k, v]) => isFalsy(v));
 
-    return new URLSearchParams([...Object.entries(baseParams)]);
+    return new URLSearchParams([...baseParams]);
 }
 
 async function fetchPosts(page = 1, limit = 20, args = {}) {
