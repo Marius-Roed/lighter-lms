@@ -90,6 +90,11 @@ function getSearchParams(userArgs) {
     return new URLSearchParams([...baseParams]);
 }
 
+/**
+ * @param {number} [page=1]
+ * @param {number} [limit=20]
+ * @param {Object} [args={}]
+ */
 async function fetchPosts(page = 1, limit = 20, args = {}) {
     args = {
         ...args,
@@ -110,7 +115,7 @@ async function fetchPosts(page = 1, limit = 20, args = {}) {
         },
     });
 
-    const totalPosts = resp.headers.get('X-wp-total');
+    const totalPosts = resp.headers.get('X-wp-total') || 0;
 
     const data = await resp.json();
 
@@ -169,6 +174,7 @@ export class CoursesStore {
     filterTags = $state([]);
     filterDate = $state();
 
+    /** @param {Object} courses */
     constructor(courses) {
         this.courses = $state(courses.posts);
         this.pagination = $state(courses.pagination);
@@ -178,6 +184,7 @@ export class CoursesStore {
         this.pagination.currentPage = 1;
     }
 
+    /** @param {number} page */
     async loadPosts(page = 1) {
         this.loading = true;
         this.error = null;
