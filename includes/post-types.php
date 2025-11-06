@@ -39,6 +39,8 @@ class Post_Types
 		add_action('wp_enqueue_scripts', [$this, 'scripts']);
 		add_action('manage_' . $this->course_post_type . '_posts_custom_column', [$this, 'course_custom_columns'], 10, 2);
 
+		add_action('template_redirect', [$this, 'course_access']);
+
 		add_filter('get_user_option_screen_layout_' . $this->course_post_type, [$this, 'screen_layout'], 10, 1);
 		add_filter('post_class', [$this, 'post_class'], 10, 3);
 		add_filter('manage_' . $this->course_post_type . '_posts_columns', [$this, 'course_columns']);
@@ -188,6 +190,8 @@ class Post_Types
 
 			$img_id = $product['images'][0]['id'] ?? false;
 			if ($img_id) set_post_thumbnail($post, $img_id);
+
+			update_post_meta($post_id, '_lighter_is_restricted', true);
 		}
 
 		update_post_meta($post_id, '_course_description', trim($course_description));
@@ -250,13 +254,28 @@ class Post_Types
 		}
 	}
 
+	public function course_access()
+	{
+		if (! is_singular($this->course_post_type)) return;
+
+		global $post;
+		$is_restricted = get_post_meta($post->ID, '_lighter_is_restricted', true);
+		$is_restricted = filter_var($is_restricted, FILTER_VALIDATE_BOOLEAN);
+		if ($is_restricted) {
+			$user_access = new User_Access();
+			if (!$user_access->check_course_access($post->ID)) {
+				wp_die('access denied', 'Please purchase the lesson or log in to view.', ['response' => 403]);
+			}
+		}
+	}
+
 	public function course_template($template)
 	{
 		if (! is_singular($this->course_post_type)) {
 			return $template;
 		}
 
-		$new = locate_template(lighter_lms()->course_template);
+		$new = null; //locate_template(lighter_lms()->course_template);
 
 		if (! empty($new)) {
 			return $new;

@@ -70,8 +70,9 @@ if (get_post_meta($post->ID, '_course_display_theme_sidebar', true)) {
         else: ?>
             <h1><?php echo esc_html(the_title()); ?></h1>
             <?php
-            if (get_the_post_thumbnail($post)) {
-                the_post_thumbnail($post);
+            $thumb = get_the_post_thumbnail($post, $image_size);
+            if (! empty($thumb)) {
+                echo $thumb;
             } elseif (lighter_lms()->connected_store === "woocommerce") {
                 $prod_id = get_post_meta($post->ID, '_lighter_product_id', true);
 
@@ -89,4 +90,6 @@ if (get_post_meta($post->ID, '_course_display_theme_sidebar', true)) {
 <?php
 if (get_post_meta($post->ID, '_course_display_theme_footer',  true)) {
     get_footer();
+} else {
+    wp_footer();
 }

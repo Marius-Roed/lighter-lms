@@ -12,12 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
 window.onpopstate = async (e) => {
     if (e.state && e.state.lesson && e.state.lessonId) {
         await loadLesson(e.state.lessonId);
-    } else {
-        // Fallback load default page
-        const url = new URL(window.location.href);
-        url.searchParams.delete('lesson');
-        window.history.pushState({ lesson: null, lessonId: null }, '', url.toString());
-        window.location.reload();
     }
 };
 
