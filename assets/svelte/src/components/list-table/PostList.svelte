@@ -5,10 +5,11 @@
      * @typedef {Object} PostListProps
      * @property {import('$lib/posts.svelte').Post[]} posts
      * @property {Object} columns
+     * @property {boolean} loading
      */
 
     /** @type {PostListProps} */
-    let { posts, columns } = $props();
+    let { posts, columns, loading } = $props();
 </script>
 
 {#snippet header(
@@ -50,7 +51,7 @@
             {/each}
         </tr>
     </thead>
-    <tbody id="the-list">
+    <tbody id="the-list" class={{ loading }}>
         {#each posts as post}
             <PostRow {post} {columns} />
         {/each}

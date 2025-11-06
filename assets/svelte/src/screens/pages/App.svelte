@@ -34,12 +34,17 @@
         value="/wp-admin/edit.php?post_type=lighter_courses"
     />
     <Navtop {actions} />
-    {#if courseStore.loading}
-        <div>Fetching posts</div>
-    {:else if courseStore.error}
+    {#if courseStore.error}
         <div>There has been an error</div>
     {:else}
-        <PostList posts={courseStore.courses} columns={courseStore.columns} />
+        {#if courseStore.loading}
+            <span class="lighter-load-posts">Loading...</span>
+        {/if}
+        <PostList
+            posts={courseStore.courses}
+            columns={courseStore.columns}
+            loading={courseStore.loading}
+        />
     {/if}
     {#if courseStore.pagination.totalPages}
         <div class="pagination-wrap">
@@ -47,7 +52,7 @@
                 <Pagination
                     bind:currentPage={courseStore.pagination.currentPage}
                     totalPages={courseStore.pagination.totalPages}
-                    onPageChange={courseStore.loadPosts}
+                    onPageChange={courseStore.loadPosts.bind(courseStore)}
                 />
             {/if}
             <div class="total">

@@ -465,6 +465,7 @@ if (! function_exists('lighter_postlist_js_obj')) {
 				'page' => isset($_GET['paged']) ? intval($_GET['paged']) : 1,
 				'totalPages' => ceil(intval($wp_query->found_posts) / $per_page),
 				'totalPosts' => $wp_query->found_posts,
+				'limit' => isset($_GET['limit']) ? intval($_GET['limit']) : 20,
 			],
 			'posts' => lighter_normalise_posts($wp_query->posts),
 			'tags' => [

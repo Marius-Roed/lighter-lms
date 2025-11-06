@@ -297,7 +297,7 @@
         background-color: white;
         border-bottom: 1px solid oklch(0.8492 0.0346 303.37);
         box-shadow: 0 2px 12px -9px;
-        z-index: 99998;
+        z-index: 2;
 
         .inner {
             display: flex;
@@ -356,6 +356,23 @@
             border: 5px solid transparent;
             border-top-color: #555;
         }
+    }
+
+    .lighter #the-list {
+        position: relative;
+    }
+
+    .lighter #the-list.loading::before {
+        content: "Loading...";
+        position: absolute;
+        inset: 0;
+        background-color: #fff;
+        z-index: 2;
+    }
+    .lighter #the-list.loading::after {
+        content: "loading";
+        position: absolute;
+        z-index: 3;
     }
 
     .pagination-wrap {

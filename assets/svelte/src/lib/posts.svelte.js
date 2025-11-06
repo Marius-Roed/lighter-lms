@@ -170,7 +170,7 @@ export function createPostsStore() {
 export class CoursesStore {
     loading = $state(false);
     error = $state(null);
-    postsPerPage = $state(20);
+    postsPerPage = $state(window.lighterCourses?.pagination?.limit ?? 20);
     filterTags = $state([]);
     filterDate = $state();
 
@@ -181,7 +181,7 @@ export class CoursesStore {
         this.columns = $state(courses.columns);
         this.filterStatus = $state(courses.filters.post_stati)
 
-        this.pagination.currentPage = 1;
+        this.pagination.currentPage = new URLSearchParams(window.location.href).get('paged') ?? 1;
     }
 
     /** @param {number} page */
