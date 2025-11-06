@@ -64,7 +64,8 @@ class User_Access
 		$progress = $progress ? json_decode($progress, true) : [];
 		if (!isset($progress[$course_id])) {
 			// NOTE: Should probably have a $unlocked_lessons param
-			$progress[$course_id] = ['max_unlocked_lesson' => 0, 'unlocked_lessons' => [], 'completion_date' => null];
+			$progress[$course_id] = ['max_unlocked_lesson' => 0, 'unlocked_lessons' => [], 'completed_lessons' => [], 'completion_date' => null];
+			update_user_meta($this->user->ID, $this->course_progress, wp_json_encode($progress));
 		}
 
 		delete_transient('lighter_lms_access_check_' . $this->user->ID . '_*');
@@ -149,6 +150,34 @@ class User_Access
 			return $has_access;
 		}
 		set_transient($cache_key, false, HOUR_IN_SECONDS);
+		return false;
+	}
+
+	/**
+	 * Check user lesson access
+	 *
+	 * Checks the users access of a courses lesson.
+	 *
+	 * @param int $lesson_id
+	 * @param int $course_id
+	 *
+	 * @return bool Whether the user has access
+	 */
+	public function check_lesson_access($lesson_id, $course_id)
+	{
+		if ($this->user->has_cap('manage_options')) return true;
+
+		$has_course_access = $this->check_course_access($course_id);
+
+		if (!$has_course_access) return false;
+
+		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
+		$progress = $progress ? json_decode($progress, true) : [];
+
+		if (!isset($progress[$course_id])) return false;
+
+		if (in_array($lesson_id, $progress[$course_id]['unlocked_lessons'])) return true;
+
 		return false;
 	}
 }

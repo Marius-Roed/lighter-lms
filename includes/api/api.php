@@ -4,6 +4,7 @@ namespace LighterLMS\API;
 
 use LighterLMS\Lesson_Content;
 use LighterLMS\Topics;
+use LighterLMS\User_Access;
 use WP_Error;
 use WP_Posts_List_Table;
 use WP_Query;
@@ -99,6 +100,15 @@ class API
 
 		if (!$lesson) {
 			return new \WP_Error('not_found', "Lesson with ID {$id} not found", ['status' => 404]);
+		}
+
+		$user_id = wp_get_current_user()->ID;
+
+		$user = new User_Access($user_id);
+		$course_id = (int) $req->get_header('course');
+
+		if (!$user->check_lesson_access($id, $course_id)) {
+			return new \WP_Error('access_denied', 'You do not have access to this lesson', ['status' => 403]);
 		}
 
 		if ($only_content) {

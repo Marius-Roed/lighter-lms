@@ -43,7 +43,7 @@ if (get_post_meta($post->ID, '_course_display_theme_sidebar', true)) {
 }
 ?>
 
-<main id="main" <?= esc_attr(post_class('site-main')) ?>>
+<main id="main" <?= esc_attr(post_class('site-main')) ?> data-course-id="<?php echo esc_attr($post->ID) ?>">
     <?php lighterlms_course_sidebar($post); ?>
     <div class="the-content" id="the-content">
         <?php if (isset($_GET['lesson'])):

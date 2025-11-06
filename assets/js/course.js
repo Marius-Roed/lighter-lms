@@ -118,11 +118,16 @@ class Sidebar {
             entry.status = 'loading';
         }
 
+        const course_id = document.getElementById('main').dataset.courseId ?? 0;
+
         let lesson;
         try {
             lesson = await apiFetch({
                 path: `lighterlms/v1/lesson/${id}?content_only=true`,
-                method: 'GET'
+                method: 'GET',
+                headers: {
+                    course: course_id
+                }
             });
 
             if (lesson.id != id) {
