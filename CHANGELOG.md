@@ -15,7 +15,9 @@ All notable changes to this project will be documented in this file
 - fix: general templating
 - fix: general css
 
----
+### Changes
+
+- Remove excessive usage of mardown horizontal rule.
 
 ## [1.0.0-alpha.10] - 2025-11-05
 
@@ -26,8 +28,6 @@ All notable changes to this project will be documented in this file
 ### Changes
 
 - general code cleanup
-
----
 
 ## [1.0.0-alpha.9] - 2025-11-05
 
@@ -40,8 +40,6 @@ All notable changes to this project will be documented in this file
 
 - refactor: Fronted course js
 
----
-
 ## [1.0.0-alpha.8] - 2025-11-04
 
 ### Added
@@ -52,8 +50,6 @@ All notable changes to this project will be documented in this file
 
 - cleanup standard template
 
----
-
 ## [1.0.0-alpha.7] - 2025-11-03
 
 ### Fixes
@@ -63,8 +59,6 @@ All notable changes to this project will be documented in this file
 - fix: vite config
 - fix: datepicker
 - fix: general css
-
----
 
 ## [1.0.0-alpha.6] - 2025-10-22
 
@@ -79,8 +73,6 @@ All notable changes to this project will be documented in this file
 
 - fix: update url
 
----
-
 ## [1.0.0-alpha.4] - 2025-10-20
 
 ### Added
@@ -94,8 +86,6 @@ All notable changes to this project will be documented in this file
 - fix: css
 - fix: template sort order
 
----
-
 ## [1.0.0-alpha.3] - 2025-10-17
 
 ### Fixes
@@ -103,23 +93,17 @@ All notable changes to this project will be documented in this file
 - fix: Elementor compatibility
 - fix: async lesson view
 
----
-
 ## [1.0.0-alpha.2] - 2025-10-16
 
 ### Fixes
 
 - fix: API get elementor lesson
 
----
-
 ## [1.0.0-alpha.1] - 2025-10-16
 
 ### Fixes
 
 - fix: moved from short tags to full `<?php...?>`.
-
----
 
 ## [1.0.0-alpha.0] - 2025-10-16 (tagged "Alpha" on GH)
 
