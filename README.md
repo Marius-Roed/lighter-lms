@@ -13,3 +13,9 @@ Lighter LMS is an open source lightweight lms plugin for [WordPress](wordpress.o
 Need a way to setup courses on your WordPress website, but don't want all the bulk of user portals, webshops ect?
 
 Lighter LMS is built to be as lean as possible, and only provide you with the features needed to setup and manage courses. In other words, Lighter LMS provides you with the functionality needed for online courses, while giving you the opportunity to custimize it as you like.
+
+---
+
+## Changelog
+
+You can view the changes to this project in the [CHANGELOG.md](CHANGELOG.md) file.

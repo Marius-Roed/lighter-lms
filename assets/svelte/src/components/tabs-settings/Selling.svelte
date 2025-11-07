@@ -187,11 +187,13 @@
                 </div>
                 <div>
                     <h4>Additional</h4>
-                    <Switch
-                        bind:checked={settings.product.auto_comp}
-                        name="auto_comp"
-                        onLabel="Auto complete on purchase"
-                    />
+                    {#if settings.store === "woocommerce"}
+                        <Switch
+                            bind:checked={settings.product.auto_comp}
+                            name="auto_comp"
+                            onLabel="Auto complete WooCommerce status on purchase"
+                        />
+                    {/if}
                     <Switch
                         bind:checked={settings.product.auto_hide}
                         name="auto_hide"

@@ -186,6 +186,7 @@ class Post_Types
 
 		$product = $settings['product'];
 		if ($product) {
+			$product['slug'] = $settings['slug'];
 			$saved_prod = lighter_save_product($product, $post_id);
 
 			$img_id = $product['images'][0]['id'] ?? false;

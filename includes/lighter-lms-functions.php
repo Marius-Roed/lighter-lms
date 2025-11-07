@@ -122,9 +122,30 @@ if (! function_exists('lighter_save_wc_product')) {
 			return 0;
 		}
 
+		$term_id = term_exists(lighter_lms()->course_slug);
+
+		if (empty($term_id)) {
+			$cat = ucwords(str_replace('-', ' ', lighter_lms()->course_slug));
+			$term_arr = wp_insert_term(
+				$cat,
+				'product_cat',
+				[
+					'description' => __('Courses made with Lighter LMS', 'textdomain'),
+					'slug' => lighter_lms()->course_slug,
+				]
+			);
+
+			if (is_wp_error($term_arr)) {
+				error_log("LighterLMS: Error creating woo category {$cat}; {$term_arr->get_error_message()}");
+			}
+
+			$term_id = $term_arr['term_id'];
+		}
+
 		$product_id = $args['id'];
 
 		$product = isset($args['id']) ? \wc_get_product_object('simple', $args['id']) : new \WC_Simple_Product();
+		$product_id = $product->get_id();
 
 		$auto_comp = $args['auto_comp'];
 		$auto_hide = $args['auto_hide'];
@@ -148,10 +169,12 @@ if (! function_exists('lighter_save_wc_product')) {
 			$product->set_image_id($img_id);
 		}
 
+
 		if ($post_id > 0) {
 			update_post_meta($post_id, '_lighter_product_id', $product_id);
 		}
 
+		$product->set_category_ids([$term_id]);
 		$product->set_virtual(true);
 		$product->save();
 

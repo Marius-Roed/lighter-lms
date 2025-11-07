@@ -17,6 +17,7 @@ if (! defined('ABSPATH')) {
  * @property bool $development
  * @property string $connected_store
  * @property string $standard_template
+ * @property string $course_slug
  */
 class Config
 {
@@ -82,6 +83,7 @@ class Config
 			'course_post_type' => $course_post_type,
 			'lesson_post_type' => $lesson_post_type,
 			'post_types' => [$course_post_type, $lesson_post_type],
+			'course_slug' => 'kurser', // TODO: Make editable
 			'standard_template' => LIGHTER_LMS_PATH . '/includes/templates/courses/standard.php',
 			'admin_page_path' => 'admin.php?page=' . $admin_url,
 			'admin_url' => $admin_url,
