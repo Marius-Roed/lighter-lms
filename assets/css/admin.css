@@ -297,7 +297,7 @@
         background-color: white;
         border-bottom: 1px solid oklch(0.8492 0.0346 303.37);
         box-shadow: 0 2px 12px -9px;
-        z-index: 2;
+        z-index: 10;
 
         .inner {
             display: flex;
