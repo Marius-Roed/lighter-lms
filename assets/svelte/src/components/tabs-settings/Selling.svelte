@@ -112,6 +112,7 @@
                 text: "Use this media",
             },
             multiple: false,
+            library: { type: "image" },
         });
 
         frame.on("select", () => {
@@ -125,6 +126,13 @@
         });
 
         frame.open();
+    }
+
+    function initialiseProduct() {
+        setProduct();
+        wp.editor.remove("product_desc");
+        wp.editor.remove("product_short_desc");
+        queueMicrotask(initEditors);
     }
 
     // INFO: Track product, to update all values on change.
@@ -143,12 +151,7 @@
     <button
         type="button"
         class="lighter-btn transparent"
-        onclick={() => {
-            setProduct();
-            wp.editor.remove("product_desc");
-            wp.editor.remove("product_short_desc");
-            queueMicrotask(initEditors);
-        }}>Create product</button
+        onclick={initialiseProduct}>Create product</button
     >
 </div>
 
@@ -181,7 +184,7 @@
                         <input
                             type="number"
                             name="product_sales_price"
-                            bind:value={settings.product.sales_price}
+                            bind:value={settings.product.sale_price}
                         />
                     </label>
                 </div>
@@ -199,6 +202,16 @@
                         name="auto_hide"
                         onLabel="Hide the product when bought"
                     />
+                    <label for="store-sort">
+                        Menu order
+                        <input
+                            bind:value={settings.product.menu_order}
+                            type="number"
+                            name="store-sort"
+                            id="store-sort"
+                            min="0"
+                        />
+                    </label>
                     <SideModal trigger="Mange access" class="transparent">
                         <CourseAccess />
                     </SideModal>
@@ -240,8 +253,10 @@
     {:else}
         <div class="no-prod">
             <p>There is no product linked to this course yet.</p>
-            <button type="button" class="lighter-btn"
-                >Create a new product</button
+            <button
+                type="button"
+                class="lighter-btn"
+                onclick={initialiseProduct}>Create a new product</button
             >
         </div>
     {/if}

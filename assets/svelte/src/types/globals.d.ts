@@ -24,9 +24,30 @@ declare global {
             addFilter: Function;
             doAction: Function;
             applyFilter: Function;
+            course?: Course;
         }
         lighterCourses: lighterCourses;
         lighterCourse: lighterCourse;
+    }
+
+    interface Course {
+        settings: CourseSettings;
+    }
+
+    interface CourseSettings {
+        showIcons: boolean;
+        showProgress: boolean;
+        status: CourseStatus;
+        publishedOn: Date;
+        userLocale: string;
+        description: string;
+        displayHeader: boolean;
+        displaySidebar: boolean;
+        displayFooter: boolean;
+        currency: string;
+        store: string;
+        tags: Array<T>;
+        product: Product;
     }
 
     interface Media {
@@ -54,6 +75,7 @@ declare global {
             text: string;
         };
         multiple: boolean;
+        library: Object;
     }
 
     interface tag {
@@ -82,9 +104,7 @@ declare global {
             remove: Function;
             removep: Function;
         }
-        media: (t: MediaArgs) => {
-            open: () => Media;
-        };
+        media: (t: MediaArgs) => Media & JQuery<HTMLElement>;
     }
 
     const tinymce: {

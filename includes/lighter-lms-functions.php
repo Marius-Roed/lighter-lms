@@ -155,6 +155,8 @@ if (! function_exists('lighter_save_wc_product')) {
 
 		$img_id = $args['images'][0]['id'] ?? false;
 
+		$args['downloads'] = empty($args['downloads']) ? [] : $args['downloads'];
+
 		unset($args['auto_comp']);
 		unset($args['auto_hide']);
 		unset($args['id']);

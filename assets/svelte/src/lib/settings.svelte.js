@@ -13,9 +13,15 @@
  * @property {boolean} displayHeader - Whether to display the theme header.
  * @property {boolean} displaySidebar - Whether to display the theme sidebar.
  * @property {boolean} displayFooter - Whether to display the theme footer.
+ * @property {string} currency - The store currency.
  * @property {string} store - The store course is linked to
  * @property {array} tags - The tags on the course
  * @property {Product} product
+ */
+
+/**
+ * @typedef {Object} Course
+ * @property {Settings} settings
  */
 
 /**
@@ -24,27 +30,26 @@
  * @property {string} nonce
  * @property {string} restUrl
  * @property {Settings} settings
+ * @property {Course} [course]
  */
 
-/** @type {LighterLMS} */
-window.LighterLMS;
-
-const raw = window.LighterLMS.course?.settings || {};
-
-const parseProduct = (raw) => {
+const parseProduct = (/** @type {Product} */ raw) => {
     if (isEmpty(raw)) return {};
     const product = {
         ...raw,
-        auto_comp: raw.auto_comp == 'true',
-        auto_hide: raw.auto_hide == 'true',
+        auto_comp: JSON.parse(raw.auto_comp.toString()),
+        auto_hide: JSON.parse(raw.auto_hide.toString()),
     };
     return product;
 }
 
-/** @type {Settings} */
+/** @type {Partial<Settings>} */
+const raw = window.LighterLMS.course?.settings || {};
+
+/** @type {Settings | {}} */
 const normalized = raw ? {
     ...raw,
-    publishedOn: raw.publishedOn instanceof Date ? raw.publishedOn : new Date(raw.publishedOn),
+    publishedOn: raw.publishedOn instanceof Date ? raw.publishedOn : new Date(raw.publishedOn ?? Date.now()),
     product: raw.product ? parseProduct(raw.product) : {},
     tags: window.lighterCourse?.tags.selected ?? []
 } : {};
@@ -101,7 +106,8 @@ export function setProduct(args = undefined) {
         regular_price: args?.regular_price,
         sale_price: args?.sale_price,
         short_description: args?.short_description,
-        stock_quantity: args?.stock_quantity
+        stock_quantity: args?.stock_quantity,
+        menu_order: args?.menu_order
     }
 
     settings.product = { ...product };
@@ -116,12 +122,12 @@ export function setProduct(args = undefined) {
  * @property {boolean} auto_hide
  * @property {string} description
  * @property {Array} downloads
- * @property {number} id
+ * @property {number|string} id
  * @property {Array} images
  * @property {string} name
  * @property {string} regular_price
  * @property {string} sale_price
  * @property {string} short_description
  * @property {number|null} stock_quantity
- *
+ * @property {number} menu_order
  */
