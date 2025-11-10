@@ -2,6 +2,7 @@
 
 use LighterLMS\Lessons;
 use LighterLMS\Topics;
+use LighterLMS\WooCommerce\WC;
 
 if (! defined('ABSPATH')) {
 	exit;
@@ -101,90 +102,20 @@ if (! function_exists('lighter_save_product')) {
 		$store = lighter_lms()->connected_store;
 
 		if ('woocommerce' === $store) {
-			return lighter_save_wc_product($args, $post_id);
+			return WC::save_product($args, $post_id);
 		}
-	}
-}
-
-if (! function_exists('lighter_save_wc_product')) {
-	/**
-	 * Save product to woocommerce
-	 *
-	 * Saves a product as a woocommerce product. Updates the product if $args contains 'id'.
-	 *
-	 * @param object $args The product object to save.
-	 * @param int? $post_id The id of the post to save it to. 0 will not save it to a post.
-	 */
-	function lighter_save_wc_product($args, $post_id)
-	{
-		if (! did_action('woocommerce_init')) {
-			_doing_it_wrong(__FUNCTION__, 'WooCommerce was not initialised', '1.0');
-			return 0;
-		}
-
-		$term_id = term_exists(lighter_lms()->course_slug);
-
-		if (empty($term_id)) {
-			$cat = ucwords(str_replace('-', ' ', lighter_lms()->course_slug));
-			$term_arr = wp_insert_term(
-				$cat,
-				'product_cat',
-				[
-					'description' => __('Courses made with Lighter LMS', 'textdomain'),
-					'slug' => lighter_lms()->course_slug,
-				]
-			);
-
-			if (is_wp_error($term_arr)) {
-				error_log("LighterLMS: Error creating woo category {$cat}; {$term_arr->get_error_message()}");
-			}
-
-			$term_id = $term_arr['term_id'];
-		}
-
-		$product_id = $args['id'];
-
-		$product = isset($args['id']) ? \wc_get_product_object('simple', $args['id']) : new \WC_Simple_Product();
-		$product_id = $product->get_id();
-
-		$auto_comp = $args['auto_comp'];
-		$auto_hide = $args['auto_hide'];
-
-		update_post_meta($product_id, '_lighter_lms_wc_auto_complete_course', $auto_comp);
-		update_post_meta($product_id, '_lighter_lms_course_hide_in_store', $auto_hide);
-
-		$img_id = $args['images'][0]['id'] ?? false;
-
-		$args['downloads'] = empty($args['downloads']) ? [] : $args['downloads'];
-
-		unset($args['auto_comp']);
-		unset($args['auto_hide']);
-		unset($args['id']);
-		unset($args['images']);
-
-		foreach ($args as $key => $arg) {
-			$method = 'set_' . $key;
-			$product->$method($arg);
-		}
-
-		if ($img_id) {
-			$product->set_image_id($img_id);
-		}
-
-
-		if ($post_id > 0) {
-			update_post_meta($post_id, '_lighter_product_id', $product_id);
-		}
-
-		$product->set_category_ids([$term_id]);
-		$product->set_virtual(true);
-		$product->save();
-
-		return 1;
 	}
 }
 
 if (! function_exists('ligter_get_course_product')) {
+	/**
+	 * Gets a product
+	 *
+	 * Get the product obj with Lighter fields
+	 *
+	 * @param int $product_id
+	 * @return object
+	 */
 	function lighter_get_course_product($product_id)
 	{
 		if (! $product_id) {
@@ -192,51 +123,9 @@ if (! function_exists('ligter_get_course_product')) {
 			return (object) [];
 		}
 
-		if (! did_action('woocommerce_init')) {
-			_doing_it_wrong(__FUNCTION__, 'WooCommerce was not initialised', '1.0');
+		if ("woocommerce" === lighter_lms()->connected_store) {
+			return WC::get_product($product_id);
 		}
-
-		$product = \wc_get_product_object('simple', $product_id);
-
-		if (empty($product)) {
-			return (object) [];
-		}
-
-		$auto_comp = get_post_meta($product_id, '_lighter_lms_wc_auto_complete_course', true) ?: lighter_lms()->defaults()->course_auto_complete;
-		$auto_hide = get_post_meta($product_id, '_lighter_lms_course_hide_in_store', true) ?: lighter_lms()->defaults()->course_auto_hide;
-
-		$image_id = $product->get_image_id();
-		$image = [[
-			"src" => wp_get_attachment_url($image_id) ?: null,
-			"alt" => wp_get_attachment_caption($image_id) ?: null,
-			"id" => $image_id ?: null,
-		]];
-
-		$downloads = array_values(
-			array_map(
-				fn($prod) => [
-					"name" => sanitize_text_field($prod['name']),
-					"file" => esc_url($prod['file'])
-				],
-				$product->get_downloads('edit')
-			)
-		);
-
-		$obj = [
-			'auto_hide' => $auto_hide,
-			'auto_comp' => $auto_comp,
-			'id' => $product->get_id('edit'),
-			'name' => $product->get_name('edit'),
-			'regular_price' => $product->get_regular_price('edit'),
-			'sale_price' => $product->get_sale_price('edit'),
-			'images' => $image,
-			'downloads' => $downloads,
-			'description' => $product->get_description('edit'),
-			'short_description' => $product->get_short_description('edit'),
-			'stock_quantity' => $product->get_stock_quantity('edit'),
-		];
-
-		return $obj;
 	}
 }
 
