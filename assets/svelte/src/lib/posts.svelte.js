@@ -104,7 +104,9 @@ async function fetchPosts(page = 1, limit = 20, args = {}) {
 
     const params = getSearchParams(args);
 
-    const req_url = new URL(`${window.location.origin}/wp-json/wp/v2/lighter_courses?${params.toString()}`);
+    const cpt = new URLSearchParams(window.location.search).get('post_type') ?? 'lighter_courses';
+
+    const req_url = new URL(`${window.location.origin}/wp-json/wp/v2/${cpt}?${params.toString()}`);
 
     const resp = await fetch(req_url.href, {
         method: 'GET',
@@ -181,7 +183,18 @@ export class CoursesStore {
         this.columns = $state(courses.columns);
         this.filterStatus = $state(courses.filters.post_stati)
 
-        this.pagination.currentPage = new URLSearchParams(window.location.href).get('paged') ?? 1;
+        this.pagination.currentPage = this.getInitialPage();
+
+        this.boundPopstateHandler = this.handlePopstate.bind(this);
+
+        if (typeof window !== "undefined") {
+            window.addEventListener('popstate', this.boundPopstateHandler);
+        }
+    }
+
+    getInitialPage() {
+        const page = new URLSearchParams(window.location.search).get('paged');
+        return page ? parseInt(page, 10) : 1;
     }
 
     /** @param {number} page */
@@ -199,12 +212,39 @@ export class CoursesStore {
             const resp = await fetchPosts(page, this.postsPerPage, args);
             this.courses = resp.posts;
             this.pagination = resp.pagination;
+            this.updateUrl();
         } catch (e) {
             console.error(e);
             this.error = e.message;
             this.courses = [];
         } finally {
             this.loading = false;
+        }
+    }
+
+    updateUrl(page = 0) {
+        if (!page) {
+            page = this.pagination.currentPage;
+        }
+        const url = new URL(window.location.href);
+        if (page === 1) {
+            url.searchParams.delete('paged');
+        } else {
+            url.searchParams.set('paged', page.toString());
+        }
+        window.history.pushState({}, '', url);
+    }
+
+    handlePopstate() {
+        const newPage = this.getInitialPage();
+        if (newPage !== this.pagination.currentPage) {
+            this.loadPosts(newPage);
+        }
+    }
+
+    destroy() {
+        if (typeof window !== "undefined") {
+            window.removeEventListener('popstate', this.boundPopstateHandler);
         }
     }
 }

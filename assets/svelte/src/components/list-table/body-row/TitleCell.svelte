@@ -1,5 +1,18 @@
 <script>
     let { post } = $props();
+
+    const getTitle = (post) => {
+        if (post.course_title) return post.course_title;
+
+        if (post.title) {
+            if (typeof post.title == "object") {
+                return post.title.rendered;
+            }
+            return post.title;
+        }
+
+        return "Untitled";
+    };
 </script>
 
 <td class={["title", "column-title"]}>
@@ -8,7 +21,7 @@
             class="row-title"
             href={`/wp-admin/post.php?post=${post.id}&action=edit`}
         >
-            {post.course_title ?? post.title ?? "Untitled"}
+            {getTitle(post)}
             {#if post.status != "publish"}
                 <span
                     style="color:#000;display:inline-block;text-transform:capitalize;"

@@ -22,6 +22,7 @@ class API
 
 		add_filter('rest_' . lighter_lms()->course_post_type . '_query', [$this, 'course_rest'], 10, 2);
 		add_filter('rest_prepare_' . lighter_lms()->lesson_post_type, [$this, 'ensure_fields'], 10, 3);
+		add_filter('rest_prepare_' . lighter_lms()->course_post_type, [$this, 'ensure_fields'], 10, 3);
 	}
 
 	public function register_lesson_routes()
@@ -618,7 +619,7 @@ class API
 	 */
 	public function ensure_fields($response, $post, $request)
 	{
-		if ($post->post_type !== lighter_lms()->lesson_post_type) {
+		if (!in_array($post->post_type, lighter_lms()->post_types)) {
 			return $response;
 		}
 
