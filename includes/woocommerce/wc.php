@@ -39,12 +39,19 @@ class WC
 					'slug' => lighter_lms()->course_slug,
 				]
 			);
-
 			if (is_wp_error($term_arr)) {
 				error_log("LighterLMS: Error creating woo category {$cat}; {$term_arr->get_error_message()}");
 			}
-
 			$term_id = $term_arr['term_id'];
+		}
+
+		if ($args['tags']) {
+			$tags = wp_set_post_terms($post_id, $args['tags'], 'product_tag');
+			if (!$tags || is_wp_error($tags)) {
+				error_log("LighterLMS: Error adding tags to WooCommerce product.");
+			} else {
+				$args['tag_ids'] = $tags;
+			}
 		}
 
 		$product_id = $args['id'];
@@ -66,8 +73,8 @@ class WC
 		unset($args['auto_hide']);
 		unset($args['id']);
 		unset($args['images']);
+		unset($args['tags']);
 
-		file_put_contents(LIGHTER_LMS_PATH . '/log.log', var_export($args, true));
 		foreach ($args as $key => $arg) {
 			self::_sanitize_field($key, $arg);
 			$method = 'set_' . $key;
@@ -77,7 +84,6 @@ class WC
 		if ($img_id) {
 			$product->set_image_id($img_id);
 		}
-
 
 		if ($post_id > 0) {
 			update_post_meta($post_id, '_lighter_product_id', $product_id);
@@ -142,6 +148,7 @@ class WC
 			'description' => $product->get_description('edit'),
 			'short_description' => $product->get_short_description('edit'),
 			'stock_quantity' => $product->get_stock_quantity('edit'),
+			'menu_order' => $product->get_menu_order('edit'),
 		];
 
 		return $obj;

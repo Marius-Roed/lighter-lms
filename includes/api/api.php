@@ -622,8 +622,6 @@ class API
 			return $response;
 		}
 
-		file_put_contents(LIGHTER_LMS_PATH . '/log.log', var_export($response, true));
-
 		if (empty($response->data['title'])) {
 			$response->data['title'] = ['rendered' => get_post_field('post_title', $post, 'raw') ?: '']; // NOTE: raw value as Svelte will escape it.
 		}

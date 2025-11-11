@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file
 
+## [1.0.0-alpha.13] - 2025-11-11
+
+### Added
+
+- Synchronising course tags with woocommerce tags.
+
+### Fixes
+
+- Add product menu order to JS object, when editing course.
+
+## [1.0.0-alpha.12] - 2025-11-10
+
+### Fixes
+
+- fix: Admin CSS header z-index
+- Fix global and local JS types in `global.d.ts` and `settings.svelte.js`
+- Create product button at the button, so that it actually creates a new product.
+
+### General
+
+- Moved woo getter and setter into a seperate Woo file `WooCommerce/WC`.
+
 ## [1.0.0-alpha.11] - 2025-11-07
 
 ### Added
