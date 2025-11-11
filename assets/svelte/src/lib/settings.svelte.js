@@ -2,6 +2,8 @@
  * @typedef {"publish" | "pending" | "draft" | "auto-draft" | "future" | "private"} CourseStatus
  */
 
+import { lessons } from "./state.svelte";
+
 /**
  * @typedef {Object} Settings
  * @property {boolean} showIcons - Whether the lesson icons should be shown.
@@ -76,7 +78,6 @@ export function displayDate(date) {
  */
 export const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 
-
 /**
  * @param {object} obj
  */
@@ -95,9 +96,17 @@ export function isEmpty(obj) {
  */
 export function setProduct(args = undefined) {
     const title = document.getElementById('title').value;
+
+    const initAccess = () => {
+        console.log("h");
+        const tops = Object.groupBy(lessons, ({ parentTopicKey }) => parentTopicKey);
+        return tops
+    }
+
     let product = {
         auto_comp: true,
         auto_hide: true,
+        access: args.access ?? initAccess(),
         id: args?.id ?? "temp",
         name: args?.name ?? "Course: " + title,
         description: args?.description,

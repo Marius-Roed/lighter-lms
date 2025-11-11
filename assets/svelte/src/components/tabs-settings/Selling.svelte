@@ -251,7 +251,7 @@
             ></textarea>
         </div>
     {:else}
-        <div class="no-prod">
+        <div class="no-prod col center">
             <p>There is no product linked to this course yet.</p>
             <button
                 type="button"

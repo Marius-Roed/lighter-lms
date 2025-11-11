@@ -85,13 +85,13 @@ class WC
 			$product->set_image_id($img_id);
 		}
 
-		if ($post_id > 0) {
-			update_post_meta($post_id, '_lighter_product_id', $product_id);
-		}
-
 		$product->set_category_ids([$term_id]);
 		$product->set_virtual(true);
 		$product->save();
+
+		if ($post_id > 0) {
+			update_post_meta($post_id, '_lighter_product_id', $product->get_id());
+		}
 
 		return 1;
 	}
@@ -118,6 +118,7 @@ class WC
 
 		$auto_comp = get_post_meta($product_id, '_lighter_lms_wc_auto_complete_course', true) ?: lighter_lms()->defaults()->course_auto_complete;
 		$auto_hide = get_post_meta($product_id, '_lighter_lms_course_hide_in_store', true) ?: lighter_lms()->defaults()->course_auto_hide;
+		$access = [];
 
 		$image_id = $product->get_image_id();
 		$image = [[
@@ -139,6 +140,7 @@ class WC
 		$obj = [
 			'auto_hide' => $auto_hide,
 			'auto_comp' => $auto_comp,
+			'access' => $access,
 			'id' => $product->get_id('edit'),
 			'name' => $product->get_name('edit'),
 			'regular_price' => $product->get_regular_price('edit'),
