@@ -65,7 +65,7 @@ class WC
 
 		update_post_meta($product_id, '_lighter_lms_wc_auto_complete_course', $auto_comp);
 		update_post_meta($product_id, '_lighter_lms_course_hide_in_store', $auto_hide);
-		update_post_meta($product_id, '_lighter_lms_course_access', $course_access);
+		update_post_meta($product_id, '_lighter_lms_course_access', $course_access); // TODO: Change this to be a separate function
 
 		$img_id = $args['images'][0]['id'] ?? false;
 

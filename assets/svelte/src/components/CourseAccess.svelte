@@ -1,8 +1,13 @@
 <script>
-    import { getTopicLessons, topics } from "$lib/state.svelte.js";
+    import settings, { initAccess, isEmpty } from "$lib/settings.svelte";
+    import { getTopic, getTopicLessons } from "$lib/state.svelte.js";
     import MultiCheckbox from "./MultiCheckbox.svelte";
 
     let { ...props } = $props();
+
+    if (isEmpty(settings.product.access)) {
+        initAccess();
+    }
 </script>
 
 <div class="course-access-wrap" {...props}>

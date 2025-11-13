@@ -81,6 +81,11 @@ class Lessons
 		return $join;
 	}
 
+	/**
+	 * Save a lesson.
+	 *
+	 * Saves a lesson to the Lighter Lesson DB table with given information.
+	 */
 	public function save()
 	{
 		if ($this->db->query($this->db->prepare("SELECT * FROM {$this->table} WHERE parent_id = {$this->parent} AND lesson_id = {$this->lesson}"))) {
