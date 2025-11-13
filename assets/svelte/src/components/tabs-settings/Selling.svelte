@@ -138,10 +138,6 @@
     // INFO: Track product, to update all values on change.
     $effect(() => {
         settings.product;
-
-        if (isEmpty(settings.product.access)) {
-            settings.product.access = initAccess();
-        }
     });
 </script>
 

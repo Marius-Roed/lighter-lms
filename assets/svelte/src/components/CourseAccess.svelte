@@ -6,7 +6,7 @@
     let { ...props } = $props();
 
     if (isEmpty(settings.product.access)) {
-        initAccess();
+        settings.product.access = initAccess();
     }
 </script>
 
