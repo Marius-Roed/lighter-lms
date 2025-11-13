@@ -1,5 +1,5 @@
 <script>
-    import { setProduct, settings } from "$lib/settings.svelte";
+    import settings, { setProduct } from "$lib/settings.svelte";
     import apiFetch from "@wordpress/api-fetch";
     import { SvelteMap } from "svelte/reactivity";
 

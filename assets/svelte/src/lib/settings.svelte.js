@@ -2,7 +2,7 @@
  * @typedef {"publish" | "pending" | "draft" | "auto-draft" | "future" | "private"} CourseStatus
  */
 
-import { lessons } from "./state.svelte";
+import { lessons, safeLessons, topics } from "./state.svelte";
 
 /**
  * @typedef {Object} Settings
@@ -19,6 +19,8 @@ import { lessons } from "./state.svelte";
  * @property {string} store - The store course is linked to
  * @property {array} tags - The tags on the course
  * @property {Product} product
+ * @property {string} slug - The slug for the course
+ * @property {string} baseUrl
  */
 
 /**
@@ -41,6 +43,7 @@ const parseProduct = (/** @type {Product} */ raw) => {
         ...raw,
         auto_comp: JSON.parse(raw.auto_comp.toString()),
         auto_hide: JSON.parse(raw.auto_hide.toString()),
+        access: initAccess(raw.access),
     };
     return product;
 }
@@ -56,9 +59,10 @@ const normalized = raw ? {
     tags: window.lighterCourse?.tags.selected ?? []
 } : {};
 
-export const settings = $state(
+const settings = $state(
 /** @type {Settings} */(normalized)
 );
+export default settings;
 
 /**
  * Returns a locale formated string
@@ -91,22 +95,61 @@ export function isEmpty(obj) {
 }
 
 /**
+ * Initialise access object
+ *
+ * @param {CourseAccess} [access={}] 
+ * @returns {CourseAccess}
+ */
+export function initAccess(access = {}) {
+    if (!safeLessons?.()) return normaliseAccess(access);
+    return lessons.reduce((acc, lesson) => {
+        const topicKey = lesson.parentTopicKey;
+        if (!acc[topicKey]) acc[topicKey] = [];
+        acc[topicKey].push(lesson.id ?? lesson.key);
+        return acc;
+    }, access);
+}
+
+/**
+ * Normalise an access object
+ *
+ * @param {Object} access
+ * @return {CourseAccess}
+ */
+function normaliseAccess(access) {
+    if (typeof access !== "object" || access == null) {
+        console.warn("Could not normalise access object. Not an object");
+        return access;
+    }
+
+    for (const [key, val] of Object.entries(access)) {
+        if (typeof key !== "string" || !/^[0-9a-z]{13}$/i.test(key)) {
+            console.warn(`Invalid access key: ${key} (must be of local type "string").`, typeof key);
+        }
+        access[key] = val.map(v => {
+            if (/[a-z]/.test(v)) {
+                console.warn(`Value "${v}" should be an int.`);
+                return v;
+            } else if (/[0-9]+/.test(v)) {
+                return parseInt(v, 10);
+            }
+        });
+    }
+
+    return access;
+}
+
+/**
  * @param {Product|undefined} args 
  * @returns {string}
  */
 export function setProduct(args = undefined) {
     const title = document.getElementById('title').value;
 
-    const initAccess = () => {
-        console.log("h");
-        const tops = Object.groupBy(lessons, ({ parentTopicKey }) => parentTopicKey);
-        return tops
-    }
-
     let product = {
         auto_comp: true,
         auto_hide: true,
-        access: args.access ?? initAccess(),
+        access: args?.access ?? initAccess(),
         id: args?.id ?? "temp",
         name: args?.name ?? "Course: " + title,
         description: args?.description,
@@ -126,7 +169,7 @@ export function setProduct(args = undefined) {
 
 /**
  * @typedef {Object} Product
- * @property {Array} [access]
+ * @property {CourseAccess} [access]
  * @property {boolean} auto_comp
  * @property {boolean} auto_hide
  * @property {string} description
@@ -139,4 +182,10 @@ export function setProduct(args = undefined) {
  * @property {string} short_description
  * @property {number|null} stock_quantity
  * @property {number} menu_order
+ */
+
+/**
+ * @typedef {Object.<string,Array<number|string>>} CourseAccess
+ * @property {string} - The key of a topic
+ * @property {Array<number|string>} - Array of IDs.
  */

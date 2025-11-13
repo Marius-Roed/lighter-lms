@@ -1,6 +1,6 @@
 <script>
     import Editable from "$components/Editable.svelte";
-    import { settings } from "$lib/settings.svelte";
+    import settings from "$lib/settings.svelte";
 
     let frame;
 

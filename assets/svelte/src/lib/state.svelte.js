@@ -1,6 +1,9 @@
 
 import Randflake from "./randflake";
 import lighterFetch from "./lighterFetch";
+import settings, { initAccess } from "./settings.svelte";
+
+/** @typedef {"publish"|"pending"|"future"|"private"|"draft"} LessonStatus */
 
 /**
  * @typedef {Object} Lesson
@@ -9,7 +12,7 @@ import lighterFetch from "./lighterFetch";
  * @property {string} title - Lesson title
  * @property {number} sortOrder - The number it appears when sorted
  * @property {string} parentTopicKey - Key of the topic this lesson belongs to
- * @property {"publish"|"pending"|"future"|"private"|"draft"} status="draft" - Status of the lesson
+ * @property {LessonStatus} status="draft" - Status of the lesson
  * @property {string} [permalink] - Url to the lesson
  * @property {string} [icon] - Name of the icon to show
  */
@@ -19,7 +22,6 @@ import lighterFetch from "./lighterFetch";
  * @property {string} key - Unique Topic key
  * @property {string} title - Topic title
  * @property {number} sortOrder - The number it appears when sorted
- * @property {Array} [access=[]]
  */
 
 /** @typedef {Topic | Lesson} HierarchicalItem
@@ -38,6 +40,8 @@ import lighterFetch from "./lighterFetch";
  * @property {number} lessonCount
  */
 
+let isInited = $state(false);
+
 export const course = $state({ id: 0, tags: { all: [], selected: [] } });
 
 export const topics = $state(
@@ -47,6 +51,12 @@ export const topics = $state(
 export const lessons = $state(
     /** @type {Lesson[]} */([])
 );
+
+// INFO: Derived hack since it might not be inited if used outside this module.
+export var safeLessons = () => {
+    const v = $derived(isInited ? lessons : []);
+    return v;
+};
 
 /**
  * Initialize state from server data
@@ -69,6 +79,8 @@ export function initState({ courseNum: initCourse, topicsData: initTopics, lesso
 
     topics.splice(0, topics.length, ...initTopics);
     lessons.splice(0, lessons.length, ...initLessons);
+
+    isInited = true;
 }
 
 /**
@@ -150,11 +162,69 @@ function getTopicIdx(key) {
  * @param {string} [title="New module"]
  */
 export function addTopic(title = "New Topic") {
+    const key = genKey();
     topics.push({
-        key: genKey(),
+        key,
         title,
         sortOrder: topics.length + 1,
-        access: []
+    });
+
+    if (settings.product.access && !settings.product.access[key]) {
+        settings.product.access[key] = [];
+    }
+}
+
+/**
+ * Get a topic by key
+ * @param {string} key 
+ * @returns {Topic}
+ */
+export function getTopic(key) {
+    return topics.filter((t) => t.key === key)[0];
+}
+
+
+/**
+ * Get a hierarchical view of topics with their lessons
+ * @param {Topic} topic 
+ * @returns {TopicWithLessons}
+ */
+export function getTopicWithLessons(topic) {
+    return {
+        ...topic,
+        lessons: lessons.filter(l => l.parentTopicKey === topic.key)
+    };
+}
+
+/**
+ * @param {Topic} topic 
+ * @returns {Lesson[]}
+ */
+export function getTopicLessons(topic) {
+    return lessons.filter(l => l.parentTopicKey === topic.key);
+}
+
+/**
+ * Change the topic order
+ * @param {number} sourceIndex - Index of the topic to move
+ * @param {number} targetIndex - Destination index
+ */
+export function moveTopic(sourceIndex, targetIndex) {
+    if (
+        sourceIndex < 0 ||
+        targetIndex < 0 ||
+        sourceIndex >= topics.length ||
+        targetIndex >= topics.length
+    ) {
+        return;
+    }
+
+    const [moved] = topics.splice(sourceIndex, 1);
+
+    topics.splice(targetIndex, 0, moved);
+
+    topics.forEach((t, i) => {
+        t.sortOrder = i;
     });
 }
 
@@ -241,16 +311,21 @@ export function moveLesson(lesson, moveUp) {
  */
 export function addLesson(topicKey, title = "New lesson") {
     const key = genKey();
+    /** @type {LessonStatus} */
+    const draft = "draft";
     const newLesson = {
         key,
         title,
-        status: "draft",
+        status: draft,
         parentTopicKey: topicKey,
-        sortOrder: (topicLessonLength(topicKey) + 1) + "",
+        sortOrder: (topicLessonLength(topicKey) + 1),
     }
     lessons.push(newLesson);
-
-    topics.filter((t) => t.key === topicKey)?.[0].access.push(newLesson.key);
+    if (settings.product.access && settings.product.access[topicKey]) {
+        settings.product.access[topicKey].push(key);
+    } else if (settings.product.access) {
+        settings.product.access[topicKey] = [key];
+    }
 }
 
 /**
@@ -325,50 +400,6 @@ export async function syncLesson(key) {
     lessons[idx] = { ...lessons[idx], ...Object.fromEntries(Object.entries(synced)) };
 }
 
-/**
- * Get a hierarchical view of topics with their lessons
- * @param {Topic} topic 
- * @returns {TopicWithLessons}
- */
-export function getTopicWithLessons(topic) {
-    return {
-        ...topic,
-        lessons: lessons.filter(l => l.parentTopicKey === topic.key)
-    };
-}
-
-/**
- * @param {Topic} topic 
- * @returns {Lesson[]}
- */
-export function getTopicLessons(topic) {
-    return lessons.filter(l => l.parentTopicKey === topic.key);
-}
-
-/**
- * Change the topic order
- * @param {number} sourceIndex - Index of the topic to move
- * @param {number} targetIndex - Destination index
- */
-export function moveTopic(sourceIndex, targetIndex) {
-    if (
-        sourceIndex < 0 ||
-        targetIndex < 0 ||
-        sourceIndex >= topics.length ||
-        targetIndex >= topics.length
-    ) {
-        return;
-    }
-
-    const [moved] = topics.splice(sourceIndex, 1);
-
-    topics.splice(targetIndex, 0, moved);
-
-    topics.forEach((t, i) => {
-        t.sortOrder = i;
-    });
-}
-
 export const editModal = $state({
     open: false,
     key: null,
@@ -410,6 +441,9 @@ export function editPrevLesson() {
     editModal.key = allLessons[idx - 1].key;
     editModal.lesson = allLessons[idx - 1];
 }
+
+
+
 
 /** @type {DeleteModal} */
 export const deleteModal = $state({

@@ -38,7 +38,6 @@ class User_Access
 		if (!$this->user->ID) {
 			return;
 		}
-
 		$exists = false;
 		foreach ($this->owned as &$entry) {
 			if ($entry['course_id'] == $course_id) {
@@ -57,7 +56,6 @@ class User_Access
 				'expires' => $expires
 			];
 		}
-
 		update_user_meta($this->user->ID, $this->owned_courses, wp_json_encode($this->owned));
 
 		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
@@ -67,7 +65,6 @@ class User_Access
 			$progress[$course_id] = ['max_unlocked_lesson' => 0, 'unlocked_lessons' => [], 'completed_lessons' => [], 'completion_date' => null];
 			update_user_meta($this->user->ID, $this->course_progress, wp_json_encode($progress));
 		}
-
 		delete_transient('lighter_lms_access_check_' . $this->user->ID . '_*');
 	}
 

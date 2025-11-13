@@ -13,7 +13,6 @@
         if (deleteModal.type === "topic") {
             await deleteTopic(deleteModal.key);
         } else {
-            console.log(deleteModal.key);
             await deleteLesson(deleteModal.id, deleteModal.key);
         }
 

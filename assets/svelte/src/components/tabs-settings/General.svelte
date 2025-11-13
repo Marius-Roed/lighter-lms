@@ -1,7 +1,7 @@
 <script>
     import DatePicker from "$components/DatePicker.svelte";
     import FilterSearch from "$components/FilterSearch.svelte";
-    import { displayDate, settings } from "$lib/settings.svelte";
+    import settings, { displayDate } from "$lib/settings.svelte";
     import { course, postStatus } from "$lib/state.svelte";
 
     /** @var {HTMLButtonElement} */

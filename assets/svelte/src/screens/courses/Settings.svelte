@@ -4,7 +4,7 @@
     import Selling from "$components/tabs-settings/Selling.svelte";
     import Downloads from "$components/tabs-settings/Downloads.svelte";
     import Tabs from "$components/Tabs.svelte";
-    import { settings } from "$lib/settings.svelte";
+    import settings from "$lib/settings.svelte";
     import { topics } from "$lib/state.svelte";
 
     let items = [

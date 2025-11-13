@@ -1,7 +1,7 @@
 export { };
 
 declare global {
-    type CourseStatus = "publish" | "pending" | "draft";
+    type CourseStatus = "publish" | "pending" | "draft" | "auto-draft" | "future" | "private";
 
     interface Window {
         LighterLMS: {
@@ -49,6 +49,10 @@ declare global {
         tags: Array<T>;
         product: Product;
     }
+
+    type CourseAccess = {
+        [x: string]: (string | number)[];
+    };
 
     interface Media {
         $el: Array;

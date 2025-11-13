@@ -17,13 +17,16 @@
     <hr />
     <h2>Grant access</h2>
     <div class="course-access-selectors">
-        {#each topics as topic (topic.key)}
+        {#each Object.keys(settings.product.access) as key (key)}
+            {@const topic = getTopic(key)}
             {@const items = getTopicLessons(topic)}
             <MultiCheckbox
                 {items}
                 title={topic.title}
-                bind:group={topic.access}
+                bind:group={settings.product.access[key]}
             />
+        {:else}
+            <p>No topics found</p>
         {/each}
     </div>
 </div>

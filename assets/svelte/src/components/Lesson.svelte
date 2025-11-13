@@ -1,5 +1,5 @@
 <script>
-    import { settings } from "$lib/settings.svelte";
+    import settings from "$lib/settings.svelte";
     /**
      * @typedef {Object} LessonProps
      * @property {string} key

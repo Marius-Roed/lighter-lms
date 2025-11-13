@@ -3,11 +3,11 @@
     import ProductSearch from "$components/ProductSearch.svelte";
     import SideModal from "$components/SideModal.svelte";
     import Switch from "$components/Switch.svelte";
-    import {
-        settings,
+    import settings, {
         capitalize,
         setProduct,
         isEmpty,
+        initAccess,
     } from "$lib/settings.svelte";
     import { onMount } from "svelte";
 
@@ -138,6 +138,10 @@
     // INFO: Track product, to update all values on change.
     $effect(() => {
         settings.product;
+
+        if (isEmpty(settings.product.access)) {
+            settings.product.access = initAccess();
+        }
     });
 </script>
 

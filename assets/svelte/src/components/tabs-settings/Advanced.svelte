@@ -1,7 +1,7 @@
 <script>
     import Editable from "$components/Editable.svelte";
     import Switch from "$components/Switch.svelte";
-    import { settings } from "$lib/settings.svelte";
+    import settings from "$lib/settings.svelte";
 </script>
 
 <div class="course-slug">

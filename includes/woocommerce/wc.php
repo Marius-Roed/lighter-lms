@@ -61,9 +61,11 @@ class WC
 
 		$auto_comp = $args['auto_comp'];
 		$auto_hide = $args['auto_hide'];
+		$course_access = $args['access'];
 
 		update_post_meta($product_id, '_lighter_lms_wc_auto_complete_course', $auto_comp);
 		update_post_meta($product_id, '_lighter_lms_course_hide_in_store', $auto_hide);
+		update_post_meta($product_id, '_lighter_lms_course_access', $course_access);
 
 		$img_id = $args['images'][0]['id'] ?? false;
 
@@ -74,6 +76,7 @@ class WC
 		unset($args['id']);
 		unset($args['images']);
 		unset($args['tags']);
+		unset($args['access']);
 
 		foreach ($args as $key => $arg) {
 			self::_sanitize_field($key, $arg);
@@ -118,7 +121,7 @@ class WC
 
 		$auto_comp = get_post_meta($product_id, '_lighter_lms_wc_auto_complete_course', true) ?: lighter_lms()->defaults()->course_auto_complete;
 		$auto_hide = get_post_meta($product_id, '_lighter_lms_course_hide_in_store', true) ?: lighter_lms()->defaults()->course_auto_hide;
-		$access = [];
+		$access = get_post_meta($product_id, '_lighter_lms_course_access', true) ?: (object) [];
 
 		$image_id = $product->get_image_id();
 		$image = [[
