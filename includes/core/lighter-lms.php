@@ -5,19 +5,13 @@ namespace LighterLMS\Core;
 use LighterLMS\Admin\Admin;
 use LighterLMS\API\API;
 use LighterLMS\Assets;
-use LighterLMS\Post_Types;
 use LighterLMS\Admin\Settings;
+use LighterLMS\Course_Post;
+use LighterLMS\Lesson_Post;
 
 class Lighter_LMS
 {
 	private static $_instance = null;
-
-	/**
-	 * Internal post types object
-	 *
-	 * @var object
-	 */
-	private $_post_types;
 
 	/**
 	 * Course class object
@@ -86,11 +80,12 @@ class Lighter_LMS
 		add_action('init', [$this, 'init_update_checker'], 5);
 		add_action('admin_post_save_lighter_lms_settings', [Settings::class, 'save']);
 
-		// $this->_course = new Course();
-		// $this->_lesson = new Lesson();
-		$this->admin = new Admin();
+		$this->_course = new Course_Post();
+		$this->_lesson = new Lesson_Post();
+		if (is_admin()) {
+			$this->admin = new Admin();
+		}
 		$this->_assets = new Assets();
-		$this->_post_types = new Post_Types();
 		$this->_api = new API();
 	}
 
