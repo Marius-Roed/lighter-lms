@@ -30,17 +30,12 @@ $topic_db = new Topics();
 
 $topics_raw = $topic_db->get_by_course($post->ID);
 
-$topics = array_map(function ($row) use ($lessons) {
-	$access = array_values(array_map(fn($l) => $l->ID, array_filter($lessons, function ($les) use ($row) {
-		return get_post_meta($les->ID, '_lighter_parent_topic', true) === $row->topic_key;
-	})));
-
+$topics = array_map(function ($row) {
 	return (object) [
 		'key' => $row->topic_key,
 		'title' => $row->title,
 		'sortOrder' => $row->sort_order,
 		'courseId' => $row->post_id,
-		'access' => $access,
 	];
 }, $topics_raw);
 

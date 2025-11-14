@@ -27,17 +27,18 @@ class User_Access
 	 *
 	 * Grants the user access to a course.
 	 *
-	 * @param string $course_id
-	 * @param string $access_type
-	 * @param DateTime $start_date
-	 * @param string $drip_interval
-	 * @param DateTime $expires
+	 * @param string $course_id The ID of the course to grant access to.
+	 * @param string $access_type Which type of access to give the user. Accepts "Full" | "Drip".
+	 * @param DateTime $start_date The start date.
+	 * @param string $drip_interval The drip interval.
+	 * @param DateTime $expires When access should expire.
 	 */
 	public function grant_course_access($course_id, $access_type = 'full', $start_date = null, $drip_interval = null, $expires = null)
 	{
 		if (!$this->user->ID) {
 			return;
 		}
+		$lessons = get_post_meta($course_id, '_lighter_lms_course_access', true);
 		$exists = false;
 		foreach ($this->owned as &$entry) {
 			if ($entry['course_id'] == $course_id) {
@@ -50,10 +51,11 @@ class User_Access
 		if (!$exists) {
 			$this->owned[] = [
 				'course_id' => $course_id,
+				'lessons' => $lessons,
 				'access_type' => $access_type,
 				'start_date' => $start_date ?: current_time('mysql'),
 				'drip_interval' => $drip_interval,
-				'expires' => $expires
+				'expires' => $expires,
 			];
 		}
 		update_user_meta($this->user->ID, $this->owned_courses, wp_json_encode($this->owned));
@@ -62,7 +64,23 @@ class User_Access
 		$progress = $progress ? json_decode($progress, true) : [];
 		if (!isset($progress[$course_id])) {
 			// NOTE: Should probably have a $unlocked_lessons param
-			$progress[$course_id] = ['max_unlocked_lesson' => 0, 'unlocked_lessons' => [], 'completed_lessons' => [], 'completion_date' => null];
+			switch ($access_type) {
+				case 'full':
+					$unlocked_lessons = $lessons;
+					break;
+				case 'drip':
+					$unlocked_lessons = count($lessons[0]) > 2 ? array_slice($lessons[0], 0, 2) : $lessons[0];
+					break;
+				default:
+					$unlocked_lessons = $lessons;
+					break;
+			}
+			$progress[$course_id] = [
+				'max_unlocked_lesson' => 0,
+				'unlocked_lessons' => $unlocked_lessons,
+				'completed_lessons' => [],
+				'completion_date' => null
+			];
 			update_user_meta($this->user->ID, $this->course_progress, wp_json_encode($progress));
 		}
 		delete_transient('lighter_lms_access_check_' . $this->user->ID . '_*');

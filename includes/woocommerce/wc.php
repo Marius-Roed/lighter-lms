@@ -65,7 +65,7 @@ class WC
 
 		update_post_meta($product_id, '_lighter_lms_wc_auto_complete_course', $auto_comp);
 		update_post_meta($product_id, '_lighter_lms_course_hide_in_store', $auto_hide);
-		update_post_meta($product_id, '_lighter_lms_course_access', $course_access); // TODO: Change this to be a separate function
+		update_post_meta($post_id, '_lighter_lms_course_access', $course_access); // TODO: Change this to be a separate function
 
 		$img_id = $args['images'][0]['id'] ?? false;
 
@@ -113,6 +113,7 @@ class WC
 			_doing_it_wrong(__FUNCTION__, 'WooCommerce was not initialised', '1.0');
 		}
 
+		global $post;
 		$product = \wc_get_product_object('simple', $product_id);
 
 		if (empty($product)) {
@@ -121,7 +122,7 @@ class WC
 
 		$auto_comp = get_post_meta($product_id, '_lighter_lms_wc_auto_complete_course', true) ?: lighter_lms()->defaults()->course_auto_complete;
 		$auto_hide = get_post_meta($product_id, '_lighter_lms_course_hide_in_store', true) ?: lighter_lms()->defaults()->course_auto_hide;
-		$access = get_post_meta($product_id, '_lighter_lms_course_access', true) ?: (object) [];
+		$access = get_post_meta($post->ID, '_lighter_lms_course_access', true) ?: (object) [];
 
 		$image_id = $product->get_image_id();
 		$image = [[

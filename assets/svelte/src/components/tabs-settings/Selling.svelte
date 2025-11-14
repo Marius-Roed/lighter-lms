@@ -226,10 +226,12 @@
                         style="max-width:100%;"
                         bind:this={imgContainer}
                     />
+                    <button
+                        type="button"
+                        class="change-img"
+                        onclick={() => openImageModal()}>Change image</button
+                    >
                 </div>
-                <button type="button" onclick={() => openImageModal()}
-                    >Change image</button
-                >
             </div>
         </div>
         <div class="description">

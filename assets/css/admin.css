@@ -1099,6 +1099,23 @@ button.lighter-btn {
         }
     }
 
+    .prod-img-wrap {
+        position: relative;
+
+        .change-img {
+            position: absolute;
+            inset: 0;
+            padding: 0;
+            color: white;
+            background: oklch(0 0 0 / 0.6);
+            display: none;
+        }
+
+        &:hover .change-img {
+            display: block;
+        }
+    }
+
     .img {
         flex-shrink: 1;
         display: flex;
