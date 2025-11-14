@@ -97,7 +97,7 @@ class Course_Post extends Post_Type
 
 				if (isset($topic['lessons'])) {
 					foreach ($topic['lessons'] as $lesson) {
-						// TODO: Get lesson obj -> save.
+						Lesson_Post::save_from_course($lesson, $post_id, $topic, $topic_db);
 					}
 				}
 			}

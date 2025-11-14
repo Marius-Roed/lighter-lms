@@ -61,7 +61,7 @@ class WC
 
 		$auto_comp = $args['auto_comp'];
 		$auto_hide = $args['auto_hide'];
-		$course_access = $args['access'];
+		$course_access = lighter_sanitize_access($args['access'], $post_id);
 
 		update_post_meta($product_id, '_lighter_lms_wc_auto_complete_course', $auto_comp);
 		update_post_meta($product_id, '_lighter_lms_course_hide_in_store', $auto_hide);

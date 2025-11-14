@@ -1,6 +1,6 @@
 <?php
 
-use LighterLMS\Lessons;
+use LighterLMS\Randflake;
 use LighterLMS\Topics;
 use LighterLMS\WooCommerce\WC;
 
@@ -411,5 +411,63 @@ if (! function_exists('lighter_get_lesson_settings')) {
 			'parents' => $parents ?? [],
 			'slug' => $post->post_name,
 		];
+	}
+}
+
+if (!function_exists('lighter_sanitize_access')) {
+	/**
+	 * Sanitize access object.
+	 *
+	 * Sanitizes an access object, making sure all items are valid lesson ID's, and the key's are valid topic keys.
+	 *
+	 * @param object|array	$access		The access object to sanitize
+	 * @param int			$post_id	The course post ID.
+	 * 
+	 * @return array The sanitized access object.
+	 */
+	function lighter_sanitize_access($access, $post_id)
+	{
+		if ($access == null || empty($access)) {
+			return [];
+		}
+
+		$topic_db = new Topics();
+		$access_obj = [];
+
+		foreach ($access as $key => $post_ids) {
+			$topic = $topic_db->get($key);
+
+			if (empty($topic) || $topic->post_id != $post_id) {
+				continue;
+			}
+
+			$post_ids = array_filter(array_map(function ($id) {
+				if ($id === null || !is_scalar($id)) return null;
+				if (is_int($id)) return $id;
+				if (is_numeric($id)) return (int) $id;
+				if (!Randflake::validate($id)) return null;
+
+				$clean_id = sanitize_text_field($id);
+				$post = get_post([
+					'post_type' => lighter_lms()->lesson_post_type,
+					'post_status' => 'any',
+					'meta_query' => [
+						[
+							'key' => '_lighter_lesson_key',
+							'value' => $clean_id,
+							'compare' => '=',
+						],
+					],
+					'posts_per_page' => 1,
+					'fields' => 'ids',
+					'suppress_filters' => true,
+				]);
+				return (empty($post)) ? null : $post->ID;
+			}, $post_ids));
+
+			$access_obj[$key] = $post_ids;
+		}
+
+		return $access_obj;
 	}
 }

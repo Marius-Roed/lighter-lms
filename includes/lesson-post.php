@@ -178,4 +178,43 @@ class Lesson_Post extends Post_Type
 	{
 		lighter_view('lesson-settings', ['admin' => true, 'post' => $post]);
 	}
+
+	/**
+	 * Save lesson
+	 *
+	 * @param array $args the lesson arguments.
+	 * @param int $parent_id The ID of the parent saving the lesson.
+	 * @param array $topic The topic data.
+	 * @param Topics $topic_db
+	 *
+	 * @return int The saved lesson ID.
+	 */
+	public static function save_from_course($args, $parent_id, $topic, $topic_db)
+	{
+		$insert_args = [
+			'post_title' => $args['title'],
+			'post_status' => $args['status'],
+			'post_type' => lighter_lms()->lesson_post_type,
+			'meta_input' => [
+				'_lighter_sort_order' => $args['sortOrder'],
+				'_lighter_parent_topic' => $topic['key'],
+				'_lighter_lesson_key' => $args['key']
+			],
+		];
+
+		if ($args['id']) {
+			$insert_args['ID'] = $args['id'];
+		}
+
+		$inserted = wp_insert_post($insert_args);
+
+		if ($inserted) {
+			$t = $topic_db->get($topic['key']);
+			$l_args = ['lesson' => $inserted, 'parent' => $parent_id, 'topic' => $t->ID];
+			$less = new Lessons($l_args);
+			$less->save();
+		}
+
+		return $inserted;
+	}
 }
