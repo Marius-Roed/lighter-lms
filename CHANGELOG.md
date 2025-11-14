@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file
 
+## [1.0.0-alpha.14] - 2025-11-14
+
+### Added
+
+- Course access structures. Still yet to be applied through a purchase or similar. You can give access throught the `User_Access {}` class.
+
+### Fixes
+
+- Woo product sync.
+- Fix general css issues.
+
 ## [1.0.0-alpha.13] - 2025-11-11
 
 ### Added
