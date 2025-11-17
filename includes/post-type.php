@@ -25,7 +25,7 @@ abstract class Post_Type
 		add_action('save_post_' . $this->post_type, [$this, 'save_post'], 10, 2);
 		add_action('manage_' . $this->post_type . '_posts_custom_column', [$this, 'custom_columns'], 10, 2);
 
-		add_filter('manage_' . $this->post_type . '_post_columns', [$this, 'columns']);
+		add_filter('manage_' . $this->post_type . '_posts_columns', [$this, 'columns']);
 		add_filter('rest_' . $this->post_type . '_query', [$this, 'rest_query'], 20, 2);
 		add_filter('get_user_option_screen_layout_' . $this->post_type, [$this, 'screen_layout']);
 
