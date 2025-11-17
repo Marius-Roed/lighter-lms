@@ -27,7 +27,7 @@ class User_Access
 	 *
 	 * Grants the user access to a course.
 	 *
-	 * @param string $course_id The ID of the course to grant access to.
+	 * @param int $course_id The ID of the course to grant access to.
 	 * @param string $access_type Which type of access to give the user. Accepts "Full" | "Drip".
 	 * @param DateTime $start_date The start date.
 	 * @param string $drip_interval The drip interval.

@@ -8,6 +8,7 @@ use LighterLMS\Assets;
 use LighterLMS\Admin\Settings;
 use LighterLMS\Course_Post;
 use LighterLMS\Lesson_Post;
+use LighterLMS\WooCommerce\WC;
 
 class Lighter_LMS
 {
@@ -56,6 +57,11 @@ class Lighter_LMS
 	public $slug = 'lighter-lms';
 
 	/**
+	 * WC class instance
+	 */
+	public $wc;
+
+	/**
 	 * Remote repo url
 	 *
 	 * @var string;
@@ -87,6 +93,10 @@ class Lighter_LMS
 		}
 		$this->_assets = new Assets();
 		$this->_api = new API();
+
+		add_action('woocommerce_init', function () {
+			$this->wc = new WC();
+		});
 	}
 
 	/**

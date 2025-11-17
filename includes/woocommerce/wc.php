@@ -2,6 +2,8 @@
 
 namespace LighterLMS\WooCommerce;
 
+use LighterLMS\User_Access;
+
 class WC
 {
 	public function __construct()
@@ -10,6 +12,13 @@ class WC
 			_doing_it_wrong(__CLASS__, 'Woocommerce was not initialized', '1.0');
 			return;
 		}
+
+		add_action('woocommerce_order_status_processing', [$this, 'auto_complete']);
+		add_action('pre_get_posts', [$this, 'hide_products']);
+		add_action('woocommerce_payment_complete', [$this, 'give_access']);
+		add_action('woocommerce_order_action_lighter_give_access', [$this, 'admin_give_access']);
+
+		add_filter('woocommerce_order_actions', [$this, 'order_actions'], 10, 2);
 	}
 
 	/**
@@ -158,6 +167,142 @@ class WC
 		];
 
 		return $obj;
+	}
+
+	/**
+	 * Auto complete orders with courses marked as auto complete.
+	 *
+	 * @param int The woocommerce order ID.
+	 */
+	public function auto_complete($order_id)
+	{
+		$order = \wc_get_order($order_id);
+		if (!$order_id || !$order) {
+			return;
+		}
+
+		$course_complete = false;
+
+		foreach ($order->get_items() as $item) {
+			$product = $item->get_product();
+			if (!$product) continue;
+			$auto_complete = get_post_meta($product->get_id(), '_lighter_lms_wc_auto_complete_course', true);
+			if ($auto_complete) {
+				$course_complete = true;
+				break;
+			}
+		}
+
+		if ($course_complete) {
+			$order->set_status('completed');
+		}
+	}
+
+	/**
+	 * Hide courses from shop with hidden enabled.
+	 *
+	 * @param \WP_Query $query The query.
+	 */
+	public function hide_products($query)
+	{
+		if (!$query->is_main_query() || is_admin()) return;
+
+		$user = wp_get_current_user();
+		$owned_courses = get_user_meta($user->ID, '_lighter_owned_courses', true);
+		$owned_courses = $owned_courses ? json_decode($owned_courses) : [];
+		$owned_courses = array_map(function ($c) {
+			$course_id = (int) $c->course_id;
+			$product_id = (int) get_post_meta($course_id, '_lighter_product_id', true);
+			if (!$product_id) return null;
+			$to_hide = get_post_meta($product_id, '_lighter_lms_course_hide_in_store', true);
+			return $to_hide ? $product_id : null;
+		}, $owned_courses);
+		$owned_courses = array_filter($owned_courses);
+
+		if (empty($owned_courses)) return;
+
+		$not_in = $query->get('post__not_in') ?: [];
+		$not_in = array_unique(array_merge($not_in, $owned_courses));
+		$query->set('post__not_in', $not_in);
+	}
+
+	/**
+	 * Order actions.
+	 *
+	 * @param array $actions The actions
+	 * @param \WC_Order $order
+	 */
+	public function order_actions($actions, $order)
+	{
+		$contains_course = false;
+		foreach ($order->get_items() as $item) {
+			$product_id = $item->get_product_id();
+			$courses = get_posts([
+				'post_type' => lighter_lms()->course_post_type,
+				'status' => 'publish',
+				'meta_key' => '_lighter_product_id',
+				'meta_value' => $product_id,
+				'meta_compare' => '=',
+			]);
+			if (empty($courses)) continue;
+			$contains_course = true;
+			break;
+		}
+
+		if ($contains_course) {
+			$lighter_actions = [
+				'lighter_give_access' => 'Give user course access',
+			];
+			$actions = array_merge($actions, $lighter_actions);
+		}
+
+		return $actions;
+	}
+
+	/**
+	 * Give user access from order admin panel
+	 *
+	 * @param \WC_Order $order The order
+	 */
+	public function admin_give_access($order)
+	{
+		$order_id = $order->get_id();
+		return $order_id ? $this->give_access($order_id) : null;
+	}
+
+	/**
+	 * Give user access to course
+	 *
+	 * Saves the course under owned courses for user making the purchase.
+	 *
+	 * @param int $order_id The order ID.
+	 */
+	public function give_access($order_id)
+	{
+		$order = \wc_get_order($order_id);
+		if (!$order) return;
+
+		$user_id = $order->get_user_id();
+		if (!$user_id) return;
+
+		$user = new User_Access($user_id);
+
+		foreach ($order->get_items() as $item) {
+			$product_id = $item->get_product_id();
+			$courses = get_posts([
+				'post_type' => lighter_lms()->course_post_type,
+				'status' => 'publish',
+				'meta_key' => '_lighter_product_id',
+				'meta_value' => $product_id,
+				'meta_compare' => '=',
+			]);
+			if (empty($courses)) continue;
+			foreach ($courses as $course) {
+				$user->grant_course_access($course->ID);
+
+				$order->add_order_note('Granted user (' . $user_id . ') access to course ' . $course->ID);
+			}
+		}
 	}
 
 	/**
