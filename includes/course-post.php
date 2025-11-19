@@ -97,7 +97,7 @@ class Course_Post extends Post_Type
 
 				if (isset($topic['lessons'])) {
 					foreach ($topic['lessons'] as $lesson) {
-						Lesson_Post::save_from_course($lesson, $post_id, $topic, $topic_db);
+						if ($lesson['editStatus'] != "clean") Lesson_Post::save_from_course($lesson, $post_id, $topic, $topic_db);
 					}
 				}
 			}
@@ -121,9 +121,9 @@ class Course_Post extends Post_Type
 		$tags = $args['tags'] ?? [];
 		$product = $args['product'] ?? [];
 		$course_description = $args['description'] ?? '';
-		$header = isset($settings['displayHeader']) ? wp_validate_boolean($settings['displayHeader']) : false;
-		$footer = isset($settings['displayFooter']) ? wp_validate_boolean($settings['displayFooter']) : false;
-		$sidebar = isset($settings['displaySidebar']) ? wp_validate_boolean($settings['displaySidebar']) : false;
+		$header = isset($args['displayHeader']) ? wp_validate_boolean($args['displayHeader']) : false;
+		$footer = isset($args['displayFooter']) ? wp_validate_boolean($args['displayFooter']) : false;
+		$sidebar = isset($args['displaySidebar']) ? wp_validate_boolean($args['displaySidebar']) : false;
 		$slug = $args['slug'] ? sanitize_post_field('post_name', $args['slug'], $post->ID, 'raw') : $post->post_name;
 
 		if (!empty($tags)) {

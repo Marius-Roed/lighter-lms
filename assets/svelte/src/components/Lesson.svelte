@@ -23,7 +23,7 @@
     let { key, len } = $props();
     /** @type {import("$lib/state.svelte.js").Lesson} */
     const lesson = $derived(lessons[getLesson(key)]);
-    const warn = $derived(lesson.status == "publish" ? "" : "warn");
+    const warn = $derived(lesson.postStatus == "publish" ? "" : "warn");
 
     let actionMenu;
 
@@ -71,9 +71,21 @@
         />
         <input
             type="hidden"
-            name={`topics[${lesson.parentTopicKey}][lessons][${lesson.sortOrder}][status]`}
-            value={lesson.status}
+            name={`topics[${lesson.parentTopicKey}][lessons][${lesson.sortOrder}][postStatus]`}
+            value={lesson.postStatus}
         />
+        <input
+            type="hidden"
+            name={`topics[${lesson.parentTopicKey}][lessons][${lesson.sortOrder}][editStatus]`}
+            value={lesson.editStatus}
+        />
+        {#if !lesson.id}
+            <input
+                type="hidden"
+                name={`topics[${lesson.parentTopicKey}][lessons][${lesson.sortOrder}][new]`}
+                value="true"
+            />
+        {/if}
     </div>
     <div class="lesson-title">
         {#if settings.showIcons}
@@ -101,16 +113,17 @@
                         <button type="button" class="submenu-trig"
                             >Status: <span
                                 class={[
-                                    lesson.status != "publish" && "text-warn",
-                                ]}>{postStatus[lesson.status]}</span
+                                    lesson.postStatus != "publish" &&
+                                        "text-warn",
+                                ]}>{postStatus[lesson.postStatus]}</span
                             ></button
                         >
                     {/snippet}
                     {#each Object.entries(postStatus) as [key, label]}
                         <button
                             type="button"
-                            class={{ active: lesson.status === key }}
-                            onclick={() => (lesson.status = key)}
+                            class={{ active: lesson.postStatus === key }}
+                            onclick={() => (lesson.postStatus = key)}
                             >{label}</button
                         >
                     {/each}

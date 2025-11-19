@@ -20,7 +20,7 @@ $lesson_data = array_map(function ($lesson) {
 		'id' => $lesson->ID,
 		'key' => get_post_meta($lesson->ID, '_lighter_lesson_key', true),
 		'title' => $lesson->post_title,
-		'status' => $lesson->post_status,
+		'postStatus' => $lesson->post_status,
 		'sortOrder' => get_post_meta($lesson->ID, '_lighter_sort_order', true) ?: 0,
 		'parentTopicKey' => get_post_meta($lesson->ID, '_lighter_parent_topic', true),
 	];

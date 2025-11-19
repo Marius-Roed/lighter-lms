@@ -193,7 +193,7 @@ class Lesson_Post extends Post_Type
 	{
 		$insert_args = [
 			'post_title' => $args['title'],
-			'post_status' => $args['status'],
+			'post_status' => $args['postStatus'],
 			'post_type' => lighter_lms()->lesson_post_type,
 			'meta_input' => [
 				'_lighter_sort_order' => $args['sortOrder'],
@@ -206,7 +206,11 @@ class Lesson_Post extends Post_Type
 			$insert_args['ID'] = $args['id'];
 		}
 
-		$inserted = wp_insert_post($insert_args);
+		if (isset($insert_args['ID'])) {
+			$inserted = wp_update_post($insert_args);
+		} else {
+			$inserted = wp_insert_post($insert_args);
+		}
 
 		if ($inserted) {
 			$t = $topic_db->get($topic['key']);

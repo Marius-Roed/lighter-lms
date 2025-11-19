@@ -2,8 +2,11 @@
 import Randflake from "./randflake";
 import lighterFetch from "./lighterFetch";
 import settings, { initAccess } from "./settings.svelte";
+import { untrack } from "svelte";
 
 /** @typedef {"publish"|"pending"|"future"|"private"|"draft"} LessonStatus */
+
+/** @typedef {"clean" | "dirty"} EditStatus */
 
 /**
  * @typedef {Object} Lesson
@@ -12,7 +15,8 @@ import settings, { initAccess } from "./settings.svelte";
  * @property {string} title - Lesson title
  * @property {number} sortOrder - The number it appears when sorted
  * @property {string} parentTopicKey - Key of the topic this lesson belongs to
- * @property {LessonStatus} status="draft" - Status of the lesson
+ * @property {LessonStatus} postStatus="draft" - Status of the lesson
+ * @property {EditStatus} editStatus="clean" - Whether the lesson has been edited.
  * @property {string} [permalink] - Url to the lesson
  * @property {string} [icon] - Name of the icon to show
  */
@@ -52,6 +56,8 @@ export const lessons = $state(
     /** @type {Lesson[]} */([])
 );
 
+const defaults = /** @type {Partial<Lesson>[]} */[];
+
 // INFO: Derived hack since it might not be inited if used outside this module.
 export var safeLessons = () => {
     const v = $derived(isInited ? lessons : []);
@@ -75,12 +81,49 @@ export function initState({ courseNum: initCourse, topicsData: initTopics, lesso
 
     for (const lesson of initLessons) {
         if (!lesson.key) lesson.key = genKey();
+        lesson.editStatus = "clean";
     }
 
     topics.splice(0, topics.length, ...initTopics);
     lessons.splice(0, lessons.length, ...initLessons);
+    defaults.splice(0, defaults.length, ...initLessons);
+
+    console.log(defaults);
 
     isInited = true;
+}
+
+$effect.root(() => {
+    $effect(() => {
+        lessons;
+        for (let i = 0; i < lessons.length; i++) {
+            if (!objectEquals(lessons[i], defaults[i])) {
+                untrack(() => lessons[i].editStatus = "dirty");
+            } else {
+                untrack(() => lessons[i].editStatus = "clean");
+            }
+        }
+    });
+});
+
+/**
+ * See if two objects are complete equal.
+ *
+ * @param {object} obj1 
+ * @param {object} obj2 
+ * @returns {boolean}
+ */
+function objectEquals(obj1, obj2) {
+    if (Object.keys(obj1).length != Object.keys(obj2).length) {
+        return false;
+    }
+    for (const key in obj1) {
+        if (key == "editStatus") continue;
+        if (obj1[key] !== obj2[key]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
@@ -319,6 +362,7 @@ export function addLesson(topicKey, title = "New lesson") {
         status: draft,
         parentTopicKey: topicKey,
         sortOrder: (topicLessonLength(topicKey) + 1),
+        editStatus: "dirty",
     }
     lessons.push(newLesson);
     if (settings.product.access && settings.product.access[topicKey]) {
