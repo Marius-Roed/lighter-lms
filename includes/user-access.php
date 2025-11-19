@@ -38,7 +38,8 @@ class User_Access
 		if (!$this->user->ID) {
 			return;
 		}
-		$lessons = get_post_meta($course_id, '_lighter_lms_course_access', true);
+		$lesson_query = new Lessons(['parent' => $course_id]);
+		$lessons = array_map(fn($post) => $post->ID, $lesson_query->get_lessons());
 		$exists = false;
 		foreach ($this->owned as &$entry) {
 			if ($entry['course_id'] == $course_id) {
@@ -194,5 +195,16 @@ class User_Access
 		if (in_array($lesson_id, $progress[$course_id]['unlocked_lessons'])) return true;
 
 		return false;
+	}
+
+	public function get_owned($course = null)
+	{
+		$owned = $this->owned;
+
+		if ($course) {
+			$owned = array_filter($owned, fn($access) => $access['course_id'] == $course);
+		}
+
+		return $owned;
 	}
 }

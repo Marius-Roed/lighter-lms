@@ -8,6 +8,7 @@ use LighterLMS\Assets;
 use LighterLMS\Admin\Settings;
 use LighterLMS\Course_Post;
 use LighterLMS\Lesson_Post;
+use LighterLMS\Lessons;
 use LighterLMS\WooCommerce\WC;
 
 class Lighter_LMS
@@ -97,6 +98,11 @@ class Lighter_LMS
 		add_action('woocommerce_init', function () {
 			$this->wc = new WC();
 		});
+
+		$lessons = new Lessons();
+
+		add_filter('posts_join', [$lessons, 'db_join'], 10, 2);
+		add_filter('posts_orderby', [$lessons, 'db_orderby'], 10, 2);
 	}
 
 	/**

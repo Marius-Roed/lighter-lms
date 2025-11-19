@@ -36,9 +36,6 @@ class Lessons
 		$this->topic = isset($args['topic']) && (int)$args['topic'] > 0 ? (int)$args['topic'] : null;
 
 		$this->args = $args;
-
-		add_filter('posts_join', [$this, 'db_join'], 10, 2);
-		add_filter('posts_orderby', [$this, 'db_orderby'], 10, 2);
 	}
 
 	public function install()

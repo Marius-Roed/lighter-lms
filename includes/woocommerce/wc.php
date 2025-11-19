@@ -105,7 +105,7 @@ class WC
 			update_post_meta($post_id, '_lighter_product_id', $product->get_id());
 		}
 
-		return 1;
+		return $product->get_id();
 	}
 
 	/**

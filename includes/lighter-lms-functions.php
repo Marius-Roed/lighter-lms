@@ -1,7 +1,9 @@
 <?php
 
+use LighterLMS\Lessons;
 use LighterLMS\Randflake;
 use LighterLMS\Topics;
+use LighterLMS\User_Access;
 use LighterLMS\WooCommerce\WC;
 
 if (! defined('ABSPATH')) {
@@ -193,6 +195,9 @@ if (!function_exists('lighterlms_course_sidebar')) {
 			return;
 		}
 
+		$access = new User_Access();
+		$owned_lesson = $access->get_owned($post->ID)[0]['lessons'];
+
 		$topic_db = new Topics();
 
 		$topics_raw = $topic_db->get_by_course($post->ID);
@@ -207,13 +212,8 @@ if (!function_exists('lighterlms_course_sidebar')) {
 
 		usort($topics, fn($a, $b) => (int)$a['sortOrder'] - (int)$b['sortOrder']);
 
-		$lessons = get_posts([
-			'post_type' => lighter_lms()->lesson_post_type,
-			'numberposts' => -1,
-			'lighter_course' => $post->ID,
-			'suppress_filters' => false
-		]);
-
+		$lessons_query = new Lessons(['parent' => $post->ID]);
+		$lessons = $lessons_query->get_lessons();
 		// NOTE: There should be a better way to get the post and metadata
 		// directly in one query instead of mapping it after.
 		$lesson_data = array_map(function ($lesson) {
@@ -256,14 +256,18 @@ if (!function_exists('lighterlms_course_sidebar')) {
 							</h3>
 							<ul class="course-lessons open">
 								<?php foreach ($sb_item['lessons'] as $lesson) {
-									printf(
-										'<li><a href="?lesson=%1$s" class="course-lesson %1$s" data-lesson="%1$s" data-lesson-id="%2$s" data-key="%3$s" data-parent-key="%4$s">%5$s</a></li>',
-										strtolower(sanitize_key($lesson['slug'])),
-										$lesson['id'],
-										$lesson['key'],
-										$lesson['parentTopicKey'],
-										$lesson['title']
-									);
+									if (in_array($lesson['id'], $owned_lesson)) {
+										printf(
+											'<li><a href="?lesson=%1$s" class="course-lesson %1$s" data-lesson="%1$s" data-lesson-id="%2$s" data-key="%3$s" data-parent-key="%4$s">%5$s</a></li>',
+											strtolower(sanitize_key($lesson['slug'])),
+											$lesson['id'],
+											$lesson['key'],
+											$lesson['parentTopicKey'],
+											$lesson['title']
+										);
+									} else {
+										printf('<li><span class="lighter-not-owned">%s</span></li>', $lesson['title']);
+									}
 								} ?>
 							</ul>
 							</li>

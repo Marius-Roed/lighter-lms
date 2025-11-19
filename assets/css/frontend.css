@@ -235,7 +235,7 @@
     .lighterlms.course-sidebar {
         min-height: 85vh;
         width: 100%;
-        max-width: 335px;
+        max-width: 420px;
         border-right: 1px solid #555;
 
         .course-topics {
@@ -255,13 +255,14 @@
                 word-break: break-word;
                 margin: 0;
             }
+        }
 
-            .course-lessons {
-                background-color: oklch(0.840 0.067 303.4);
+        .course-lessons {
+            background-color: oklch(0.840 0.067 303.4);
 
-                li {
-                    padding: 1rem 1.25rem;
-                }
+            li {
+                position: relative;
+                padding: 1rem 5rem 1rem 1.25rem;
             }
         }
 
