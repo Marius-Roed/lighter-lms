@@ -21,6 +21,9 @@ class Lessons
 	/** @var int The topic ID */
 	protected $topic;
 
+	/** @var array The given arguments */
+	protected $args;
+
 	public function __construct($args = [], $db = null)
 	{
 		global $wpdb;
@@ -31,6 +34,11 @@ class Lessons
 		$this->lesson = isset($args['lesson']) && (int)$args['lesson'] > 0 ? (int)$args['lesson'] : null;
 		$this->parent = isset($args['parent']) && (int)$args['parent'] > 0 ? (int)$args['parent'] : null;
 		$this->topic = isset($args['topic']) && (int)$args['topic'] > 0 ? (int)$args['topic'] : null;
+
+		$this->args = $args;
+
+		add_filter('posts_join', [$this, 'db_join'], 10, 2);
+		add_filter('posts_orderby', [$this, 'db_orderby'], 10, 2);
 	}
 
 	public function install()
@@ -62,7 +70,7 @@ class Lessons
 	 */
 	public function db_join($join, $query)
 	{
-		if ($query->is_main_query()) {
+		if ($query->is_main_query() || !in_array($query->get('post_type'), lighter_lms()->post_types)) {
 			return $join;
 		}
 
@@ -75,10 +83,63 @@ class Lessons
 
 		if (isset($vars['lighter_course']) && intval($vars['lighter_course'])) {
 			$join .= " INNER JOIN {$this->table} AS ll ON {$this->db->posts}.ID = ll.lesson_id AND ll.parent_id = " . intval($vars['lighter_course']);
+			$join .= " INNER JOIN {$this->db->postmeta} AS meta_sort ON {$this->db->posts}.ID = meta_sort.post_id AND meta_sort.meta_key = '_lighter_sort_order'";
+			$join .= " INNER JOIN {$this->db->postmeta} AS meta_topic ON {$this->db->posts}.ID = meta_topic.post_id AND meta_topic.meta_key = '_lighter_parent_topic'";
+			$join .= " INNER JOIN {$this->db->prefix}lighter_topics AS topic ON topic.topic_key = meta_topic.meta_value AND topic.post_id = " . intval($vars['lighter_course']);
 			return $join;
 		}
 
 		return $join;
+	}
+
+	public function db_orderby($orderby, $query)
+	{
+		if ($query->is_main_query() || !in_array($query->get('post_type'), lighter_lms()->post_types)) {
+			return $orderby;
+		}
+
+		$vars = $query->query_vars;
+
+		if (isset($vars['lighter_course']) && intval($vars['lighter_course'])) {
+			$orderby = " topic.sort_order ASC, CAST(meta_sort.meta_value AS UNSIGNED) ASC";
+		}
+
+		return $orderby;
+	}
+
+	/**
+	 * Get lesson(s)
+	 *
+	 * Uses the given args to get a/all lessons by topic key or, if not supplied, by parent ID.
+	 * Currently supplying only a lesson ID will just return the lesson Post object.
+	 *
+	 * @return \WP_Post|array
+	 */
+	public function get_lessons()
+	{
+		if (isset($this->topic)) {
+			// TODO: Query by topic key.
+		}
+
+		if (isset($this->parent)) {
+			// TODO: Query by parent ID.
+			$args = [
+				'post_type' => lighter_lms()->lesson_post_type,
+				'post_status' => $this->args['status'] ?? 'publish',
+				'lighter_course' => $this->parent,
+				'numberposts' => -1,
+				'suppress_filters' => false,
+			];
+
+			return get_posts($args);
+		}
+
+		if (isset($this->lesson)) {
+			return get_post($this->lesson);
+			// TODO: Query by lesson ID.
+		}
+
+		return [];
 	}
 
 	/**

@@ -3,18 +3,11 @@
 use LighterLMS\Topics;
 use LighterLMS\Lessons;
 
-$lessons_db = new Lessons();
+$lessons_db = new Lessons(['parent' => $post->ID, 'status' => 'any']);
 
-add_filter('posts_join', [$lessons_db, 'db_join'], 10, 2);
+// add_filter('posts_join', [$lessons_db, 'db_join'], 10, 2);
 
-$lessons = get_posts([
-	'post_type' => lighter_lms()->lesson_post_type,
-	'numberposts' => -1,
-	'post_status' => 'any',
-	'lighter_course' => $post->ID,
-	'suppress_filters' => false,
-]);
-
+$lessons = $lessons_db->get_lessons();
 $lesson_data = array_map(function ($lesson) {
 	return [
 		'id' => $lesson->ID,

@@ -2,6 +2,9 @@
 
 namespace LighterLMS\Admin;
 
+use LighterLMS\Lessons;
+use LighterLMS\User_Access;
+
 class Admin
 {
 	public function __construct()
@@ -11,6 +14,7 @@ class Admin
 		add_action('admin_menu', [$this, 'admin_menu'], 9);
 		add_action('current_screen', [$this, 'current_screen']);
 		add_action('admin_init', [$this, 'admin_init']);
+		add_action('admin_post_lighter_complete_lesson', [$this, 'complete_lesson']);
 
 		add_filter('menu_order', [$this, 'menu_order']);
 		add_filter('admin_body_class', [$this, 'dialog_editor']);
@@ -302,5 +306,48 @@ class Admin
 				}
 			}
 		}
+	}
+
+	public function complete_lesson()
+	{
+		$user = new User_Access();
+		$course_id = intval($_POST['course_id'] ?? 0);
+		$lesson_id = intval($_POST['lesson_id'] ?? 0);
+		if (!$user->check_course_access($course_id) || !$user->check_lesson_access($lesson_id, $course_id)) {
+			wp_die('Unauthorized access', '', ['response' => 403]);
+		}
+
+		$nonce = sanitize_text_field($_POST['lighter_lesson_nonce'] ?? '');
+		if (!wp_verify_nonce($nonce, 'complete_lesson')) {
+			wp_die('Security fail. Nonce failure', '', ['response' => 403]);
+		}
+
+		if (get_post_type($lesson_id) !== lighter_lms()->lesson_post_type) {
+			wp_die('Invalid lesson id.', '', ['response' => 403]);
+		}
+
+		$lessons = new Lessons(['parent' => $course_id]);
+		$lessons = $lessons->get_lessons();
+
+		$next_lesson = null;
+		$next = false;
+
+		foreach ($lessons as $lesson) {
+			if ($next) {
+				$next_lesson = $lesson;
+				break;
+			}
+			if ($lesson->ID == $lesson_id) $next = true;
+		}
+
+		if ($next_lesson) {
+			$slug = get_post($course_id)->post_name;
+			if ($slug) {
+				wp_redirect($slug . '?lesson=' . $next_lesson->post_name);
+				exit;
+			}
+		}
+		wp_redirect(wp_get_referer());
+		exit;
 	}
 }

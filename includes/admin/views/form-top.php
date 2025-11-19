@@ -20,7 +20,7 @@ if ($post_type == lighter_lms()->lesson_post_type) {
 
 	$lessons_db = new Lessons();
 
-	add_filter('posts_join', [$lessons_db, 'db_join'], 10, 2);
+	// add_filter('posts_join', [$lessons_db, 'db_join'], 10, 2);
 
 	$parent = get_posts([
 		'post_type' => lighter_lms()->course_post_type,

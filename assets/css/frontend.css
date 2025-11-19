@@ -208,13 +208,22 @@
         width: 100%;
         gap: 2em;
 
-        .the-content {
+        .content-wrap {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             width: 100%;
             padding-inline-end: 2em;
+
+            .the-content {
+                flex-grow: 1;
+                width: 100%;
+            }
+
+            .complete-lesson {
+                align-self: flex-end;
+            }
 
             .lighter-lesson-wrap {
                 width: 100%;
