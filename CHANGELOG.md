@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file
 
+## [1.0.0-alpha.15] - 2025-11-20
+
+### Added
+
+- Tracking lesson progress
+- Give access to course on woocommerce purchase.
+
+### Fixes
+
+- Fixed issue where saving a course would overwrite lesson content.
+- Lesson filtering.
+- Admin table list tags.
+
+### Changes
+
+- Better type safety.
+- Refactored the sidebar to split into separate functions.
+
 ## [1.0.0-alpha.14] - 2025-11-14
 
 ### Added

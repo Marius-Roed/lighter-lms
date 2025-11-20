@@ -326,6 +326,8 @@ class Admin
 			wp_die('Invalid lesson id.', '', ['response' => 403]);
 		}
 
+		$user->complete_lesson($course_id, $lesson_id);
+
 		$lessons = new Lessons(['parent' => $course_id]);
 		$lessons = $lessons->get_lessons();
 
@@ -340,7 +342,7 @@ class Admin
 			if ($lesson->ID == $lesson_id) $next = true;
 		}
 
-		if ($next_lesson) {
+		if ($next_lesson && $user->check_lesson_access($next_lesson, $course_id)) {
 			$slug = get_post($course_id)->post_name;
 			if ($slug) {
 				wp_redirect($slug . '?lesson=' . $next_lesson->post_name);

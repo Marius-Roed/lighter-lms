@@ -307,20 +307,22 @@ if (!function_exists('lighter_sidebar_item')) {
 		} ?>
 		<li class="lighter-topic" data-key="<?php echo esc_attr($item['key']) ?>">
 			<h3>
-				<button type="button" aria-expanded="true" aria-controls="<?php strtolower(esc_attr($item['title'])) ?>-lessons" class="togglable-btn">
-					<?php esc_html($item['title']) ?>
+				<button type="button" aria-expanded="true" aria-controls="<?php echo strtolower(esc_attr($item['title'])) ?>-lessons" class="togglable-btn">
+					<?php echo esc_html($item['title']) ?>
 				</button>
 			</h3>
 			<ul class="course-lessons open">
 				<?php foreach ($item['lessons'] as $lesson) {
+					$completed = in_array($lesson['id'], $data['progress']['completed_lessons']) ? '<span class="lesson-completed" title="Lesson completed">✓<span class="screen-reader-text">Lesson comlpeted</span></span>' : '';
 					if (in_array($lesson['id'], $data['owned']['lessons'] ?? [])) {
 						printf(
-							'<li><a href="?lesson=%1$s" class="course-lesson %1$s" data-lesson="%1$s" data-lesson-id="%2$s" data-key="%3$s" data-parent-key="%4$s">%5$s</a></li>',
+							'<li><a href="?lesson=%1$s" class="course-lesson %1$s" data-lesson="%1$s" data-lesson-id="%2$s" data-key="%3$s" data-parent-key="%4$s">%5$s</a>%6$s</li>',
 							strtolower(sanitize_key($lesson['slug'])),
 							esc_attr($lesson['id']),
 							esc_attr($lesson['key']),
 							esc_attr($lesson['parentTopicKey']),
-							esc_html($lesson['title'])
+							esc_html($lesson['title']),
+							$completed
 						);
 					} else {
 						printf('<li><span class="lighter-not-owned">%s</span></li>', esc_html($lesson['title']));

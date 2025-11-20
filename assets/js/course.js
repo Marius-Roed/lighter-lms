@@ -297,6 +297,7 @@ class Sidebar {
 
         if (entry.status == "success") {
             window.scrollTo({ top: contentArea.getBoundingClientRect().y + window.scrollY - 20, behavior: 'smooth' });
+            if (document.getElementById('lesson_id')) document.getElementById('lesson_id').value = id;
         }
     }
 }

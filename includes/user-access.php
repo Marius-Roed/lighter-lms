@@ -224,4 +224,34 @@ class User_Access
 
 		return $progress;
 	}
+
+	/**
+	 * Marks a lesson as completed.
+	 *
+	 * @param \WP_Post|int $course
+	 * @param \WP_Post|int $lesson
+	 *
+	 * @return int 1 for success 0 for failure.
+	 */
+	public function complete_lesson($course, $lesson)
+	{
+		$course = get_post($course);
+		$lesson = get_post($lesson);
+
+		// TODO: Check user owns course and lesson.
+
+		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
+		$progress = $progress ? json_decode($progress, true) : [];
+
+		$completed = $progress[$course->ID]['completed_lessons'] ?: [];
+		$completed[] = $lesson->ID;
+		$completed = array_unique($completed, SORT_NUMERIC);
+		$progress[$course->ID]['completed_lessons'] = $completed;
+
+		if (!update_user_meta($this->user->ID, $this->course_progress, wp_json_encode($progress))) {
+			return 0;
+		}
+
+		return 1;
+	}
 }

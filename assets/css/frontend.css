@@ -264,6 +264,18 @@
                 position: relative;
                 padding: 1rem 5rem 1rem 1.25rem;
             }
+
+            .lesson-completed {
+                position: absolute;
+                display: block;
+                height: 1.2lh;
+                width: 1.2lh;
+                top: 50%;
+                right: 2ex;
+                transform: translateY(-50%);
+                /* background-color: oklch(0.61 0.24 145.69); */
+                border-radius: 50%;
+            }
         }
 
         .course-topics>li button {
