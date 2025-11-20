@@ -202,9 +202,26 @@ class User_Access
 		$owned = $this->owned;
 
 		if ($course) {
-			$owned = array_filter($owned, fn($access) => $access['course_id'] == $course);
+			$course = get_post($course);
+			$owned = array_filter($owned, fn($access) => $access['course_id'] == $course->ID);
+			if (!empty($owned)) {
+				$owned = $owned[0];
+			}
 		}
 
 		return $owned;
+	}
+
+	public function get_progress($course = null)
+	{
+		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
+		$progress = $progress ? json_decode($progress, true) : [];
+
+		if ($course) {
+			$course = get_post($course);
+			$progress = $progress[$course->ID];
+		}
+
+		return $progress;
 	}
 }

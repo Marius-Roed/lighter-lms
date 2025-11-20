@@ -1,5 +1,6 @@
 <?php
 
+use LighterLMS\Types;
 use LighterLMS\Lessons;
 use LighterLMS\Randflake;
 use LighterLMS\Topics;
@@ -87,6 +88,57 @@ if (! function_exists('lighter_attrify')) {
 	function lighter_attrify($value, $seperator = "-")
 	{
 		return strtolower(preg_replace(["/\s/", "/_/", "/-/"], $seperator, $value));
+	}
+}
+
+if (! function_exists('lighter_get_course_lessons')) {
+	/**
+	 * Get course lessons
+	 *
+	 * Retrieves all the lessons for a given course, as well as their meta data.
+	 *
+	 * @param \WP_Post|int $course The course
+	 * @param \WP_User|int $user The user
+	 * @param bool $with_topics Whether to return the topic field.
+	 *
+	 * @phpstan-import-type CourseData from Types
+	 *
+	 * @return CourseData
+	 */
+	function lighter_get_course_lessons($course, $user = null, $with_topics = false)
+	{
+		$course = get_post($course);
+
+		$lesson_db = new Lessons(['parent' => $course->ID]);
+		$lessons = array_map(fn($post) => [
+			'id' => $post->ID,
+			'key' => get_post_meta($post->ID, '_lighter_lesson_key', true),
+			'slug' => $post->post_name,
+			'title' => $post->post_title,
+			'sortOrder' => get_post_meta($post->ID, '_lighter_sort_order', true),
+			'parentTopicKey' => get_post_meta($post->ID, '_lighter_parent_topic', true),
+		], $lesson_db->get_lessons());
+
+		$user_access = new User_Access($user);
+		$owned = $user_access->get_owned($course);
+		$progress = $user_access->get_progress($course);
+
+		$data = ['lessons', 'owned', 'progress'];
+
+		if ($with_topics) {
+			$topics_db = new Topics();
+			$topics = array_map(function ($row) {
+				return [
+					'key' => $row->topic_key,
+					'title' => $row->title,
+					'sortOrder' => $row->sort_order,
+					'courseId' => $row->post_id,
+				];
+			}, $topics_db->get_by_course($course->ID));
+			usort($topics, fn($a, $b) => (int)$a['sortOrder'] - (int)$b['sortOrder']);
+			$data[] = 'topics';
+		}
+		return compact($data);
 	}
 }
 
@@ -195,43 +247,13 @@ if (!function_exists('lighterlms_course_sidebar')) {
 			return;
 		}
 
-		$access = new User_Access();
-		$owned_lesson = $access->get_owned($post->ID)[0]['lessons'];
+		$course_data = lighter_get_course_lessons($course, null, true);
 
-		$topic_db = new Topics();
-
-		$topics_raw = $topic_db->get_by_course($post->ID);
-		$topics = array_map(function ($row) {
-			return [
-				'key' => $row->topic_key,
-				'title' => $row->title,
-				'sortOrder' => $row->sort_order,
-				'courseId' => $row->post_id,
-			];
-		}, $topics_raw);
-
-		usort($topics, fn($a, $b) => (int)$a['sortOrder'] - (int)$b['sortOrder']);
-
-		$lessons_query = new Lessons(['parent' => $post->ID]);
-		$lessons = $lessons_query->get_lessons();
-		// NOTE: There should be a better way to get the post and metadata
-		// directly in one query instead of mapping it after.
-		$lesson_data = array_map(function ($lesson) {
-			return [
-				'id' => $lesson->ID,
-				'key' => get_post_meta($lesson->ID, '_lighter_lesson_key', true),
-				'slug' => $lesson->post_name,
-				'title' => $lesson->post_title,
-				'sortOrder' => get_post_meta($lesson->ID, '_lighter_sort_order', true) ?: 0,
-				'parentTopicKey' => get_post_meta($lesson->ID, '_lighter_parent_topic', true),
-			];
-		}, $lessons);
-
-		$sb = [['title' => $post->post_title, 'href' => get_permalink($post)]];
-		foreach ($topics as $topic) {
-			$filtered = array_filter($lesson_data, fn($lesson) => $lesson['parentTopicKey'] === $topic['key']);
+		$sidebar = [['title' => $post->post_title, 'href' => get_permalink($post)]];
+		foreach ($course_data['topics'] as $topic) {
+			$filtered = array_filter($course_data['lessons'], fn($lesson) => $lesson['parentTopicKey'] === $topic['key']);
 			usort($filtered, fn($a, $b) => (int)$a['sortOrder'] - (int)$b['sortOrder']);
-			$sb[] = [
+			$sidebar[] = [
 				...$topic,
 				'lessons' => array_values($filtered),
 			];
@@ -246,34 +268,12 @@ if (!function_exists('lighterlms_course_sidebar')) {
 			<?php do_action('lighter_lms_course_before_topics_nav'); ?>
 			<nav class="course-nav lighterlms">
 				<ul class="course-topics">
-					<?php foreach ($sb as $sb_item) :
-						if (array_key_exists('lessons', $sb_item)): ?>
-							<?php printf('<li class="lighter-topic" data-key="%s">', $sb_item['key']); ?>
-							<h3>
-								<button type="button" aria-expanded="true" aria-controls="<?= strtolower(esc_attr($sb_item['title'])) ?>-lessons" class="togglable-btn">
-									<?= esc_html($sb_item['title']) ?>
-								</button>
-							</h3>
-							<ul class="course-lessons open">
-								<?php foreach ($sb_item['lessons'] as $lesson) {
-									if (in_array($lesson['id'], $owned_lesson)) {
-										printf(
-											'<li><a href="?lesson=%1$s" class="course-lesson %1$s" data-lesson="%1$s" data-lesson-id="%2$s" data-key="%3$s" data-parent-key="%4$s">%5$s</a></li>',
-											strtolower(sanitize_key($lesson['slug'])),
-											$lesson['id'],
-											$lesson['key'],
-											$lesson['parentTopicKey'],
-											$lesson['title']
-										);
-									} else {
-										printf('<li><span class="lighter-not-owned">%s</span></li>', $lesson['title']);
-									}
-								} ?>
-							</ul>
-							</li>
-						<?php else: ?>
+					<?php foreach ($sidebar as $sidebar_item) :
+						if (array_key_exists('lessons', $sidebar_item)):
+							lighter_sidebar_item($sidebar_item, $course_data);
+						else: ?>
 							<li>
-								<h1><a href="<?= esc_attr(esc_url($sb_item['href'])) ?>"><?= $sb_item['title'] ?></a></h1>
+								<h1><a href="<?php echo esc_attr(esc_url($sidebar_item['href'])) ?>"><?php echo esc_html($sidebar_item['title']) ?></a></h1>
 							</li>
 					<?php endif;
 					endforeach;
@@ -282,7 +282,7 @@ if (!function_exists('lighterlms_course_sidebar')) {
 			</nav>
 			<?php do_action('lighter_lms_course_after_topics_nav'); ?>
 		</div>
-<?php
+		<?php
 		if (!$display) {
 			$out = ob_get_clean();
 			return $out;
@@ -290,23 +290,73 @@ if (!function_exists('lighterlms_course_sidebar')) {
 	}
 }
 
+if (!function_exists('lighter_sidebar_item')) {
+	/**
+	 * Generate html for a sidebar item.
+	 *
+	 * @param array $item The sidebar item
+	 * @param CourseData $data The course data
+	 * @param bool $display Whether to ouput the content. Will be returned if not output.
+	 *
+	 * @return string|null The generated content.
+	 */
+	function lighter_sidebar_item($item, $data, $display = true)
+	{
+		if (!$display) {
+			ob_start();
+		} ?>
+		<li class="lighter-topic" data-key="<?php echo esc_attr($item['key']) ?>">
+			<h3>
+				<button type="button" aria-expanded="true" aria-controls="<?php strtolower(esc_attr($item['title'])) ?>-lessons" class="togglable-btn">
+					<?php esc_html($item['title']) ?>
+				</button>
+			</h3>
+			<ul class="course-lessons open">
+				<?php foreach ($item['lessons'] as $lesson) {
+					if (in_array($lesson['id'], $data['owned']['lessons'] ?? [])) {
+						printf(
+							'<li><a href="?lesson=%1$s" class="course-lesson %1$s" data-lesson="%1$s" data-lesson-id="%2$s" data-key="%3$s" data-parent-key="%4$s">%5$s</a></li>',
+							strtolower(sanitize_key($lesson['slug'])),
+							esc_attr($lesson['id']),
+							esc_attr($lesson['key']),
+							esc_attr($lesson['parentTopicKey']),
+							esc_html($lesson['title'])
+						);
+					} else {
+						printf('<li><span class="lighter-not-owned">%s</span></li>', esc_html($lesson['title']));
+					}
+				} ?>
+			</ul>
+		</li>
+<?php
+		if (!$display) {
+			return ob_get_clean();
+		}
+	}
+}
+
 if (!function_exists('lighter_normalise_posts')) {
+	/**
+	 * Normilises a post to use in LighterLMS
+	 *
+	 * @phpstan-import-type PostNorm from Types
+	 *
+	 * @param array<int, \WP_Post> $posts An array of wp posts.
+	 * @return array<int, PostNorm>
+	 */
 	function lighter_normalise_posts($posts)
 	{
 		/**
 		 * @param WP_Post $post
+		 * 
+		 *
+		 * @return PostNorm
 		 */
 		return array_map(function ($post) {
-			$title = 'title';
 			$post_type_obj = get_post_type_object($post->post_type);
-
-			if (lighter_lms()->course_post_type === $post->post_type) {
-				$title = 'course_title';
-			}
-
 			return [
 				'id' => $post->ID,
-				$title => $post->post_title,
+				'title' => $post->post_title,
 				'date' => $post->post_date,
 				'date_gmt' => $post->post_date_gmt,
 				'modified' => $post->post_modified,

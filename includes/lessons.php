@@ -107,7 +107,7 @@ class Lessons
 	/**
 	 * Get lesson(s)
 	 *
-	 * Uses the given args to get a/all lessons by topic key or, if not supplied, by parent ID.
+	 * Uses the given args to get a(ll) lesson(s) by topic key or, if not supplied, by parent ID.
 	 * Currently supplying only a lesson ID will just return the lesson Post object.
 	 *
 	 * @return \WP_Post|array
