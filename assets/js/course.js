@@ -297,7 +297,12 @@ class Sidebar {
 
         if (entry.status == "success") {
             window.scrollTo({ top: contentArea.getBoundingClientRect().y + window.scrollY - 20, behavior: 'smooth' });
-            if (document.getElementById('lesson_id')) document.getElementById('lesson_id').value = id;
+            const complete = document.getElementById('lesson_id');
+            if (complete) {
+                complete.value = id;
+                const container = complete.closest(".complete-lesson");
+                if (container && container.classList.contains("lighter-hidden")) container.classList.remove("lighter-hidden");
+            }
         }
     }
 }

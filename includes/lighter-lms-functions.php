@@ -313,8 +313,11 @@ if (!function_exists('lighter_sidebar_item')) {
 			</h3>
 			<ul class="course-lessons open">
 				<?php foreach ($item['lessons'] as $lesson) {
-					$completed = in_array($lesson['id'], $data['progress']['completed_lessons']) ? '<span class="lesson-completed" title="Lesson completed">✓<span class="screen-reader-text">Lesson comlpeted</span></span>' : '';
-					if (in_array($lesson['id'], $data['owned']['lessons'] ?? [])) {
+					$completed = '';
+					if (isset($data['progress']) && !empty($data['progress'])) {
+						$completed = in_array($lesson['id'], $data['progress']['completed_lessons']) ? '<span class="lesson-completed" title="Lesson completed">✓<span class="screen-reader-text">Lesson comlpeted</span></span>' : '';
+					}
+					if (in_array($lesson['id'], $data['owned']['lessons'] ?? []) || current_user_can('manage_options')) {
 						printf(
 							'<li><a href="?lesson=%1$s" class="course-lesson %1$s" data-lesson="%1$s" data-lesson-id="%2$s" data-key="%3$s" data-parent-key="%4$s">%5$s</a>%6$s</li>',
 							strtolower(sanitize_key($lesson['slug'])),

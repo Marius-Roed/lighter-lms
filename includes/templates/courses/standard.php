@@ -81,17 +81,17 @@ if (get_post_meta($post->ID, '_course_display_theme_sidebar', true)) {
                 <p><?php echo wpautop(esc_html(get_post_meta($post->ID, '_course_description', true))) ?></p>
             <?php endif; ?>
         </div>
-        <?php if ($lesson_id): ?>
-            <div class="complete-lesson">
-                <form action="<?php echo esc_url(admin_url('admin-post.php')) ?>" method="post" id="complete-form">
-                    <?php wp_nonce_field('complete_lesson', 'lighter_lesson_nonce') ?>
-                    <input type="hidden" name="action" value="lighter_complete_lesson" />
-                    <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id) ?>" id="lesson_id" />
-                    <input type="hidden" name="course_id" value="<?php echo esc_attr($post->ID) ?>" id="course_id" />
-                    <button type="submit" class="lighter-btn complete-lesson" id="complete-btn" aria-label="Complete lesson">Mark complete</button>
-                </form>
-            </div>
-        <?php endif; ?>
+        <?php
+        $btn_class = $lesson_id ? ["complete-lesson"] : ["complete-lesson", "lighter-hidden"]; ?>
+        <div class="<?php echo implode(" ", $btn_class); ?>">
+            <form action="<?php echo esc_url(admin_url('admin-post.php')) ?>" method="post" id="complete-form">
+                <?php wp_nonce_field('complete_lesson', 'lighter_lesson_nonce') ?>
+                <input type="hidden" name="action" value="lighter_complete_lesson" />
+                <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id) ?>" id="lesson_id" />
+                <input type="hidden" name="course_id" value="<?php echo esc_attr($post->ID) ?>" id="course_id" />
+                <button type="submit" class="lighter-btn complete-lesson-btn" id="complete-btn" aria-label="Complete lesson">Mark complete</button>
+            </form>
+        </div>
     </div>
 </main>
 
