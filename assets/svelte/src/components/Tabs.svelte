@@ -1,19 +1,38 @@
 <script>
     let { items, activeTab = 0, ...props } = $props();
 
+    let list = $state();
+
     /**
      * sets the active tab
      *
      * @param {number} val - Number of the tab to display
      */
-    function setAtive(val) {
+    function setActive(val) {
         activeTab = val;
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", toAttr(items[val].label));
+        window.history.pushState([], "", url.toString());
     }
 
     function handleKeydown(e, val) {
         if (e.key === " " || e.key === "Enter") {
             e.preventDefault();
-            setAtive(val);
+            setActive(val);
+        }
+        if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            let i = document.activeElement?.dataset.i ?? 1;
+            i = i-- <= 0 ? items.length - 1 : i;
+            setActive(i);
+            list.children[i].focus();
+        }
+        if (e.key === "ArrowRight") {
+            e.preventDefault();
+            let i = document.activeElement?.dataset.i ?? 1;
+            i = i++ >= items.length - 1 ? 0 : i;
+            setActive(i);
+            list.children[i].focus();
         }
     }
 
@@ -22,12 +41,13 @@
     }
 </script>
 
-<ul {...props}>
+<ul {...props} bind:this={list}>
     {#each items as item, i}
         <li
             id={toAttr(item.label + " tab")}
             class={activeTab === i ? "active" : ""}
-            onclick={() => setAtive(i)}
+            data-i={i}
+            onclick={() => setActive(i)}
             onkeydown={(e) => handleKeydown(e, i)}
             tabindex="0"
             role="tab"

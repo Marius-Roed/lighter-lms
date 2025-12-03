@@ -8,17 +8,25 @@ declare global {
             machineId: number;
             nonce: string;
             restUrl: string;
+            course: {
+                settings: {
+                    description: string;
+                    displayFooter: boolean;
+                    displayHeader: boolean;
+                    displaySidebar: boolean;
+                    showIcons: boolean;
+                    status: CourseStatus;
+                    publishedOn: Date;
+                    userLocale: string;
+                    store: string;
+                    product?: object;
+                }
+            }
             settings: {
-                description: string;
-                displayFooter: boolean;
-                displayHeader: boolean;
-                displaySidebar: boolean;
-                showIcons: boolean;
-                status: CourseStatus;
-                publishedOn: Date;
-                userLocale: string;
-                store: string;
-                product?: object;
+                builders: {
+                    plugins: Array<string>;
+                    active: string;
+                }
             }
             addAction: Function;
             addFilter: Function;

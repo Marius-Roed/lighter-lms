@@ -8,30 +8,38 @@
         ...rest
     } = $props();
 
-    import PencilIcon from "$icons/pencil.svg?raw";
+    import BreackdanceLogo from "$icons/breakdance-logo.svg?raw";
+    import BricksLogo from "$icons/bricks-logo.svg?raw";
     import CheckmarkIcon from "$icons/checkmark.svg";
     import ChevronIcon from "$icons/chevron-down.svg?raw";
+    import ElementorLogo from "$icons/elementor-logo.svg?raw";
     import LoopIcon from "$icons/loop.svg?raw";
     import MinusIcon from "$icons/minus.svg?raw";
+    import PencilIcon from "$icons/pencil.svg?raw";
     import PlusIcon from "$icons/plus.svg?raw";
     import SaveIcon from "$icons/save.svg?raw";
     import SixDotsIcon from "$icons/six-dots.svg?raw";
     import SlidersIcon from "$icons/sliders.svg?raw";
     import ThreeDotsIcon from "$icons/three-dots.svg?raw";
     import TrashIcon from "$icons/trash.svg?raw";
+    import WordpressLogo from "$icons/wordpress-logo.svg?raw";
 
     const iconMap = {
-        pencil: PencilIcon,
+        breakdance: BreackdanceLogo,
+        bricks: BricksLogo,
         checkmark: CheckmarkIcon,
         chevron: ChevronIcon,
+        elementor: ElementorLogo,
         loop: LoopIcon,
         minus: MinusIcon,
+        pencil: PencilIcon,
         plus: PlusIcon,
         save: SaveIcon,
         sixDots: SixDotsIcon,
         sliders: SlidersIcon,
         threeDots: ThreeDotsIcon,
         trash: TrashIcon,
+        "classic-editor": WordpressLogo,
     };
 
     let svgContent = $state(

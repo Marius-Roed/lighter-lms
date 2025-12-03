@@ -1,11 +1,10 @@
 <script>
-    import Advanced from "$components/tabs-settings/Advanced.svelte";
-    import General from "$components/tabs-settings/General.svelte";
-    import Selling from "$components/tabs-settings/Selling.svelte";
-    import Downloads from "$components/tabs-settings/Downloads.svelte";
+    import Advanced from "$components/course-settings/Advanced.svelte";
+    import General from "$components/course-settings/General.svelte";
+    import Selling from "$components/course-settings/Selling.svelte";
+    import Downloads from "$components/course-settings/Downloads.svelte";
     import Tabs from "$components/Tabs.svelte";
     import settings from "$lib/settings.svelte";
-    import { topics } from "$lib/state.svelte";
 
     let items = [
         {

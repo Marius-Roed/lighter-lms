@@ -9,6 +9,12 @@ $tabs = [
 
 $builders = lighter_lms()->get_builders();
 
+$colors = [
+	'classic-editor' => '#21759B',
+	'bricks' => '#212121',
+	'breakdance' => 'black',
+	'elementor' => '#F0F0F1',
+];
 
 if (isset($_GET['updated']) && $_GET['updated'] === 'true') {
 	echo '<div class="notice notice-success is-dismissible"><p>Settings saved!</p></div>';
@@ -23,33 +29,45 @@ if (isset($_GET['updated']) && $_GET['updated'] === 'true') {
 		<?php wp_nonce_field('lighter_lms_settings', 'lighter_lms'); ?>
 		<input type="hidden" name="action" value="save_lighter_lms_settings" />
 
-		<ul>
-			<?php
-			foreach ($tabs as $label => $name) {
-				printf(
-					'<li class="%1$s" role="tab" data-tab-opt="%1$s" tabindex="0" %2$s>%3$s</li>',
-					esc_attr($label),
-					esc_attr($label === $tab ? 'aria-selected="true"' : ""),
-					esc_html($name)
-				);
-			}
-			?>
-		</ul>
+		<div id="lighter-settings-mount">
+			<ul class="lighter-tab-menu">
+				<?php
+				foreach ($tabs as $label => $name) {
+					printf(
+						'<li role="tab" data-tab-opt="%1$s" tabindex="0" %2$s><a href="?page=lighter-lms-settings&tab=%1$s">%3$s</a></li>',
+						esc_attr($label),
+						esc_attr($label === $tab ? 'aria-selected="true" class="active"' : ""),
+						esc_html($name)
+					);
+				}
+				?>
+			</ul>
 
-		<div class="lighter-content">
-			<h2>Default editor</h2>
-			<?php foreach ($builders as $idx => $builder) {
-				$attr = esc_attr(lighter_attrify($builder) . "-" . $idx + 1);
-				printf(
-					'<label for="%s">%s</label><input type="radio" id="%s" name="default-editor" value="%s"%s />',
-					$attr,
-					esc_html($builder),
-					$attr,
-					esc_attr(lighter_attrify($builder)),
-					lighter_attrify($builder) == lighter_lms()->defaults()->editor ? ' checked' : ''
-				);
-			}
-			?>
+			<div class="box general lighter-content">
+				<h2>Default editor</h2>
+				<div class="editors">
+					<?php foreach ($builders as $idx => $builder) {
+						$attr = esc_attr(lighter_attrify($builder));
+						$logo = $attr == 'classic-editor' ? 'wordpress-logo' : $attr . '-logo';
+						echo "<label for=\"{$attr}\">";
+						printf(
+							'<input type="radio" id="%1$s" name="default-editor" value="%2$s"%1$s />',
+							$attr,
+							lighter_attrify($builder) == lighter_lms()->defaults()->editor ? ' checked' : ''
+						);
+					?>
+						<div class="editor-card <?php echo $attr; ?>">
+							<div class="icon-wrapper" style="--icon-size:222px;--icon-color:<?php echo $colors[$attr] ?>;">
+								<?php esc_html(lighter_icon($logo)); ?>
+							</div>
+							<span><?php echo esc_html($builder) ?></span>
+						</div>
+						</label>
+					<?php
+					}
+					?>
+				</div>
+			</div>
 		</div>
 
 		<div class="lighter-settings-foot">

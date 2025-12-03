@@ -45,7 +45,7 @@ class Post_Types
 		add_filter('post_class', [$this, 'post_class'], 10, 3);
 		add_filter('manage_' . $this->course_post_type . '_posts_columns', [$this, 'course_columns']);
 		add_filter('rest_' . $this->course_post_type . '_query', [$this, 'course_rest_query'], 20, 2);
-		add_filter('lighter_admin_object', [$this, 'js_objects'], 10, 2);
+		add_filter('lighter_lms_admin_object', [$this, 'js_objects'], 10, 2);
 
 		// TODO: Add user access check.
 

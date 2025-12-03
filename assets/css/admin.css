@@ -405,6 +405,10 @@
     .icon-wrapper {
         color: var(--icon-color, currentColor);
         width: var(--icon-size, 1em);
+        height: var(--icon-size, 1em);
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
         aspect-ratio: 1;
     }
 
@@ -638,6 +642,25 @@
         position: relative;
         width: 100%;
         overflow: visible;
+    }
+
+    .lighter-tab-menu {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 1rem;
+        border-bottom: 1px solid #D2C8E1;
+
+        li {
+            font-size: 1.25em;
+            font-weight: 600;
+            margin: 0;
+            padding: 0.75rem;
+
+            &:hover {
+                cursor: pointer;
+            }
+        }
     }
 }
 
@@ -884,9 +907,119 @@
             width: 150px;
         }
     }
+
+    #lighter-settings-mount .box {
+        max-width: 1136px;
+        margin-inline: auto;
+    }
+
+    .editors {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 16px;
+
+        :has(input:checked) .editor-card::before {
+            inset: 0%;
+            border-radius: 1rem;
+            transition-delay: 0ms;
+        }
+
+        :has(input:checked) span { color: #F0F0F1; }
+    }
+
+    .editor-card {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        align-items: center;
+        border: 1px solid #D2C8E1;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        max-width: 272px;
+        overflow: hidden;
+
+        span {
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        &:hover { cursor: pointer }
+
+        &::before {
+            content: "";
+            position: absolute;
+            inset: 1.49rem;
+            bottom: calc(1.5rem + 1.4lh + 2rem);
+            background-color: #21759B;
+            border-radius: 50%;
+            z-index: -1;
+            transition-property: top, right, left, bottom, border-radius;
+            transition-duration: 150ms;
+            transition-timing-function: ease;
+        }
+
+        &:hover::before {
+            inset: 24px;
+            bottom: calc(24px + 1.4lh + 2rem);
+            border-radius: 2rem;
+            transition-delay: 100ms;
+        }
+
+        .icon-wrapper { position: relative; }
+        /*.icon-wrapper::before {
+            content: "";
+            position: absolute;
+            inset: 2%;
+            background-color: #21759B;
+            z-index: 2;
+            border-radius: 50%;
+            transition: 250ms;
+        }*/
+        .icon-wrapper::after {
+            content: "";
+            position: absolute;
+            inset: 1%;
+            border-radius: 50%;
+            background-color: #F0F0F1;
+            z-index: 3;
+        }
+
+        &:hover .icon-wrapper::before {
+            inset: 0;
+            border-radius: 2.5rem;
+        }
+
+        svg {width: 222px; height: 222px; z-index: 5}
+    }
+
+    .lighter-settings-foot {
+        margin-inline: auto;
+        margin-block-start: 2.5rem;
+        display: flex;
+        justify-content: flex-end;
+        max-width: 1136px;
+    }
 }
 
+.lighter-wrap h1 { display: none; margin: 0; padding: 0; }
+
 #post-filters p { margin: 0; }
+
+.lighter-tab-menu li {margin: 0;}
+
+.breakdance.editor-card .icon-wrapper::before, .breakdance.editor-card .icon-wrapper::after { background-color: #FFC514; }
+.breakdance.editor-card::before { background-color: #FFC514; }
+
+.elementor.editor-card .icon-wrapper::before, .elementor.editor-card .icon-wrapper::after { background-color: #92003B; }
+.elementor.editor-card::before { background-color: #92003B; }
+
+.editors input { appearance: none; position: absolute; opacity: 0; pointer-events: none; }
+.editors input[type="radio"]:focus + .editor-card {
+    outline: 2px solid rebeccapurple;
+    outline-offset: 2px;
+}
 
 .lighter-downloads tbody input[type="text"] {
     width: 100%;

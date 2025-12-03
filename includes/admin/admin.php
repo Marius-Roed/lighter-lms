@@ -65,6 +65,18 @@ class Admin
 		$per_page = max(1, min(100, $per_page));
 		add_filter("edit_" . lighter_lms()->course_post_type . "_per_page", fn() => $per_page);
 		add_filter("edit_" . lighter_lms()->lesson_post_type . "_per_page", fn() => $per_page);
+
+		add_filter('lighter_lms_admin_object', function ($obj, $screen_id) {
+			if ($screen_id == "lighter-lms-settings") {
+				$obj['settings'] = [
+					'builders' => [
+						'plugins' => [...lighter_lms()->get_builders(), 'Elementor'],
+						'active' => lighter_lms()->defaults()->editor,
+					]
+				];
+			}
+			return $obj;
+		}, 10, 2);
 	}
 
 	public function app()
@@ -206,13 +218,14 @@ class Admin
 				'entry' => 'lessons',
 				'dev' => 'src/screens/lessons/main.js',
 			],
-			// 'lighter-lms-settings' => [
-			//	'entry' => 'settings',
-			//	'dev' => 'src/screens/settings/main.js',
-			//]
+			'lighter-lms-settings' => [
+				'entry' => 'settings',
+				'dev' => 'src/screens/settings/main.js',
+			]
 		];
 
 		$screen_id = function_exists('get_current_screen') ? get_current_screen()->id : $hook_suffix;
+		$screen_id = str_contains($screen_id, "_page_") ? substr($screen_id, 17) : $screen_id;
 
 		if (! isset($screen_map[$screen_id])) {
 			return;
@@ -230,7 +243,7 @@ class Admin
 			'machineId' => apply_filters('lighterlms_use_machine_id', 0)
 		];
 
-		$lighter_lms = apply_filters('lighter_admin_object', $lighter_lms, $screen_id);
+		$lighter_lms = apply_filters('lighter_lms_admin_object', $lighter_lms, $screen_id);
 
 		wp_localize_script('lighterlms-hooks', 'LighterLMS', $lighter_lms);
 
