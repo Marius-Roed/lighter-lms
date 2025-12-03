@@ -37,7 +37,6 @@ class Config
 		"Elementor",
 		"Elementor Pro",
 		"Gutenberg",
-		"GeneratePress",
 		"Fusion Builder",
 		"Flatsome UX Builder",
 		"KingComposer",

@@ -70,7 +70,7 @@ class Admin
 			if ($screen_id == "lighter-lms-settings") {
 				$obj['settings'] = [
 					'builders' => [
-						'plugins' => [...lighter_lms()->get_builders(), 'Elementor'],
+						'plugins' => lighter_lms()->get_builders(),
 						'active' => lighter_lms()->defaults()->editor,
 					]
 				];

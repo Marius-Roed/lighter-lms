@@ -8,38 +8,53 @@
         ...rest
     } = $props();
 
+    import BeaverBuilderLogo from "$icons/beaver-builder-logo.svg?raw";
     import BreackdanceLogo from "$icons/breakdance-logo.svg?raw";
     import BricksLogo from "$icons/bricks-logo.svg?raw";
+    import BrizyLogo from "$icons/brizy-logo.svg?raw";
     import CheckmarkIcon from "$icons/checkmark.svg";
     import ChevronIcon from "$icons/chevron-down.svg?raw";
+    import DiviLogo from "$icons/divi-logo.svg?raw";
     import ElementorLogo from "$icons/elementor-logo.svg?raw";
+    import FusionBuilderLogo from "$icons/fusion-builder-logo.svg?raw";
+    import LiveComposerLogo from "$icons/live-composer-logo.svg?raw";
     import LoopIcon from "$icons/loop.svg?raw";
     import MinusIcon from "$icons/minus.svg?raw";
+    import OxygenLogo from "$icons/oxygen-logo.svg?raw";
     import PencilIcon from "$icons/pencil.svg?raw";
     import PlusIcon from "$icons/plus.svg?raw";
     import SaveIcon from "$icons/save.svg?raw";
     import SixDotsIcon from "$icons/six-dots.svg?raw";
     import SlidersIcon from "$icons/sliders.svg?raw";
+    import SpectraLogo from "$icons/spectra-logo.svg?raw";
     import ThreeDotsIcon from "$icons/three-dots.svg?raw";
     import TrashIcon from "$icons/trash.svg?raw";
     import WordpressLogo from "$icons/wordpress-logo.svg?raw";
 
     const iconMap = {
+        "beaver-builder": BeaverBuilderLogo,
         breakdance: BreackdanceLogo,
         bricks: BricksLogo,
+        brizy: BrizyLogo,
         checkmark: CheckmarkIcon,
         chevron: ChevronIcon,
+        divi: DiviLogo,
         elementor: ElementorLogo,
+        "fusion-builder": FusionBuilderLogo,
+        "live-composer": LiveComposerLogo,
         loop: LoopIcon,
         minus: MinusIcon,
+        oxygen: OxygenLogo,
         pencil: PencilIcon,
         plus: PlusIcon,
         save: SaveIcon,
         sixDots: SixDotsIcon,
         sliders: SlidersIcon,
+        spectra: SpectraLogo,
         threeDots: ThreeDotsIcon,
         trash: TrashIcon,
         "classic-editor": WordpressLogo,
+        gutenberg: WordpressLogo,
     };
 
     let svgContent = $state(

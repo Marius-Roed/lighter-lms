@@ -2,11 +2,54 @@
     import Icon from "$components/Icon.svelte";
 
     const ICON_COLOR = {
-        blocks: "#21759B",
-        bricks: "#212121",
-        breakdance: "black",
-        elementor: "#F0F0F1",
-        "classic-editor": "#21759B",
+        "beaver-builder": {
+            foreground: "transparent",
+            background: "#FEAF52",
+        },
+        breakdance: {
+            foreground: "black",
+            background: "#FFC514",
+        },
+        bricks: {
+            foreground: "#212121",
+            background: "#FFD54C",
+        },
+        brizy: {
+            foreground: "transparent",
+            background: "#0E0736",
+        },
+        divi: {
+            foreground: "white",
+            background: "transparent",
+        },
+        elementor: {
+            foreground: "#F0F0F1",
+            background: "#92003B",
+        },
+        gutenberg: {
+            foreground: "#1e1e1e",
+            background: "#F0F0F1",
+        },
+        "fusion-builder": {
+            foreground: "white",
+            background: "#50B3C4",
+        },
+        "live-composer": {
+            foreground: "transparent",
+            background: "#2EDCE7",
+        },
+        spectra: {
+            foreground: "#F0F0F1",
+            background: "#5733FF",
+        },
+        oxygen: {
+            foreground: "white",
+            background: "black",
+        },
+        "classic-editor": {
+            foreground: "#21759B",
+            background: "#F0F0F1",
+        },
     };
 
     let LighterLMS = window.LighterLMS;
@@ -20,8 +63,9 @@
 <div class="editors">
     {#each LighterLMS.settings.builders.plugins as plugin}
         {@const editor = attrify(plugin)}
-        {@const color = ICON_COLOR[editor]}
-        <label for={editor}>
+        {@const fg = ICON_COLOR[editor]?.["foreground"]}
+        {@const bg = ICON_COLOR[editor]?.["background"]}
+        <label for={editor} style={`--bg-color: ${bg}`}>
             <input
                 type="radio"
                 id={editor}
@@ -30,7 +74,7 @@
                 checked={editor == LighterLMS.settings.builders.active}
             />
             <div class={[editor, "editor-card"]}>
-                <Icon name={editor} size="222" {color} />
+                <Icon name={editor} size="222" color={fg} />
                 <span>{plugin}</span>
             </div>
         </label>

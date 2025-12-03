@@ -951,7 +951,7 @@
             content: "";
             position: absolute;
             inset: 1.49rem;
-            bottom: calc(1.5rem + 1.4lh + 2rem);
+            bottom: calc(1.5rem + 1.5lh + 2rem);
             background-color: #21759B;
             border-radius: 50%;
             z-index: -1;
@@ -962,21 +962,12 @@
 
         &:hover::before {
             inset: 24px;
-            bottom: calc(24px + 1.4lh + 2rem);
+            bottom: calc(24px + 1.5lh + 2rem);
             border-radius: 2rem;
             transition-delay: 100ms;
         }
 
         .icon-wrapper { position: relative; }
-        /*.icon-wrapper::before {
-            content: "";
-            position: absolute;
-            inset: 2%;
-            background-color: #21759B;
-            z-index: 2;
-            border-radius: 50%;
-            transition: 250ms;
-        }*/
         .icon-wrapper::after {
             content: "";
             position: absolute;
@@ -1009,11 +1000,11 @@
 
 .lighter-tab-menu li {margin: 0;}
 
-.breakdance.editor-card .icon-wrapper::before, .breakdance.editor-card .icon-wrapper::after { background-color: #FFC514; }
-.breakdance.editor-card::before { background-color: #FFC514; }
-
-.elementor.editor-card .icon-wrapper::before, .elementor.editor-card .icon-wrapper::after { background-color: #92003B; }
-.elementor.editor-card::before { background-color: #92003B; }
+.editor-card .icon-wrapper::after { background-color: var(--bg-color, #F0F0F1 ) }
+.editor-card::before { background-color: var(--bg-color, #F0F0F1) }
+.classic-editor.editor-card::before { background-color: #25719B }
+.gutenberg.editor-card::before { background-color: #1e1e1e }
+.divi.editor-card::before { background-image: linear-gradient(90deg, #b142ec, #8f42ec) }
 
 .editors input { appearance: none; position: absolute; opacity: 0; pointer-events: none; }
 .editors input[type="radio"]:focus + .editor-card {
