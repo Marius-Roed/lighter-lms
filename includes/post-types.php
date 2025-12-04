@@ -612,13 +612,11 @@ class Post_Types
 	 */
 	public function js_objects($obj, $screen_id)
 	{
-
 		if ("lighter_lessons" === $screen_id) {
 			$obj['lesson']['settings'] = lighter_get_lesson_settings();
 		}
 
 		if ("lighter_courses" === $screen_id) {
-
 			$obj['course']['settings'] = lighter_get_course_settings();
 		}
 

@@ -34,7 +34,7 @@ abstract class Post_Type
 			add_action('edit_form_after_title', [__CLASS__, 'no_script']);
 
 			add_filter('post_class', [__CLASS__, 'post_class'], 10, 3);
-			add_filter('lighter_admin_object', [__CLASS__, 'js_objects'], 10, 2);
+			add_filter('lighter_lms_admin_object', [__CLASS__, 'js_objects'], 10, 2);
 			self::$shared_hooks_added = true;
 		}
 	}

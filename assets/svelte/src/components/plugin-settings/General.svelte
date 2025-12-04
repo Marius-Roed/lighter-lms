@@ -24,23 +24,23 @@
         },
         elementor: {
             foreground: "#F0F0F1",
-            background: "#92003B",
+            background: "#92003b",
         },
         gutenberg: {
             foreground: "#1e1e1e",
-            background: "#F0F0F1",
+            background: "#f0f0f1",
         },
         "fusion-builder": {
             foreground: "white",
-            background: "#50B3C4",
+            background: "#50b3c4",
         },
         "live-composer": {
             foreground: "transparent",
-            background: "#2EDCE7",
+            background: "#2edce7",
         },
         spectra: {
-            foreground: "#F0F0F1",
-            background: "#5733FF",
+            foreground: "#f0f0f1",
+            background: "#5733ff",
         },
         oxygen: {
             foreground: "white",
@@ -92,4 +92,11 @@
             </div>
         </label>
     {/each}
+</div>
+<h2>Course Access</h2>
+<p>Give users access to courses</p>
+<div class="course-access">
+    <div class="user-list"></div>
+    →
+    <div class="course-list"></div>
 </div>

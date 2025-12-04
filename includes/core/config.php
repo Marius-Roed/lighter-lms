@@ -27,29 +27,132 @@ class Config
 	private $_settings = [];
 
 	private $_builders = [
-		"Beaver Builder Plugin",
-		"Beaver Builder Plugin (Lite Version)",
-		"Brizy",
-		"Breakdance",
-		"Classic Editor",
-		"Cornerstone Page Builder",
-		"Divi Builder",
-		"Elementor",
-		"Elementor Pro",
-		"Gutenberg",
-		"Fusion Builder",
-		"Flatsome UX Builder",
-		"KingComposer",
-		"Live Composer",
-		"Layers WP",
-		"MotoPress Content Editor",
-		"Oxygen Builder",
-		"SiteOrigin Page Builder",
-		"Spectra",
-		"Thrive Architect",
-		"Visual Composer Website Builder",
-		"WPBakery Page Builder",
-		"Yellow Pencil",
+		"Beaver Builder Plugin" => [
+			"name" => ["Beaver Builder Plugin", "Beaver Builder Plugin (Lite Version)"],
+			"slug" => "beaver",
+			"foreground" => "#00000000",
+			"background" => "#FEAF52",
+		],
+		"Brizy" => [
+			"name" => ["Brizy"],
+			"slug" => "brizy",
+			"foreground" => "#00000000",
+			"background" => "#0E0736",
+		],
+		"Breakdance" => [
+			"name" => ["Breakdance"],
+			"slug" => "breakdance",
+			"foreground" => "#000000",
+			"background" => "#FFC514",
+		],
+		"Classic Editor" => [
+			"name" => ["Classic Editor"],
+			"slug" => "classic-editor",
+			"foreground" => "#21759B",
+			"background" => "#F0F0F1",
+		],
+		"Cornerstone Page Builder" => [
+			"name" => ["Cornerstone Page Builder"],
+			"slug" => "cornerstone",
+			"foreground" => "#00000000",
+			"background" => "#00000000",
+		],
+		"Divi Builder" => [
+			"name" => ["Divi Builder"],
+			"slug" => "divi",
+			"foreground" => "#FFFFFFF",
+			"background" => "#00000000",
+		],
+		"Elementor" => [
+			"name" => ["Elementor", "Elementor Pro"],
+			"slug" => "elementor",
+			"foreground" => "#F0F0F1",
+			"background" => "#92003B",
+		],
+		"Gutenberg" => [
+			"name" => ["Gutenberg"],
+			"slug" => "gutenberg",
+			"foreground" => "#1E1E1E",
+			"background" => "#F0F0F1",
+		],
+		"Fusion Builder" => [
+			"name" => ["Fusion Builder"],
+			"slug" => "fusion",
+			"foreground" => "#FFFFFF",
+			"background" => "#50B3C4",
+		],
+		"Flatsome UX Builder" => [
+			"name" => ["Flatsome UX Builder"],
+			"slug" => "flatsome",
+			"foreground" => "#00000000",
+			"background" => "#00000000",
+		],
+		"KingComposer" => [
+			"name" => ["KingComposer"],
+			"slug" => "kingcomposer",
+			"foreground" => "#00000000",
+			"background" => "#00000000",
+		],
+		"Live Composer" => [
+			"name" => ["Live Composer"],
+			"slug" => "live-composer",
+			"foreground" => "#00000000",
+			"background" => "#2EDCE7",
+		],
+		"Layers WP" => [
+			"name" => ["Layers WP"],
+			"slug" => "layers",
+			"foreground" => "#00000000",
+			"background" => "#00000000",
+		],
+		"MotoPress Content Editor" => [
+			"name" => ["MotoPress Content Editor"],
+			"slug" => "motopress",
+			"foreground" => "#00000000",
+			"background" => "#00000000",
+		],
+		"Oxygen Builder" => [
+			"name" => ["Oxygen Builder"],
+			"slug" => "oxygen",
+			"foreground" => "#FFFFFF",
+			"background" => "#000000",
+		],
+		"SiteOrigin Page Builder" => [
+			"name" => ["SiteOrigin Page Builder"],
+			"slug" => "siteorigin",
+			"foreground" => "#00000000",
+			"background" => "#00000000",
+		],
+		"Spectra" => [
+			"name" => ["Spectra"],
+			"slug" => "spectra",
+			"foreground" => "#F0F0F1",
+			"background" => "#5733FF",
+		],
+		"Thrive Architect" => [
+			"name" => ["Thrive Architect"],
+			"slug" => "thrive",
+			"foreground" => "#00000000",
+			"background" => "#00000000",
+		],
+		"Visual Composer Website Builder" => [
+			"name" => ["Visual Composer Website Builder"],
+			"slug" => "visual-composer",
+			"foreground" => "#00000000",
+			"background" => "#00000000",
+		],
+		"WPBakery Page Builder" => [
+			"name" => ["WPBakery Page Builder"],
+			"slug" => "wpbakery",
+			"foreground" => "#00000000",
+			"background" => "#00000000",
+		],
+		"Yellow Pencil" => [
+			"name" => ["Yellow Pencil"],
+			"slug" => "yellow",
+			"foreground" => "#00000000",
+			"background" => "#00000000",
+		],
 	];
 
 	public static function get_instance()
@@ -150,22 +253,45 @@ class Config
 		return false;
 	}
 
-	public function get_builders()
+	/**
+	 * Get page builders
+	 *
+	 * Gets all the active page builder plugin on the site. Accessible properties
+	 * are "name", "slug", "foreground" and "background". Defaults to "name".
+	 * 
+	 * @param string $property
+	 * @return array
+	 */
+	public function get_builders($property = "name")
 	{
 		if (!current_user_can('manage_options')) return [];
 
 		$plugins = get_option('active_plugins');
 		$builders = [];
+		$builds = [];
+		foreach ($this->_builders as $key => $builder) {
+			foreach ($builder['name'] as $alias) {
+				$builds[$alias] = $key;
+			}
+		}
 
 		foreach ($plugins as $plugin) {
 			$plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin);
 			$name = $plugin_data['Name'];
-
-			if (in_array($name, $this->_builders)) {
-				$builders[] = $name;
+			if (isset($builds[$name])) {
+				$builders[] = $this->_builders[$builds[$name]];
 			}
 		}
 
-		return $builders;
+		$props = [];
+		if ($property == "all") {
+			return $builders;
+		} else if (in_array($property, array_keys($this->_builders['Classic Editor']))) {
+			$props = array_column($builders, $property);
+		} else {
+			$props = array_column($builders, 'name');
+		}
+
+		return $props;
 	}
 }

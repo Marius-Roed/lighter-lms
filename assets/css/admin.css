@@ -922,7 +922,7 @@
         :has(input:checked) .editor-card::before {
             inset: 0%;
             border-radius: 1rem;
-            transition-delay: 0ms;
+            transition-delay: 0ms !important;
         }
 
         :has(input:checked) span { color: #F0F0F1; }

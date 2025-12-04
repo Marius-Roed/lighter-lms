@@ -70,7 +70,7 @@ class Admin
 			if ($screen_id == "lighter-lms-settings") {
 				$obj['settings'] = [
 					'builders' => [
-						'plugins' => lighter_lms()->get_builders(),
+						'plugins' => array_map(fn($b) => $b[0], lighter_lms()->get_builders()),
 						'active' => lighter_lms()->defaults()->editor,
 					]
 				];
@@ -256,8 +256,8 @@ class Admin
 
 		if (lighter_lms()->development) {
 			$local_server = 'http://localhost:5173/';
-			wp_enqueue_script_module('vite-client', $local_server . '@vite/client', [], null, true);
-			wp_enqueue_script_module($handle . '-' . $entry_key, $local_server . $entry_dev, ['vite-client'], null, true);
+			wp_enqueue_script_module('vite-client', $local_server . '@vite/client', [], null);
+			wp_enqueue_script_module($handle . '-' . $entry_key, $local_server . $entry_dev, ['vite-client'], null);
 		} else {
 			$manifest_path = LIGHTER_LMS_PATH . '/assets/dist/.vite/manifest.json';
 			$manifest      = json_decode(file_get_contents($manifest_path), true);
@@ -288,8 +288,7 @@ class Admin
 				$handle . '-' . $entry_key,
 				LIGHTER_LMS_URL . '/assets/dist/' . $entry_info['file'],
 				array(),
-				null,
-				true
+				LIGHTER_LMS_VERSION
 			);
 
 			// Enqueue vendor chunk if present and not inlined
@@ -300,8 +299,7 @@ class Admin
 							$handle . '-' . $entry_key . '-import-' . md5($import_key),
 							LIGHTER_LMS_URL . '/assets/dist/' . $manifest[$import_key]['file'],
 							array(),
-							null,
-							true
+							LIGHTER_LMS_VERSION
 						);
 					}
 				}
@@ -314,7 +312,7 @@ class Admin
 						$handle . '-' . $entry_key,
 						LIGHTER_LMS_URL . '/assets/dist/' . $css_file,
 						array(),
-						null
+						LIGHTER_LMS_VERSION
 					);
 				}
 			}
