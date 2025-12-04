@@ -1,57 +1,6 @@
 <script>
     import Icon from "$components/Icon.svelte";
 
-    const ICON_COLOR = {
-        "beaver-builder": {
-            foreground: "transparent",
-            background: "#FEAF52",
-        },
-        breakdance: {
-            foreground: "black",
-            background: "#FFC514",
-        },
-        bricks: {
-            foreground: "#212121",
-            background: "#FFD54C",
-        },
-        brizy: {
-            foreground: "transparent",
-            background: "#0E0736",
-        },
-        divi: {
-            foreground: "white",
-            background: "transparent",
-        },
-        elementor: {
-            foreground: "#F0F0F1",
-            background: "#92003b",
-        },
-        gutenberg: {
-            foreground: "#1e1e1e",
-            background: "#f0f0f1",
-        },
-        "fusion-builder": {
-            foreground: "white",
-            background: "#50b3c4",
-        },
-        "live-composer": {
-            foreground: "transparent",
-            background: "#2edce7",
-        },
-        spectra: {
-            foreground: "#f0f0f1",
-            background: "#5733ff",
-        },
-        oxygen: {
-            foreground: "white",
-            background: "black",
-        },
-        "classic-editor": {
-            foreground: "#21759B",
-            background: "#F0F0F1",
-        },
-    };
-
     let LighterLMS = window.LighterLMS;
 
     const attrify = (/** @type {string} */ s) => {
@@ -62,9 +11,9 @@
 <h2>Default editor</h2>
 <div class="editors">
     {#each LighterLMS.settings.builders.plugins as plugin}
-        {@const editor = attrify(plugin)}
-        {@const fg = ICON_COLOR[editor]?.["foreground"]}
-        {@const bg = ICON_COLOR[editor]?.["background"]}
+        {@const editor = plugin["slug"]}
+        {@const bg = plugin["background"]}
+        {@const fg = plugin["foreground"]}
         <label for={editor} style={`--bg-color: ${bg}`}>
             <input
                 type="radio"
@@ -75,7 +24,7 @@
             />
             <div class={[editor, "editor-card"]}>
                 <Icon name={editor} size="222" color={fg} />
-                <span>{plugin}</span>
+                <span>{plugin["name"][0]}</span>
             </div>
         </label>
     {:else}

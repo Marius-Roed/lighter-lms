@@ -919,12 +919,6 @@
         flex-wrap: wrap;
         gap: 16px;
 
-        :has(input:checked) .editor-card::before {
-            inset: 0%;
-            border-radius: 1rem;
-            transition-delay: 0ms !important;
-        }
-
         :has(input:checked) span { color: #F0F0F1; }
     }
 
@@ -1010,6 +1004,11 @@
 .editors input[type="radio"]:focus + .editor-card {
     outline: 2px solid rebeccapurple;
     outline-offset: 2px;
+}
+.editors :has(input:checked) .editor-card::before {
+    inset: 0%;
+    border-radius: 1rem;
+    transition-delay: 0ms !important;
 }
 
 .lighter-downloads tbody input[type="text"] {
