@@ -51,6 +51,7 @@ export default defineConfig({
         dashboard: path.resolve(__dirname, 'src/screens/dashboard/main.js'),
         courses: path.resolve(__dirname, 'src/screens/courses/main.js'),
         lessons: path.resolve(__dirname, 'src/screens/lessons/main.js'),
+        settings: path.resolve(__dirname, 'src/screens/settings/main.js'),
         tablelist: path.resolve(__dirname, 'src/screens/pages/main.js'),
         hooks: path.resolve(__dirname, 'src/hooks.js'),
       },

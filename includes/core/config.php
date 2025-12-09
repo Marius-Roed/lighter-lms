@@ -28,7 +28,7 @@ class Config
 
 	private $_builders = [
 		"Beaver Builder Plugin" => [
-			"name" => ["Beaver Builder Plugin", "Beaver Builder Plugin (Lite Version)"],
+			"name" => ["Beaver Builder", "Beaver Builder Plugin (Lite Version)"],
 			"slug" => "beaver",
 			"foreground" => "#00000000",
 			"background" => "#FEAF52",
@@ -48,7 +48,7 @@ class Config
 		"Classic Editor" => [
 			"name" => ["Classic Editor"],
 			"slug" => "classic-editor",
-			"foreground" => "#21759B",
+			"foreground" => "#25719B",
 			"background" => "#F0F0F1",
 		],
 		"Cornerstone Page Builder" => [
@@ -268,18 +268,12 @@ class Config
 
 		$plugins = get_option('active_plugins');
 		$builders = [];
-		$builds = [];
-		foreach ($this->_builders as $key => $builder) {
-			foreach ($builder['name'] as $alias) {
-				$builds[$alias] = $key;
-			}
-		}
 
 		foreach ($plugins as $plugin) {
 			$plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin);
 			$name = $plugin_data['Name'];
-			if (isset($builds[$name])) {
-				$builders[] = $this->_builders[$builds[$name]];
+			if (isset($this->_builders[$name]) && ! in_array($this->_builders[$name]['slug'], array_column($builders, 'slug'))) {
+				$builders[] = $this->_builders[$name];
 			}
 		}
 

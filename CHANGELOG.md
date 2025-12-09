@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file
 
+## [1.0.0-alpha.17] - 2025-12-04
+
+### Fixes
+
+- Double editors in settings page.
+
+## [1.0.0-alpha.16] - 2025-12-04
+
+### Fixes
+
+- show complete button.
+- argument issue with updates `wp_enqueue_script_module()`.
+
+### Changes
+
+- New settings page look.
+
 ## [1.0.0-alpha.15] - 2025-11-20
 
 ### Added

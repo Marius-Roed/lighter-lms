@@ -1,4 +1,5 @@
 <?php
+global $wp_rest_additional_fields;
 $tabs = [
 	'general' => 'General',
 	'lessons' => 'Lessons',
@@ -49,7 +50,7 @@ if (isset($_GET['updated']) && $_GET['updated'] === 'true') {
 							$builder['slug'] == lighter_lms()->defaults()->editor ? ' checked' : ''
 						);
 					?>
-						<div class="editor-card <?php echo $attr; ?>">
+						<div class="editor-card col <?php echo $attr; ?>">
 							<div class="icon-wrapper" style="--icon-size:222px;--icon-color:<?php echo $builder['foreground'] ?>;">
 								<?php esc_html(lighter_icon($logo)); ?>
 							</div>
@@ -70,3 +71,4 @@ if (isset($_GET['updated']) && $_GET['updated'] === 'true') {
 		</div>
 	</form>
 </div>
+<?php var_dump($wp_rest_additional_fields); ?>

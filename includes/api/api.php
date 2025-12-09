@@ -23,6 +23,24 @@ class API
 		add_filter('rest_' . lighter_lms()->course_post_type . '_query', [$this, 'course_rest'], 10, 2);
 		add_filter('rest_prepare_' . lighter_lms()->lesson_post_type, [$this, 'ensure_fields'], 10, 3);
 		add_filter('rest_prepare_' . lighter_lms()->course_post_type, [$this, 'ensure_fields'], 10, 3);
+		add_filter('rest_prepare_user', [$this, 'ensure_user'], 10, 3);
+
+		/*
+		register_rest_field('user', 'email', [
+			'get_callback' => function ($user) {
+				$u = new \WP_User($user['id']);
+				return $u->user_email;
+			},
+			'update_callback' => null,
+			'schema' => [
+				'description' => 'tester',
+				'type' => 'string',
+				'format' => 'text',
+				'context' => ['view', 'edit'],
+				'readonly' => true,
+			]
+		]);
+		*/
 	}
 
 	public function register_lesson_routes()
@@ -628,5 +646,22 @@ class API
 		}
 
 		return $response;
+	}
+
+	public function ensure_user($resp, $user, $req)
+	{
+		$data = $resp->get_data();
+		$current_user_id = get_current_user_id();
+
+		$can_view = $current_user_id === $user->ID || current_user_can('edit_users') || current_user_can('list_users');
+
+		if ($can_view) {
+			$data['email'] = $user->user_email;
+		} else {
+			unset($data['email']);
+		}
+
+		$resp->set_data($data);
+		return $resp;
 	}
 }

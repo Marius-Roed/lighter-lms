@@ -1,7 +1,9 @@
 <script>
     import Icon from "$components/Icon.svelte";
+    import UserList from "$components/UserList.svelte";
 
     let LighterLMS = window.LighterLMS;
+    let users = $state([]);
 
     const attrify = (/** @type {string} */ s) => {
         return s.replaceAll(/\s|_/gi, "-").toLowerCase();
@@ -22,7 +24,7 @@
                 value={editor}
                 checked={editor == LighterLMS.settings.builders.active}
             />
-            <div class={[editor, "editor-card"]}>
+            <div class={[editor, "editor-card", "col"]}>
                 <Icon name={editor} size="222" color={fg} />
                 <span>{plugin["name"][0]}</span>
             </div>
@@ -45,7 +47,7 @@
 <h2>Course Access</h2>
 <p>Give users access to courses</p>
 <div class="course-access">
-    <div class="user-list"></div>
+    <UserList bind:users />
     →
     <div class="course-list"></div>
 </div>

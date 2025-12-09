@@ -113,6 +113,10 @@
         height: fit-content;
     }
 
+    .bordered {
+        border: 1px solid #D2C8E1;
+    }
+
     .lighter.dia-editor {
         --admin-bar: 0px;
     }
@@ -924,8 +928,6 @@
 
     .editor-card {
         position: relative;
-        display: flex;
-        flex-direction: column;
         gap: 2rem;
         align-items: center;
         border: 1px solid #D2C8E1;
@@ -979,6 +981,67 @@
         svg {width: 222px; height: 222px; z-index: 5}
     }
 
+    #lighter-settings-mount .course-access {
+        display: grid;
+        grid-template-columns: 1fr 2rem 1fr;
+        gap: 2rem;
+
+        .users-wrap {
+            padding: 0.25rem;
+            border-radius: 0.925rem;
+            background-color: #fff;
+            min-height: 20rem;
+        }
+
+        .no-users {
+            flex: 1;
+            display: grid;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .user-list {
+            position: relative;
+            height: 100%;
+
+            .dropdown {
+                position: absolute;
+                background: white;
+                border-radius: 0 0 .5em .5em;
+                padding: 4px !important;
+                width: 100%;
+                top: 35px;
+                left: 0;
+                box-shadow: 0 1px 9px -3px oklch( 0 0 0 / .25);
+                border: 1px solid #D2C8E1;
+
+                div {
+                    position: relative;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.5em;
+                    border-radius: 4px;
+                    padding: .75em;
+
+                    &:hover {
+                        background-color: oklch(0.85 0.04 303.81 / .45);
+                    }
+
+                    &[aria-selected="true"] {
+                        background-color: oklch(0.85 0.04 303.81 / .85);
+                    }
+                }
+                .user-id {
+                    position: absolute;
+                    top: 50%;
+                    right: 1em;
+                    transform: translateY(-50%);
+                }
+            }
+        }
+    }
+
     .lighter-settings-foot {
         margin-inline: auto;
         margin-block-start: 2.5rem;
@@ -1007,7 +1070,7 @@
 }
 .editors :has(input:checked) .editor-card::before {
     inset: 0%;
-    border-radius: 1rem;
+    border-radius: 0.5rem;
     transition-delay: 0ms !important;
 }
 
@@ -1019,6 +1082,8 @@
     font-size: 14px;
     font-weight: 500;
 }
+
+.lighter .dropdown li { margin: 0; }
 
 .tag-search .dropdown li {
     padding: .75em;
