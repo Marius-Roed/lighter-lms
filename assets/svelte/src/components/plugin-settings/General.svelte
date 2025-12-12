@@ -1,9 +1,12 @@
 <script>
+    import CoursePicker from "$components/CoursePicker.svelte";
     import Icon from "$components/Icon.svelte";
     import UserList from "$components/UserList.svelte";
+    import settings from "$lib/settings.svelte";
 
     let LighterLMS = window.LighterLMS;
     let users = $state([]);
+    let courses = $derived(settings.courses);
 
     const attrify = (/** @type {string} */ s) => {
         return s.replaceAll(/\s|_/gi, "-").toLowerCase();
@@ -49,5 +52,5 @@
 <div class="course-access">
     <UserList bind:users />
     →
-    <div class="course-list"></div>
+    <CoursePicker {courses} />
 </div>

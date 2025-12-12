@@ -2,6 +2,10 @@
 
 namespace LighterLMS\Core;
 
+use LighterLMS\Lessons;
+use LighterLMS\Topics;
+use WP_Query;
+
 if (! defined('ABSPATH')) {
 	exit;
 }
@@ -212,6 +216,59 @@ class Config
 	public function all()
 	{
 		return $this->_settings;
+	}
+
+	/**
+	 * Gets all courses.
+	 *
+	 * Gets all the courses in an associated list of course->topics->lessons.
+	 */
+	public function get_courses()
+	{
+		$courses = [];
+		$args = [
+			'post_type' => $this->course_post_type,
+			'post_status' => 'any',
+			'posts_per_page' => -1,
+		];
+
+		$query = new WP_Query($args);
+
+		if (!$query->have_posts()) {
+			wp_reset_postdata();
+			return $courses;
+		}
+
+		$topics_db = new Topics();
+
+		while ($query->have_posts()) {
+			$query->the_post();
+			global $post;
+
+			$topics = $topics_db->get_by_course($post->ID);
+			$topics = array_map(function ($t) {
+				$lessons_db = new Lessons();
+				$lessons = $lessons_db->get_lessons(['topic' => $t->ID]);
+				return [
+					'key' => $t->topic_key,
+					'post_id' => $t->post_id,
+					'title' => $t->title,
+					'sort_order' => $t->sort_order,
+					'lessons' => $lessons,
+				];
+			}, $topics);
+
+			$courses[] = [
+				'title' => $post->post_title,
+				'topics' => [
+					...$topics
+				]
+			];
+		}
+		do_action('qm/debug', $courses);
+
+		wp_reset_postdata();
+		return $courses;
 	}
 
 	/**

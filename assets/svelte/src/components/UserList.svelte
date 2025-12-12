@@ -2,6 +2,7 @@
     import lighterFetch from "$lib/lighterFetch";
     import { onMount } from "svelte";
     import { SvelteMap } from "svelte/reactivity";
+    import Icon from "./Icon.svelte";
 
     let { users = $bindable([]) } = $props();
 
@@ -9,6 +10,7 @@
     let dropdownIdx = $state(0);
     let isOpen = $state(false);
     let results = $state([]);
+    let userIdx = $state(0);
     let cache = new SvelteMap();
 
     /**
@@ -94,6 +96,16 @@
     const handleSearchInput = (/** @type {KeyboardEvent} */ e) => {
         if (e.key === "Enter") {
             e.preventDefault();
+            appendUser(results[dropdownIdx]);
+        } else if (e.key == "ArrowUp" || e.key == "ArrowDown") {
+            e.preventDefault();
+            let move = e.key == "ArrowUp" ? -1 : 1;
+            if (
+                (move < 0 && dropdownIdx > 0) ||
+                (move > 0 && dropdownIdx < results.length - 1)
+            ) {
+                dropdownIdx += move;
+            }
         }
     };
 
@@ -103,30 +115,45 @@
      * @param {Object} user
      */
     const appendUser = (user) => {
-        if (users.some((u) => u.slug == user.slug)) return;
+        if (users.some((u) => u.id == user.id)) return;
         users.push(user);
+        users.sort((a, b) => a.id - b.id);
     };
 
-    const handleDropdownKey = (/** @type {KeyboardEvent} */ e) => {
+    /**
+     * Removes a user from the selected list
+     *
+     * @param {Object} user
+     */
+    const removeUser = (user) => {
+        users = users.filter((u) => u.id != user.id);
+    };
+
+    function handleDropdownKey(/** @type {KeyboardEvent} */ e) {
         if (e.key == "Enter") {
             e.preventDefault();
+            appendUser(this);
         }
-    };
+    }
 
-    onMount(async () => {
-        let url = "/wp-json/wp/v2/users";
-        let resp = await lighterFetch({
-            url,
-            method: "GET",
-            parse: false,
-        });
-        if (resp.ok) {
-            cache.set("", await resp.json());
+    function handleUserListKeyEvent(/** @type {KeyboardEvent} */ e) {
+        if (e.key == "Enter") {
+            e.preventDefault();
+            console.log(users[userIdx]);
+        } else if (e.key == "ArrowDown" || e.key == "ArrowUp") {
+            e.preventDefault();
+            let move = e.key == "ArrowUp" ? -1 : 1;
+            if (
+                (move < 0 && userIdx > 0) ||
+                (move > 0 && userIdx < users.length - 1)
+            ) {
+                userIdx += move;
+            }
         }
-    });
+    }
 
-    $effect(() => {
-        $inspect(cache);
+    onMount(() => {
+        doFetch();
     });
 </script>
 
@@ -147,19 +174,21 @@
             <div class="dropdown">
                 {#await debouncedFetch(value) then results}
                     <ul>
-                        {#each results as person}
+                        {#each results as person, idx}
                             <li>
                                 <div
-                                    onmousedown={() => {
+                                    onmousedown={(e) => {
+                                        e.preventDefault();
                                         appendUser(person);
                                         value = "";
                                     }}
-                                    onkeydown={handleDropdownKey}
                                     tabindex="0"
                                     aria-selected={users.some(
                                         (u) => u.slug == person.slug,
                                     )}
                                     role="option"
+                                    class:hover={dropdownIdx == idx &&
+                                        "--hovered-opt"}
                                 >
                                     <b>{person.name}</b>
                                     {person.email}
@@ -174,16 +203,33 @@
             </div>
         {/if}
         {#if users.length}
-            <ul class="lighter-user-access-list">
+            <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+            <ul
+                class="lighter-user-access-list"
+                tabindex="0"
+                onkeydown={handleUserListKeyEvent}
+            >
                 {#each users as user}
                     <li>
-                        <div>
+                        <div class="user-pp">
                             <img
                                 src={user.avatar_urls[48]}
                                 alt="User profile picutre"
                             />
                         </div>
-                        {user.name}
+                        <div class="user-info col">
+                            <strong>{user.name}</strong>
+                            {user.email}
+                        </div>
+                        <div class="user-id">
+                            ID: {user.id}
+                        </div>
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <span
+                            onclick={() => removeUser(user)}
+                            tabindex="-1"
+                            role="button"><Icon name="plus" /></span
+                        >
                     </li>
                 {/each}
             </ul>

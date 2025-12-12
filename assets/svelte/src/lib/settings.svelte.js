@@ -5,7 +5,7 @@
 import { lessons, safeLessons, topics } from "./state.svelte";
 
 /**
- * @typedef {Object} Settings
+ * @typedef {Object} CourseSettings
  * @property {boolean} showIcons - Whether the lesson icons should be shown.
  * @property {boolean} showProgress - Whether to show lesson progress
  * @property {CourseStatus} status - The status of the course.
@@ -25,7 +25,11 @@ import { lessons, safeLessons, topics } from "./state.svelte";
 
 /**
  * @typedef {Object} Course
- * @property {Settings} settings
+ * @property {CourseSettings} settings
+ */
+
+/**
+ * @typedef {Object} Settings
  */
 
 /**
@@ -49,7 +53,7 @@ const parseProduct = (/** @type {Product} */ raw) => {
 }
 
 /** @type {Partial<Settings>} */
-const raw = window.LighterLMS.course?.settings || {};
+const raw = window.LighterLMS.course?.settings || window.LighterLMS.settings || {};
 
 /** @type {Settings | {}} */
 const normalized = raw ? {

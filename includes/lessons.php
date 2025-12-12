@@ -110,20 +110,46 @@ class Lessons
 	 * Uses the given args to get a(ll) lesson(s) by topic key or, if not supplied, by parent ID.
 	 * Currently supplying only a lesson ID will just return the lesson Post object.
 	 *
+	 * @param {Array_A} $args - Alternative args to the class properties
+	 *
 	 * @return \WP_Post|array
 	 */
-	public function get_lessons()
+	public function get_lessons($args)
 	{
-		if (isset($this->topic)) {
+		$defaults = [
+			'topic' => $this->topic ?? false,
+			'parent' => $this->parent ?? false,
+			'lesson' => $this->lesson ?? false,
+			'status' => $this->args['status'] ?? null,
+		];
+
+		$args = wp_parse_args($args, $defaults);
+
+		if ($args['topic']) {
 			// TODO: Query by topic key.
+			if (is_numeric($args['topic'])) {
+				$lessons = $this->db->get_results(
+					$this->db->prepare(
+						'SELECT %1$s.* FROM %2$s INNER JOIN %3$s ON %4$s.ID = %5$s.lesson_id WHERE %6$s.topic_id = %7$s',
+						$this->db->posts,
+						$this->db->posts,
+						$this->table,
+						$this->db->posts,
+						$this->table,
+						$this->table,
+						$args['topic']
+					)
+				);
+				return $lessons;
+			}
 		}
 
-		if (isset($this->parent)) {
+		if ($args['parent']) {
 			// TODO: Query by parent ID.
 			$args = [
 				'post_type' => lighter_lms()->lesson_post_type,
-				'post_status' => $this->args['status'] ?? 'publish',
-				'lighter_course' => $this->parent,
+				'post_status' => $args['status'] ?? 'publish',
+				'lighter_course' => $args['parent'],
 				'numberposts' => -1,
 				'suppress_filters' => false,
 			];
@@ -131,7 +157,7 @@ class Lessons
 			return get_posts($args);
 		}
 
-		if (isset($this->lesson)) {
+		if ($args['lesson']) {
 			return get_post($this->lesson);
 			// TODO: Query by lesson ID.
 		}

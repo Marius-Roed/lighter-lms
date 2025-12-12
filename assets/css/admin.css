@@ -987,8 +987,8 @@
         gap: 2rem;
 
         .users-wrap {
-            padding: 0.25rem;
-            border-radius: 0.925rem;
+            padding: 0.375rem .25rem;
+            border-radius: 0.875rem;
             background-color: #fff;
             min-height: 20rem;
         }
@@ -1015,6 +1015,21 @@
                 left: 0;
                 box-shadow: 0 1px 9px -3px oklch( 0 0 0 / .25);
                 border: 1px solid #D2C8E1;
+                z-index: 150;
+
+                &::before {
+                    position: absolute;
+                    content: "";
+                    background: oklch(0.85 0.04 303.81 / .45);
+                    top: anchor(top);
+                    left: anchor(left);
+                    right: anchor(right);
+                    bottom: anchor(bottom);
+                    border-radius: 4px;
+                    position-anchor: --hovered-opt;
+
+                    transition: 150ms;
+                }
 
                 div {
                     position: relative;
@@ -1024,19 +1039,50 @@
                     border-radius: 4px;
                     padding: .75em;
 
-                    &:hover {
-                        background-color: oklch(0.85 0.04 303.81 / .45);
-                    }
+                    &:hover { anchor-name: --hovered-opt;cursor: pointer; }
 
                     &[aria-selected="true"] {
                         background-color: oklch(0.85 0.04 303.81 / .85);
                     }
                 }
+
+                &:not(:hover) .hover {anchor-name: --hovered-opt;}
+
                 .user-id {
                     position: absolute;
                     top: 50%;
                     right: 1em;
                     transform: translateY(-50%);
+                }
+            }
+
+            .lighter-user-access-list {
+                display: grid;
+                gap: .5em;
+                margin-block-start: .5em;
+                padding-inline: 4px !important;
+
+                .user-pp { display: inline-block; flex-basis: 48px; img { border-radius: 4px; } }
+
+                li {
+                    position: relative;
+                    display: flex;
+                    flex-direction: row;
+                    flex-wrap: nowrap;
+                    align-items: center;
+                    gap: .75em;
+                    padding-inline-end: 1em;
+
+                    .user-info {
+                        flex: 1;
+                        gap: .25rem;
+                    }
+
+                    span {
+                        cursor: pointer;
+                        color: oklch(0.55 0.18 378);
+                        transform: rotate(135deg);
+                    }
                 }
             }
         }

@@ -72,7 +72,8 @@ class Admin
 					'builders' => [
 						'plugins' => lighter_lms()->get_builders('all'),
 						'active' => lighter_lms()->defaults()->editor,
-					]
+					],
+					'courses' => lighter_lms()->get_courses(),
 				];
 			}
 			return $obj;
