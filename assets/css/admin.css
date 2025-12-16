@@ -991,6 +991,7 @@
             border-radius: 0.875rem;
             background-color: #fff;
             min-height: 20rem;
+            max-height: 25rem;
         }
 
         .no-users {
@@ -1061,6 +1062,8 @@
                 gap: .5em;
                 margin-block-start: .5em;
                 padding-inline: 4px !important;
+                max-height: 100%;
+                overflow-y: scroll;
 
                 .user-pp { display: inline-block; flex-basis: 48px; img { border-radius: 4px; } }
 
@@ -1086,6 +1089,35 @@
                 }
             }
         }
+
+        .course-list {
+            min-height: 20rem;
+            max-height: 25rem;
+            background: #fff;
+            border-radius: 0.875rem;
+            padding: .5rem;
+            gap: 1em;
+            overflow-y: scroll;
+
+            .course-wrap {
+                padding: 0.375rem;
+                gap: .5em;
+
+                .course {
+                    font-weight: 600;
+                    font-size: 14px;
+                    display: flex;
+                    flex-direction: row;
+                    flex-wrap: nowrap;
+                    justify-content: space-between;
+                }
+
+                .topic { gap: .375em; }
+                .grid { grid-template-columns: repeat(2, 1fr); gap: .5em; }
+            }
+        }
+
+        span.row.center.middle { align-items: center; .icon-wrapper { rotate: -90deg; } }
     }
 
     .lighter-settings-foot {
@@ -1118,6 +1150,22 @@
     inset: 0%;
     border-radius: 0.5rem;
     transition-delay: 0ms !important;
+}
+
+.course-list .course button {
+    width: 1rem;
+    height: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: unset;
+    border:none;
+    padding: 0.625rem;
+    cursor: pointer;
+}
+
+.course-list [aria-expanded="true"] .course button {
+    rotate: 180deg;
 }
 
 .lighter-downloads tbody input[type="text"] {

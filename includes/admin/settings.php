@@ -2,6 +2,8 @@
 
 namespace LighterLMS\Admin;
 
+use LighterLMS\User_Access;
+
 class Settings
 {
 	/** @var string|bool $tab The current tab */
@@ -31,18 +33,33 @@ class Settings
 
 		$to_update = [];
 
-		$editor = isset($_POST['default-editor']) ? $_POST['default-editor'] : '';
+		$editor = $_POST['default-editor'] ?? '';
+		$courses = $_POST['courses'] ?? [];
+		$users = $_POST['users'] ?? [];
 
 		if ($editor) {
 			$to_update['lighter_lms_default_builder'] = $editor;
 		}
 
 		if (empty($to_update)) {
-			wp_redirect(add_query_arg(['error' => true, 'message' => 'Value cannot be empty'], wp_get_referer()));
+			wp_redirect(add_query_arg(['error' => 'true', 'message' => 'Value cannot be empty'], admin_url(lighter_lms()->admin_page_path . '-settings')));
+			exit;
+		}
+
+		if ($courses && empty($users)) {
+			wp_redirect(add_query_arg(['error' => 'true', 'message' => 'Cannot give access to 0 users'], admin_url(lighter_lms()->admin_page_path . '-settings')));
+			exit;
 		}
 
 		foreach ($to_update as $opt => $val) {
 			update_option($opt, $val);
+		}
+
+		foreach ($users as $user) {
+			$user_acc = new User_Access((int)$user);
+			foreach ($courses as $course => $lessons) {
+				$user_acc->grant_course_access($course, "partial", explode(",", $lessons));
+			}
 		}
 
 		wp_redirect(add_query_arg('updated', 'true', wp_get_referer()));

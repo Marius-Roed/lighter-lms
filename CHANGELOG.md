@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file
 
 ## [1.0.0-alpha.17] - 2025-12-04
 
+### Added
+
+- New user-course access grant in settings page.
+
 ### Fixes
 
 - Double editors in settings page.

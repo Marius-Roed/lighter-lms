@@ -114,7 +114,7 @@ class Lessons
 	 *
 	 * @return \WP_Post|array
 	 */
-	public function get_lessons($args)
+	public function get_lessons($args = [])
 	{
 		$defaults = [
 			'topic' => $this->topic ?? false,

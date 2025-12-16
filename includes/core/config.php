@@ -259,6 +259,7 @@ class Config
 			}, $topics);
 
 			$courses[] = [
+				'id' => $post->ID,
 				'title' => $post->post_title,
 				'topics' => [
 					...$topics

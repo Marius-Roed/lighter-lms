@@ -7,6 +7,7 @@
     let LighterLMS = window.LighterLMS;
     let users = $state([]);
     let courses = $derived(settings.courses);
+    let selectedCourses = $state({});
 
     const attrify = (/** @type {string} */ s) => {
         return s.replaceAll(/\s|_/gi, "-").toLowerCase();
@@ -49,8 +50,20 @@
 </div>
 <h2>Course Access</h2>
 <p>Give users access to courses</p>
+<div>
+    {#each users as user}
+        <input type="hidden" name="users[]" value={user.id} />
+    {/each}
+    {#each Object.entries(selectedCourses) as [course, selected]}
+        {#if selected.length}
+            <input type="hidden" name={`courses[${course}]`} value={selected} />
+        {/if}
+    {/each}
+</div>
 <div class="course-access">
     <UserList bind:users />
-    →
-    <CoursePicker {courses} />
+    <span class="row center middle"
+        ><Icon name="chevron" color="rebeccapurple" size="1.5rem" /></span
+    >
+    <CoursePicker {courses} bind:selectedCourses />
 </div>

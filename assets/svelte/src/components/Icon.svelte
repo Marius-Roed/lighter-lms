@@ -1,12 +1,5 @@
-<script>
-    let {
-        name,
-        className = "",
-        size = "1em",
-        color = "currentColor",
-        fill = false,
-        ...rest
-    } = $props();
+<script lang="ts">
+    import type { HTMLAttributes } from "svelte/elements";
 
     import BeaverBuilderLogo from "$icons/beaver-builder-logo.svg?raw";
     import BreackdanceLogo from "$icons/breakdance-logo.svg?raw";
@@ -55,7 +48,26 @@
         trash: TrashIcon,
         "classic-editor": WordpressLogo,
         gutenberg: WordpressLogo,
-    };
+    } as const;
+
+    type IconName = keyof typeof iconMap;
+
+    interface IconProps extends HTMLAttributes<HTMLDivElement> {
+        name: IconName;
+        className?: string;
+        size?: string | number;
+        color?: string;
+        fill?: boolean;
+    }
+
+    let {
+        name,
+        className = "",
+        size = "1em",
+        color = "currentColor",
+        fill = false,
+        ...rest
+    }: IconProps = $props();
 
     let svgContent = $state(
         '<svg viewBox="0 0 24 24" fill="red"><circle cx="12" cy="12" r="10" fill="red"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="white">!</text></svg>',

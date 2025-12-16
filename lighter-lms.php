@@ -8,7 +8,7 @@
  * Author URI: https://github.com/marius-roed
  * Requires PHP: 8.2
  * Requires at least: 5.3
- * Tested up to: 6.8.3
+ * Tested up to: 6.9
  * Text Domain: lighterlms
  *
  * @package Lighter

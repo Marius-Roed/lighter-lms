@@ -28,12 +28,13 @@ class User_Access
 	 * Grants the user access to a course.
 	 *
 	 * @param int $course_id The ID of the course to grant access to.
-	 * @param string $access_type Which type of access to give the user. Accepts "Full" | "Drip".
+	 * @param string $access_type Which type of access to give the user. Accepts "full" | "drip" | "partial".
+	 * @param array $unlock The custom lessons which should be granted access to. Only used when `$access_type` is "partial"
 	 * @param DateTime $start_date The start date.
 	 * @param string $drip_interval The drip interval.
 	 * @param DateTime $expires When access should expire.
 	 */
-	public function grant_course_access($course_id, $access_type = 'full', $start_date = null, $drip_interval = null, $expires = null)
+	public function grant_course_access($course_id, $access_type = 'full', $unlock = [], $start_date = null, $drip_interval = null, $expires = null)
 	{
 		if (!$this->user->ID) {
 			return;
@@ -52,7 +53,6 @@ class User_Access
 		if (!$exists) {
 			$this->owned[] = [
 				'course_id' => $course_id,
-				'lessons' => $lessons,
 				'access_type' => $access_type,
 				'start_date' => $start_date ?: current_time('mysql'),
 				'drip_interval' => $drip_interval,
@@ -71,6 +71,9 @@ class User_Access
 					break;
 				case 'drip':
 					$unlocked_lessons = count($lessons[0]) > 2 ? array_slice($lessons[0], 0, 2) : $lessons[0];
+					break;
+				case 'partial':
+					$unlocked_lessons = $unlock;
 					break;
 				default:
 					$unlocked_lessons = $lessons;

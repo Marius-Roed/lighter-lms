@@ -9,6 +9,7 @@ $tabs = [
 // $tab = $_GET['tab'] ?? array_keys($tabs)[0];
 
 $builders = lighter_lms()->get_builders('all');
+$courses = lighter_lms()->get_courses();
 
 if (isset($_GET['updated']) && $_GET['updated'] === 'true') {
 	echo '<div class="notice notice-success is-dismissible"><p>Settings saved!</p></div>';
@@ -63,6 +64,56 @@ if (isset($_GET['updated']) && $_GET['updated'] === 'true') {
 				</div>
 				<h2>Course Access</h2>
 				<p>Give users access to courses.</p>
+				<div class="course-access">
+					<div class="users-wrap bordered">
+						<div class="user-list col">
+							<input type="text" style="border-bottom-left-radius: 0.625em; border-bottom-right-radius: 0.625em;">
+							<span class="no-users">Select users to grant course access.</span>
+						</div>
+					</div>
+					<span class="row center middle">
+						<div class="icon-wrapper s-h58VsaBwmicF" style="--icon-size: 1.5rem; --icon-color: rebeccapurple;">
+							<svg width="14" height="9" viewBox="0 0 14 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<path d="M13.0036 1.05524L6.98621 7.05524L1.00363 1.05524" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+							</svg>
+						</div>
+					</span>
+					<div class="course-list bordered col">
+						<?php foreach ($courses as $course):
+							$title = $course['title']; ?>
+							<div class="course-wrap col" aria-expanded="false">
+								<div class="course">
+									<label>
+										<input type="checkbox" name="<?php echo esc_attr($course['id']) ?>" id="<?php echo esc_attr($course['id']) ?>">
+										<?php echo esc_html($title) ?>
+									</label>
+									<button type="button">
+										<div class="icon-wrapper" style="--icon-size: 1.5rem; --icon-color: currentColor;">
+											<?php echo lighter_icon("chevron-down") ?>
+										</div>
+									</button>
+								</div>
+								<?php foreach ($course['topics'] as $topic): ?>
+									<div class="topic col">
+										<b><?php echo esc_html($topic['title']) ?></b>
+										<div class="grid">
+											<?php foreach ($topic['lessons'] as $idx => $lesson): ?>
+												<label>
+													<input
+														type="checkbox"
+														name="<?php echo esc_attr(lighter_attrify($title)) ?>"
+														value="<?php echo esc_attr($lesson->ID) ?>"
+														id="<?php echo esc_attr(lighter_attrify("$title-$idx")) ?>" />
+													<?php echo esc_html($lesson->post_title) ?>
+												</label>
+											<?php endforeach; ?>
+										</div>
+									</div>
+								<?php endforeach; ?>
+							</div>
+						<?php endforeach; ?>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -71,4 +122,3 @@ if (isset($_GET['updated']) && $_GET['updated'] === 'true') {
 		</div>
 	</form>
 </div>
-<?php var_dump($wp_rest_additional_fields); ?>
