@@ -54,7 +54,7 @@ class API
 		register_rest_route($this->namespace, '/lesson/(?P<id>\d+)', [
 			'methods' => 'GET',
 			'callback' => [$this, 'get_lesson'],
-			'permission_callback' => fn() => current_user_can('edit_posts'),
+			'permission_callback' => '__return_true',
 		]);
 
 		register_rest_route($this->namespace, '/lesson/(?P<id>\d+)', [

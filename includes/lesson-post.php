@@ -35,7 +35,7 @@ class Lesson_Post extends Post_Type
 			'labels' => $labels,
 			'description' => __('Lesson description.', 'lighterlms'),
 			'public' => true,
-			'publicly_queryable' => false,
+			'publicly_queryable' => true,
 			'show_ui' => true,
 			'show_in_rest' => true,
 			'show_in_menu' => lighter_lms()->admin_url,

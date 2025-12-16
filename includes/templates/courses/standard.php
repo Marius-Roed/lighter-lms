@@ -7,14 +7,16 @@
  */
 
 use LighterLMS\Lessons;
+use LighterLMS\User_Access;
 
 /** @var \WP_Post */
 global $post;
 $lesson_id = null;
 
 $lessons_db = new Lessons(['parent' => $post->ID]);
-
 $lessons = $lessons_db->get_lessons();
+
+$user_access = new User_Access(get_current_user_id());
 
 $lesson_data = array_map(function ($lesson) {
     return [
@@ -45,19 +47,21 @@ if (get_post_meta($post->ID, '_course_display_theme_sidebar', true)) {
                 echo '<div class="lighter-lesson-wrap">';
                 foreach ($lesson_data as $lesson) {
                     if (strtolower(sanitize_key($lesson['slug'])) == $_GET['lesson']) {
-                        $lesson_id = $lesson['id'];
+                        $lesson_id = intval($lesson['id']);
                         $args = [
                             'post_status' => 'publish',
                             'post_type' => lighter_lms()->lesson_post_type,
-                            'p' => intval($lesson['id']),
+                            'p' => $lesson_id,
                             'posts_per_page' => 1,
                         ];
 
                         $query = new WP_Query($args);
 
                         while ($query->have_posts()) {
-                            $query->the_post();
-                            the_content();
+                            if ($user_access->check_lesson_access($lesson_id, $post->ID)) {
+                                $query->the_post();
+                                the_content();
+                            }
                         }
                         wp_reset_postdata();
                     }

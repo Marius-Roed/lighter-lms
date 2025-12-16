@@ -58,7 +58,7 @@ class Settings
 		foreach ($users as $user) {
 			$user_acc = new User_Access((int)$user);
 			foreach ($courses as $course => $lessons) {
-				$user_acc->grant_course_access($course, "partial", explode(",", $lessons));
+				$user_acc->grant_course_access($course, "partial", array_map('intval', explode(",", $lessons)));
 			}
 		}
 

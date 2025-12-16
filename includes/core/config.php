@@ -31,127 +31,127 @@ class Config
 	private $_settings = [];
 
 	private $_builders = [
-		"Beaver Builder Plugin" => [
+		"fl-builder" => [
 			"name" => ["Beaver Builder", "Beaver Builder Plugin (Lite Version)"],
-			"slug" => "beaver",
+			"slug" => "beaver-builder",
 			"foreground" => "#00000000",
 			"background" => "#FEAF52",
 		],
-		"Brizy" => [
+		"brizy" => [
 			"name" => ["Brizy"],
 			"slug" => "brizy",
 			"foreground" => "#00000000",
 			"background" => "#0E0736",
 		],
-		"Breakdance" => [
+		"breakdance/plugin.php" => [
 			"name" => ["Breakdance"],
 			"slug" => "breakdance",
 			"foreground" => "#000000",
 			"background" => "#FFC514",
 		],
-		"Classic Editor" => [
+		"classic-editor" => [
 			"name" => ["Classic Editor"],
 			"slug" => "classic-editor",
 			"foreground" => "#25719B",
 			"background" => "#F0F0F1",
 		],
-		"Cornerstone Page Builder" => [
+		"cornerstone-page-builder" => [
 			"name" => ["Cornerstone Page Builder"],
 			"slug" => "cornerstone",
 			"foreground" => "#00000000",
 			"background" => "#00000000",
 		],
-		"Divi Builder" => [
+		"divi" => [
 			"name" => ["Divi Builder"],
 			"slug" => "divi",
 			"foreground" => "#FFFFFFF",
 			"background" => "#00000000",
 		],
-		"Elementor" => [
+		"elementor" => [
 			"name" => ["Elementor", "Elementor Pro"],
 			"slug" => "elementor",
 			"foreground" => "#F0F0F1",
 			"background" => "#92003B",
 		],
-		"Gutenberg" => [
+		"gutenberg" => [
 			"name" => ["Gutenberg"],
 			"slug" => "gutenberg",
 			"foreground" => "#1E1E1E",
 			"background" => "#F0F0F1",
 		],
-		"Fusion Builder" => [
+		"fusion-builder" => [
 			"name" => ["Fusion Builder"],
 			"slug" => "fusion",
 			"foreground" => "#FFFFFF",
 			"background" => "#50B3C4",
 		],
-		"Flatsome UX Builder" => [
+		"flatsome-Builder" => [
 			"name" => ["Flatsome UX Builder"],
 			"slug" => "flatsome",
 			"foreground" => "#00000000",
 			"background" => "#00000000",
 		],
-		"KingComposer" => [
+		"kingcomposer" => [
 			"name" => ["KingComposer"],
 			"slug" => "kingcomposer",
 			"foreground" => "#00000000",
 			"background" => "#00000000",
 		],
-		"Live Composer" => [
+		"live-composer" => [
 			"name" => ["Live Composer"],
 			"slug" => "live-composer",
 			"foreground" => "#00000000",
 			"background" => "#2EDCE7",
 		],
-		"Layers WP" => [
+		"layers" => [
 			"name" => ["Layers WP"],
 			"slug" => "layers",
 			"foreground" => "#00000000",
 			"background" => "#00000000",
 		],
-		"MotoPress Content Editor" => [
+		"motopress-content-editor" => [
 			"name" => ["MotoPress Content Editor"],
 			"slug" => "motopress",
 			"foreground" => "#00000000",
 			"background" => "#00000000",
 		],
-		"Oxygen Builder" => [
+		"oxygen-builder" => [
 			"name" => ["Oxygen Builder"],
 			"slug" => "oxygen",
 			"foreground" => "#FFFFFF",
 			"background" => "#000000",
 		],
-		"SiteOrigin Page Builder" => [
+		"siteorigin-page-builder" => [
 			"name" => ["SiteOrigin Page Builder"],
 			"slug" => "siteorigin",
 			"foreground" => "#00000000",
 			"background" => "#00000000",
 		],
-		"Spectra" => [
+		"ultimate-addons-for-gutenberg" => [
 			"name" => ["Spectra"],
 			"slug" => "spectra",
 			"foreground" => "#F0F0F1",
 			"background" => "#5733FF",
 		],
-		"Thrive Architect" => [
+		"thrive-architect" => [
 			"name" => ["Thrive Architect"],
 			"slug" => "thrive",
 			"foreground" => "#00000000",
 			"background" => "#00000000",
 		],
-		"Visual Composer Website Builder" => [
+		"visual-composer-website-builder" => [
 			"name" => ["Visual Composer Website Builder"],
 			"slug" => "visual-composer",
 			"foreground" => "#00000000",
 			"background" => "#00000000",
 		],
-		"WPBakery Page Builder" => [
+		"wpbakery-page-builder" => [
 			"name" => ["WPBakery Page Builder"],
 			"slug" => "wpbakery",
 			"foreground" => "#00000000",
 			"background" => "#00000000",
 		],
-		"Yellow Pencil" => [
+		"yellow-pencil" => [
 			"name" => ["Yellow Pencil"],
 			"slug" => "yellow",
 			"foreground" => "#00000000",
@@ -266,7 +266,6 @@ class Config
 				]
 			];
 		}
-		do_action('qm/debug', $courses);
 
 		wp_reset_postdata();
 		return $courses;
@@ -329,9 +328,16 @@ class Config
 
 		foreach ($plugins as $plugin) {
 			$plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin);
-			$name = $plugin_data['Name'];
-			if (isset($this->_builders[$name]) && ! in_array($this->_builders[$name]['slug'], array_column($builders, 'slug'))) {
-				$builders[] = $this->_builders[$name];
+			$slug = substr(
+				$plugin,
+				strpos($plugin, '/') + 1,
+				strpos($plugin, '.') - strpos($plugin, '/') - 1
+			);
+			do_action('qm/debug', $plugin);
+			if (isset($this->_builders[$slug])) {
+				$builders[] = $this->_builders[$slug];
+			} elseif (isset($this->_builders[$plugin])) {
+				$builders[] = $this->_builders[$plugin];
 			}
 		}
 

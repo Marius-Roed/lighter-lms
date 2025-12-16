@@ -206,9 +206,9 @@ class User_Access
 
 		if ($course) {
 			$course = get_post($course);
-			$owned = array_filter($owned, fn($access) => $access['course_id'] == $course->ID);
+			$key = array_key_first(array_filter($owned, fn($access) => $access['course_id'] == $course->ID) ?? []);
 			if (!empty($owned)) {
-				$owned = $owned[0] ?? $owned ?? [];
+				$owned = $owned[$key];
 			}
 		}
 
