@@ -88,8 +88,6 @@ export function initState({ courseNum: initCourse, topicsData: initTopics, lesso
     lessons.splice(0, lessons.length, ...initLessons);
     defaults.splice(0, defaults.length, ...initLessons);
 
-    console.log(defaults);
-
     isInited = true;
 }
 

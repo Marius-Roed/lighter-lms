@@ -109,6 +109,14 @@
         display: grid;
     }
 
+    .col-full {
+        grid-column: 1 / -1;
+    }
+
+    .row-full {
+        grid-row: 1 / -1;
+    }
+
     .height-content {
         height: fit-content;
     }
@@ -981,6 +989,44 @@
         svg {width: 222px; height: 222px; z-index: 5}
     }
 
+    #lighter-course-settings :is(.prod-img-wrap, .course-img-wrap) {
+        position: relative;
+        width: 180px;
+        height: 180px;
+
+        img {
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+        }
+
+
+        .change-img {
+            position: absolute;
+            inset: 0;
+            padding: 0;
+            color: white;
+            background: oklch(0 0 0 / 0.6);
+            display: none;
+        }
+
+        &:hover .change-img {
+            display: block;
+        }
+    }
+
+    #lighter-course-settings .general .content {
+        flex-wrap: wrap;
+        gap: 1em;
+
+        button { padding: 0 }
+    }
+
+    #lighter-course-settings .advanced .content {
+        gap: .75em;
+    }
+
     #lighter-settings-mount .course-access {
         display: grid;
         grid-template-columns: 1fr 2rem 1fr;
@@ -1273,6 +1319,11 @@ button.lighter-btn {
     min-width: fit-content;
 }
 
+#lighter-course-settings :is(.prod-img-wrap, .course-img-wrap) img {
+    width: 100%;
+    height: 100%;
+}
+
 .lighter .box.selling .product-select {
     display: flex;
     gap: 2.5em;
@@ -1366,35 +1417,20 @@ button.lighter-btn {
     .top {
         display: flex;
         flex-wrap: nowrap;
+        justify-content: space-between;
     }
 
     .general {
+        display: grid;
         flex-grow: 1;
-        display: flex;
-        flex-wrap: wrap;
+        grid-template-columns: repeat(2, 1fr);
         gap: 1em;
+        max-width: 828px;
 
         &>div {
             display: flex;
             flex-direction: column;
             gap: .5em;
-        }
-    }
-
-    .prod-img-wrap {
-        position: relative;
-
-        .change-img {
-            position: absolute;
-            inset: 0;
-            padding: 0;
-            color: white;
-            background: oklch(0 0 0 / 0.6);
-            display: none;
-        }
-
-        &:hover .change-img {
-            display: block;
         }
     }
 
@@ -1404,18 +1440,6 @@ button.lighter-btn {
         flex-direction: column;
         justify-content: center;
         align-items: flex-end;
-
-        .prod-img-wrap {
-            width: 180px;
-            height: 180px;
-
-            img {
-                width: 100%;
-                height: 100%;
-                aspect-ratio: 1;
-                object-fit: cover;
-            }
-        }
     }
 
     textarea {
@@ -1743,7 +1767,7 @@ button.lighter-btn {
     }
 
     &.closed .postbox-header {
-        padding-block-end: .75em;
+        padding-block-end: 1.25em;
     }
 
     .inside {
@@ -1770,12 +1794,8 @@ button.lighter-btn {
 
 #course-description {
     width: 100%;
-    min-height: 96px;
+    min-height: 180px;
     padding-block: 12px;
-}
-
-#coursesettingsdiv #lighter-settings-mount .open-date {
-    anchor-name: --publish-date;
 }
 
 .mce-toolbar-grp.mce-container.mce-panel.mce-first.mce-last[style*="position: fixed"] {

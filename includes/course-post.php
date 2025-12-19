@@ -125,6 +125,8 @@ class Course_Post extends Post_Type
 		$footer = isset($args['displayFooter']) ? wp_validate_boolean($args['displayFooter']) : false;
 		$sidebar = isset($args['displaySidebar']) ? wp_validate_boolean($args['displaySidebar']) : false;
 		$slug = $args['slug'] ? sanitize_post_field('post_name', $args['slug'], $post->ID, 'raw') : $post->post_name;
+		$sync_prod_img = isset($args['sync_prod_img']) ? wp_validate_boolean($args['sync_prod_img']) : true;
+		$thumbnail = $args['thumbnail'];
 
 		if (!empty($tags)) {
 			wp_set_post_terms($post->ID, $tags, 'course-tags');
@@ -135,8 +137,8 @@ class Course_Post extends Post_Type
 			$product['tags'] = $tags;
 			$saved_prod = lighter_save_product($product, $post->ID);
 
-			$img_id = $product['image'][0]['id'] ?? false;
-			if ($img_id) set_post_thumbnail($post->ID, $img_id);
+			$img_id = $product['images'][0]['id'] ?? false;
+			if ($img_id && $sync_prod_img) set_post_thumbnail($post->ID, $img_id);
 
 			update_post_meta($post->ID, '_lighter_is_restricted', true);
 		}
@@ -145,6 +147,7 @@ class Course_Post extends Post_Type
 		update_post_meta($post->ID, '_course_display_theme_header', $header);
 		update_post_meta($post->ID, '_course_display_theme_sidebar', $sidebar);
 		update_post_meta($post->ID, '_course_display_theme_footer', $footer);
+		if ($thumbnail && !$sync_prod_img) set_post_thumbnail($post->ID, $thumbnail['id']);
 
 		if ($post->post_name !== $slug) {
 			$this->skip_next_save = true;

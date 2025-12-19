@@ -9,12 +9,13 @@ class Admin
 {
 	public function __construct()
 	{
-		global $wpdb;
 		add_action('admin_enqueue_scripts', [$this, 'admin_app']);
 		add_action('admin_menu', [$this, 'admin_menu'], 9);
 		add_action('current_screen', [$this, 'current_screen']);
 		add_action('admin_init', [$this, 'admin_init']);
 		add_action('admin_post_lighter_complete_lesson', [$this, 'complete_lesson']);
+		add_action('edit_user_profile', [$this, 'user_access'], 5);
+		add_action('show_user_profile', [$this, 'user_access'], 5);
 
 		add_filter('menu_order', [$this, 'menu_order']);
 		add_filter('admin_body_class', [$this, 'dialog_editor']);
@@ -90,6 +91,13 @@ class Admin
 	public function settings()
 	{
 		Settings::render();
+	}
+
+	public function user_access($user)
+	{
+		if (!current_user_can('edit_user', $user->ID)) return;
+
+		lighter_view('user-access', ['admin' => true, 'user' => $user]);
 	}
 
 	/**

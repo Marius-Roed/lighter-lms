@@ -197,6 +197,7 @@ if (! function_exists('lighter_get_course_settings')) {
 		$course = get_post($post);
 
 		$post_id = $course->ID ?? 0;
+		$thumbnail_id = get_post_thumbnail_id($post_id);
 
 		if ($course->post_type != lighter_lms()->course_post_type) {
 			return false;
@@ -217,6 +218,7 @@ if (! function_exists('lighter_get_course_settings')) {
 			'displayFooter' => get_post_meta($post_id, '_course_display_theme_footer', true) ?: lighter_lms()->defaults()->course_hide_theme_footer,
 			'product' => lighter_get_course_product($product_id),
 			'store' => lighter_lms()->connected_store,
+			'sync_prod_img' => get_post_meta($post_id, '_course_sync_prod_img', true) ?: lighter_lms()->defaults()->course_sync_prod_img,
 			'editor' => lighter_lms()->defaults()->editor,
 			'baseUrl' => 'kurser',
 			'slug' => $course->post_name
@@ -224,6 +226,14 @@ if (! function_exists('lighter_get_course_settings')) {
 
 		if ($settings['store'] === "woocommerce") {
 			$settings['currency'] = \get_woocommerce_currency();
+		}
+
+		if ($thumbnail_id) {
+			$settings['thumbnail'] = [
+				'id' => $thumbnail_id,
+				'src' => wp_get_attachment_url($thumbnail_id),
+				'alt' => get_post_meta($thumbnail_id, '_wp_attachment_image_alt', true) ?: null,
+			];
 		}
 
 		return $settings;

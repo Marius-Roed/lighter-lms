@@ -45,6 +45,7 @@ class User_Access
 		foreach ($this->owned as &$entry) {
 			if ($entry['course_id'] == $course_id) {
 				$exists = true;
+				$entry['lessons'] = $lessons;
 				$entry['access_type'] = $access_type;
 				break;
 			}
@@ -53,6 +54,7 @@ class User_Access
 		if (!$exists) {
 			$this->owned[] = [
 				'course_id' => $course_id,
+				'lessons' => $lessons,
 				'access_type' => $access_type,
 				'start_date' => $start_date ?: current_time('mysql'),
 				'drip_interval' => $drip_interval,
@@ -63,30 +65,31 @@ class User_Access
 
 		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
 		$progress = $progress ? json_decode($progress, true) : [];
+		switch ($access_type) {
+			case 'full':
+				$unlocked_lessons = $lessons;
+				break;
+			case 'drip':
+				$unlocked_lessons = count($lessons[0]) > 2 ? array_slice($lessons[0], 0, 2) : $lessons[0];
+				break;
+			case 'partial':
+				$unlocked_lessons = $unlock;
+				break;
+			default:
+				$unlocked_lessons = $lessons;
+				break;
+		}
 		if (!isset($progress[$course_id])) {
-			// NOTE: Should probably have a $unlocked_lessons param
-			switch ($access_type) {
-				case 'full':
-					$unlocked_lessons = $lessons;
-					break;
-				case 'drip':
-					$unlocked_lessons = count($lessons[0]) > 2 ? array_slice($lessons[0], 0, 2) : $lessons[0];
-					break;
-				case 'partial':
-					$unlocked_lessons = $unlock;
-					break;
-				default:
-					$unlocked_lessons = $lessons;
-					break;
-			}
 			$progress[$course_id] = [
 				'max_unlocked_lesson' => 0,
 				'unlocked_lessons' => $unlocked_lessons,
 				'completed_lessons' => [],
 				'completion_date' => null
 			];
-			update_user_meta($this->user->ID, $this->course_progress, wp_json_encode($progress));
+		} else {
+			$progress[$course_id]['unlocked_lessons'] = $unlocked_lessons;
 		}
+		update_user_meta($this->user->ID, $this->course_progress, wp_json_encode($progress));
 		delete_transient('lighter_lms_access_check_' . $this->user->ID . '_*');
 	}
 

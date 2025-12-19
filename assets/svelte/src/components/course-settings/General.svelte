@@ -4,65 +4,66 @@
     import settings, { displayDate } from "$lib/settings.svelte";
     import { course, postStatus } from "$lib/state.svelte";
 
-    /** @var {HTMLButtonElement} */
-    const saveBtn = document.getElementById("save-post");
+    let src = $derived(
+        (settings.sync_prod_img
+            ? settings.product.images[0]?.src
+            : settings.thumbnail?.src) ??
+            "https://placehold.co/350/D2C8E1/663399?text=%3F",
+    );
+    let alt = $derived(
+        (settings.sync_prod_img
+            ? settings.product.images[0]?.alt
+            : settings.thumbnail?.alt) ?? "placeholder",
+    );
+    let frame;
 
-    let btnText = $derived.by(() => {
-        const status = settings?.status ?? "default";
-        switch (status) {
-            case "draft":
-                return "Save draft";
-            case "auto-draft":
-                return "Publish";
-            case "pending":
-                return "For review";
-            case "future":
-                return "Schedule";
-            default:
-                return "Save";
+    function openImageModal() {
+        if (!wp || !wp.media) {
+            console.error(
+                "Could not open media modal. Did you forget to enqueue wp_media?",
+            );
+            return;
         }
-    });
 
-    const openCalendar = () => {
-        console.log("Hello world");
-    };
+        if (frame) {
+            frame.open();
+            return;
+        }
 
-    let currentListener = null;
+        frame = wp.media({
+            title: "",
+            button: {
+                text: "Use this media",
+            },
+            multiple: false,
+            library: { type: "image" },
+        });
 
-    $effect(() => {
-        const isSchedule = "schedule" === btnText.toLowerCase();
-        if (isSchedule) {
-            saveBtn.removeAttribute("form");
-            saveBtn.setAttribute("type", "button");
+        frame.on("select", () => {
+            const attachment = frame.state().get("selection").first().toJSON();
 
-            if (currentListener) {
-                saveBtn.addEventListener("click", currentListener);
-                currentListener = null;
+            if (settings.sync_prod_img) {
+                settings.product.images[0] = {
+                    id: attachment.id,
+                    src: attachment.url,
+                    alt: attachment.alt,
+                };
             }
+            settings.thumbnail = {
+                id: attachment.id,
+                src: attachment.url,
+                alt: attachment.alt,
+            };
+        });
 
-            currentListener = openCalendar;
-            saveBtn.addEventListener("click", currentListener);
-        } else {
-            saveBtn.removeAttribute("type");
-            saveBtn.setAttribute("form", "post");
-
-            if (currentListener) {
-                saveBtn.removeEventListener("click", currentListener);
-                currentListener = null;
-            }
-        }
-
-        const lastChild = saveBtn.lastChild;
-        if (lastChild && lastChild.textContent !== undefined) {
-            lastChild.textContent = btnText.toUpperCase();
-        }
-    });
+        frame.open();
+    }
 </script>
 
-<div class="col">
-    <div class="row gen-top">
-        <div class="course-vis">
-            <h3>Course visibilty</h3>
+<div class="grid">
+    <div class="course-vis">
+        <h3>Course visibilty</h3>
+        <div class="content row">
             <span>
                 <b>Status:</b>
                 <select name="post_status" bind:value={settings.status}>
@@ -75,7 +76,10 @@
                     {/if}
                 </select>
             </span>
-            <button type="button" class="open-date" popovertarget="datetime"
+            <button
+                type="button"
+                popovertarget="datetime"
+                style="anchor-name:--publish-date;"
                 ><b>Published on:</b>
                 {displayDate(settings.publishedOn)}</button
             >
@@ -83,16 +87,16 @@
                 <DatePicker bind:value={settings.publishedOn} />
             </div>
         </div>
-        <div class="course-tags">
-            <h3>Tags</h3>
-            <FilterSearch
-                name="course-tags"
-                width="100%"
-                tags={course.tags.all}
-                bind:selected={settings.tags}
-                createNew
-            />
-        </div>
+    </div>
+    <div class="course-tags">
+        <h3>Tags</h3>
+        <FilterSearch
+            name="course-tags"
+            width="100%"
+            tags={course.tags.all}
+            bind:selected={settings.tags}
+            createNew
+        />
     </div>
     <div class="course-desc">
         <h3>Description</h3>
@@ -100,9 +104,22 @@
             id="course-description"
             name="course_description"
             cols="35"
-            rows="8"
+            rows="12"
             placeholder="Enter an eye catching description..."
             bind:value={settings.description}
         ></textarea>
+    </div>
+    <div class="course-img">
+        <h3>Feature image</h3>
+        <div class="col center">
+            <div class="course-img-wrap">
+                <img {src} {alt} />
+                <button
+                    type="button"
+                    class="change-img"
+                    onclick={openImageModal}>Change image</button
+                >
+            </div>
+        </div>
     </div>
 </div>

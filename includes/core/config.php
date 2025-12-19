@@ -327,7 +327,6 @@ class Config
 		$builders = [];
 
 		foreach ($plugins as $plugin) {
-			$plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin);
 			$slug = substr(
 				$plugin,
 				strpos($plugin, '/') + 1,

@@ -136,7 +136,7 @@ class WC
 		$image_id = $product->get_image_id();
 		$image = [[
 			"src" => wp_get_attachment_url($image_id) ?: null,
-			"alt" => wp_get_attachment_caption($image_id) ?: null,
+			"alt" => get_post_meta($image_id, '_wp_attachment_image_alt', true) ?: null,
 			"id" => $image_id ?: null,
 		]];
 

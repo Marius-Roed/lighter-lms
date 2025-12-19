@@ -5,7 +5,7 @@ import { initState } from '$lib/state.svelte.js';
 
 const origin = window.origin;
 const target = document.getElementById('lighter-course-mount');
-const settingsTarget = document.getElementById('lighter-settings-mount');
+const settingsTarget = document.getElementById('lighter-course-settings');
 
 if (!target) {
     throw new Error('Could not mount lighter-lms');

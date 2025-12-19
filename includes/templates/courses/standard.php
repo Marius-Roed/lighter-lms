@@ -93,7 +93,7 @@ if (get_post_meta($post->ID, '_course_display_theme_sidebar', true)) {
                 <input type="hidden" name="action" value="lighter_complete_lesson" />
                 <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id) ?>" id="lesson_id" />
                 <input type="hidden" name="course_id" value="<?php echo esc_attr($post->ID) ?>" id="course_id" />
-                <button type="submit" class="lighter-btn complete-lesson-btn" id="complete-btn" aria-label="Complete lesson">Mark complete</button>
+                <button type="submit" class="lighter-btn complete-lesson-btn" id="complete-btn" aria-label="Complete lesson"><?php _e('Mark complete', 'textdomain') ?></button>
             </form>
         </div>
     </div>
