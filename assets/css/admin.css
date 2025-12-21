@@ -305,7 +305,7 @@
     .lighter-header {
         position: sticky;
         top: var(--admin-bar);
-        height: 4em;
+        min-height: 4em;
         margin-left: -20px;
         padding: 2em;
         background-color: white;
@@ -317,12 +317,15 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 1.5em;
         }
 
         .content {
             display: flex;
             gap: .5em;
             align-items: center;
+            flex-wrap: wrap;
 
             #title-prompt-text {
                 display: none;
@@ -1175,6 +1178,22 @@
     }
 }
 
+@media screen and (max-width: 600px) {
+    .lighter-header {
+        position: relative;
+
+        .actions {
+            justify-content: space-between;
+            flex-grow: 1;
+
+            a, button {
+                flex-grow: 1;
+                justify-content: center;
+            }
+        }
+    }
+}
+
 .lighter-wrap h1 { display: none; margin: 0; padding: 0; }
 
 #post-filters p { margin: 0; }
@@ -1255,6 +1274,7 @@ div.tag-search .search-wrap input.search {
 
 ul.settings-tabs {
     padding-inline: 2em;
+    overflow-x: scroll;
 }
 
 a.lighter-btn,

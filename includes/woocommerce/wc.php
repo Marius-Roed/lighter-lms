@@ -292,15 +292,20 @@ class WC
 			$courses = get_posts([
 				'post_type' => lighter_lms()->course_post_type,
 				'status' => 'publish',
+				'fields' => 'ids',
+				'numberposts' => -1,
 				'meta_key' => '_lighter_product_id',
 				'meta_value' => $product_id,
 				'meta_compare' => '=',
 			]);
+
+			$courses = apply_filters('lighter_lms_woo_give_access', $courses, $product_id);
+
 			if (empty($courses)) continue;
 			foreach ($courses as $course) {
-				$user->grant_course_access($course->ID);
+				$user->grant_course_access($course);
 
-				$order->add_order_note('Granted user (' . $user_id . ') access to course ' . $course->ID);
+				$order->add_order_note('Granted user (' . $user_id . ') access to course ' . $course);
 			}
 		}
 	}
