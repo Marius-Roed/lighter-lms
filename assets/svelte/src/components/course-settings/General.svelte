@@ -6,13 +6,13 @@
 
     let src = $derived(
         (settings.sync_prod_img
-            ? settings.product.images[0]?.src
+            ? settings.product.images?.[0]?.src
             : settings.thumbnail?.src) ??
             "https://placehold.co/350/D2C8E1/663399?text=%3F",
     );
     let alt = $derived(
         (settings.sync_prod_img
-            ? settings.product.images[0]?.alt
+            ? settings.product.images?.[0]?.alt
             : settings.thumbnail?.alt) ?? "placeholder",
     );
     let frame;

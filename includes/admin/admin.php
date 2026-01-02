@@ -14,6 +14,7 @@ class Admin
 		add_action('current_screen', [$this, 'current_screen']);
 		add_action('admin_init', [$this, 'admin_init']);
 		add_action('admin_post_lighter_complete_lesson', [$this, 'complete_lesson']);
+		add_action('admin_post_nopriv_lighter_complete_lesson', [$this, 'complete_lesson']);
 		add_action('edit_user_profile', [$this, 'user_access'], 5);
 		add_action('show_user_profile', [$this, 'user_access'], 5);
 
@@ -362,10 +363,10 @@ class Admin
 			if ($lesson->ID == $lesson_id) $next = true;
 		}
 
-		if ($next_lesson && $user->check_lesson_access($next_lesson, $course_id)) {
+		if ($next_lesson && $user->check_lesson_access($next_lesson->ID, $course_id)) {
 			$slug = get_post($course_id)->post_name;
 			if ($slug) {
-				wp_redirect($slug . '?lesson=' . $next_lesson->post_name);
+				wp_redirect(home_url($slug . '?lesson=' . $next_lesson->post_name));
 				exit;
 			}
 		}

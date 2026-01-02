@@ -124,6 +124,7 @@ class Lessons
 		];
 
 		$args = wp_parse_args($args, $defaults);
+		$topic_db = new Topics();
 
 		if ($args['topic']) {
 			// TODO: Query by topic key.
@@ -145,16 +146,33 @@ class Lessons
 		}
 
 		if ($args['parent']) {
-			// TODO: Query by parent ID.
-			$args = [
+			$lessons = [];
+			$q_args = [
 				'post_type' => lighter_lms()->lesson_post_type,
 				'post_status' => $args['status'] ?? 'publish',
 				'lighter_course' => $args['parent'],
 				'numberposts' => -1,
 				'suppress_filters' => false,
 			];
-
-			return get_posts($args);
+			$posts = get_posts($q_args);
+			$topics = $topic_db->get_by_course($args['parent']);
+			if (empty($topics)) {
+				return $posts;
+			}
+			$topics = is_array($topics) ? $topics : [$topics];
+			usort($topics, fn($a, $b) => $a->sort_order - $b->sort_order);
+			foreach ($topics as $topic) {
+				$t_lessons = [];
+				foreach ($posts as $post) {
+					if (get_post_meta($post->ID, '_lighter_parent_topic', true) == $topic->topic_key) {
+						$post->sort_order = get_post_meta($post->ID, '_lighter_sort_order', true);
+						$t_lessons[] = $post;
+					}
+				}
+				usort($t_lessons, fn($a, $b) => $a->sort_order - $b->sort_order);
+				$lessons = array_merge($lessons, $t_lessons);
+			}
+			return $lessons;
 		}
 
 		if ($args['lesson']) {
