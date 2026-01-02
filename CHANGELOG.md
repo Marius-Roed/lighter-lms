@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file
 
+## [1.0.0-alpha.18] - 2026-01-02
+
+### Added
+
+- Course thumbnail picture.
+- Woo purchase access filter hook `lighter_lms_woo_give_access`. See [wc.php](includes/woocommerce/wc.php).
+
+### Fixes
+
+- Filter owned courses array for uniques.
+- Course complete lesson action.
+- General CSS.
+
 ## [1.0.0-alpha.17] - 2025-12-04
 
 ### Added

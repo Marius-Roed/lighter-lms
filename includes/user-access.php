@@ -40,7 +40,7 @@ class User_Access
 			return;
 		}
 		$lesson_query = new Lessons(['parent' => $course_id]);
-		$lessons = array_map(fn($post) => $post->ID, $lesson_query->get_lessons());
+		$lessons = $access_type == "partial" ? $unlock : array_map(fn($post) => $post->ID, $lesson_query->get_lessons());
 		$exists = false;
 		foreach ($this->owned as &$entry) {
 			if ($entry['course_id'] == $course_id) {
@@ -61,6 +61,7 @@ class User_Access
 				'expires' => $expires,
 			];
 		}
+		$this->owned = $this->unique_owned($this->owned);
 		update_user_meta($this->user->ID, $this->owned_courses, wp_json_encode($this->owned));
 
 		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
@@ -81,13 +82,14 @@ class User_Access
 		}
 		if (!isset($progress[$course_id])) {
 			$progress[$course_id] = [
-				'max_unlocked_lesson' => 0,
+				'max_unlocked_lesson' => count($unlocked_lessons),
 				'unlocked_lessons' => $unlocked_lessons,
 				'completed_lessons' => [],
 				'completion_date' => null
 			];
 		} else {
 			$progress[$course_id]['unlocked_lessons'] = $unlocked_lessons;
+			$progress[$course_id]['max_unlocked_lesson'] = count($unlocked_lessons);
 		}
 		update_user_meta($this->user->ID, $this->course_progress, wp_json_encode($progress));
 		delete_transient('lighter_lms_access_check_' . $this->user->ID . '_*');
@@ -259,5 +261,26 @@ class User_Access
 		}
 
 		return 1;
+	}
+
+	/**
+	 * Get unique rows of owned course objects
+	 *
+	 * @param array $rows Array of owned course objects
+	 * @return mixed[]
+	 */
+	public static function unique_owned($rows)
+	{
+		$owned = [];
+		foreach ($rows as $row) {
+			$id = $row['course_id'] ?? null;
+			if ($id === null) continue;
+
+			$date = $row['start_date'] ?? "1970-01-01 00:00:00";
+			if (!isset($owned[$id]) || new DateTime($date) > new DateTime($owned[$id]['start_date'])) {
+				$owned[$id] = $row;
+			}
+		}
+		return array_values($owned);
 	}
 }

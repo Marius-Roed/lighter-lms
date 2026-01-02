@@ -332,7 +332,6 @@ class Config
 				strpos($plugin, '/') + 1,
 				strpos($plugin, '.') - strpos($plugin, '/') - 1
 			);
-			do_action('qm/debug', $plugin);
 			if (isset($this->_builders[$slug])) {
 				$builders[] = $this->_builders[$slug];
 			} elseif (isset($this->_builders[$plugin])) {

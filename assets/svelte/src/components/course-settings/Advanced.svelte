@@ -10,7 +10,7 @@
         <Switch
             bind:checked={settings.sync_prod_img}
             name="sync-prod-img"
-            onLabel="Syncronise product image and course thumbnail"
+            onLabel="Synchronise product image and course thumbnail"
         />
     </div>
     <div class="course-slug">

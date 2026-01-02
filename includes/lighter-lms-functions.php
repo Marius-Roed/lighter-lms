@@ -240,7 +240,7 @@ if (! function_exists('lighter_get_course_settings')) {
 	}
 }
 
-if (!function_exists('lighterlms_course_sidebar')) {
+if (!function_exists('lighter_course_sidebar')) {
 	/**
 	 * Creates and prints the sidebar of a course to be viewed on the frontend.
 	 *
@@ -249,7 +249,7 @@ if (!function_exists('lighterlms_course_sidebar')) {
 	 *
 	 * @return string|null The generated HTML.
 	 */
-	function lighterlms_course_sidebar($course, $display = true)
+	function lighter_course_sidebar($course, $display = true)
 	{
 		$post = get_post($course);
 
@@ -480,6 +480,21 @@ if (! function_exists('lighter_get_lesson_settings')) {
 			'parents' => $parents ?? [],
 			'slug' => $post->post_name,
 		];
+	}
+}
+
+if (!function_exists('lihgter_grant_course_access')) {
+	/**
+	 * Give course access to a specified user
+	 *
+	 * @param int $course_id The id of the course to give access to.
+	 * @param int|\WP_User|null $user The ID or user object to give access to. Defaults to the logged in user.
+	 * @param int[] $lessons Array of lesson IDs to give access to.
+	 */
+	function lighter_grant_course_access($course_id, $user = null, $lessons)
+	{
+		$user = new User_Access($user);
+		$user->grant_course_access($course_id, 'partial', $lessons);
 	}
 }
 
