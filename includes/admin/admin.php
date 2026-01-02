@@ -343,16 +343,15 @@ class Admin
 			wp_die('Security fail. Nonce failure', '', ['response' => 403]);
 		}
 
-		if (get_post_type($lesson_id) !== lighter_lms()->lesson_post_type) {
+		if (!(get_post_type($lesson_id) === lighter_lms()->lesson_post_type || $course_id === $lesson_id)) {
 			wp_die('Invalid lesson id.', '', ['response' => 403]);
 		}
 
-		$user->complete_lesson($course_id, $lesson_id);
 
 		$lessons = new Lessons(['parent' => $course_id]);
 		$lessons = $lessons->get_lessons();
 
-		$next_lesson = null;
+		$next_lesson = $course_id === $lesson_id ? $lessons[0] : $user->complete_lesson($course_id, $lesson_id);
 		$next = false;
 
 		foreach ($lessons as $lesson) {
@@ -366,7 +365,7 @@ class Admin
 		if ($next_lesson && $user->check_lesson_access($next_lesson->ID, $course_id)) {
 			$slug = get_post($course_id)->post_name;
 			if ($slug) {
-				wp_redirect(home_url($slug . '?lesson=' . $next_lesson->post_name));
+				wp_redirect(home_url(lighter_lms()->course_slug . '/' . $slug . '?lesson=' . $next_lesson->post_name));
 				exit;
 			}
 		}

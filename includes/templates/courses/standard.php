@@ -91,7 +91,7 @@ if (get_post_meta($post->ID, '_course_display_theme_sidebar', true)) {
             <form action="<?php echo esc_url(admin_url('admin-post.php')) ?>" method="post" id="complete-form">
                 <?php wp_nonce_field('complete_lesson', 'lighter_lesson_nonce') ?>
                 <input type="hidden" name="action" value="lighter_complete_lesson" />
-                <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id) ?>" id="lesson_id" />
+                <input type="hidden" name="lesson_id" value="<?php echo esc_attr($lesson_id ?? $post->ID) ?>" id="lesson_id" />
                 <input type="hidden" name="course_id" value="<?php echo esc_attr($post->ID) ?>" id="course_id" />
                 <button type="submit" class="lighter-btn complete-lesson-btn" id="complete-btn" aria-label="Complete lesson"><?php _e('Mark complete', 'textdomain') ?></button>
             </form>
