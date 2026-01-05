@@ -244,6 +244,9 @@ class WC
 				'meta_value' => $product_id,
 				'meta_compare' => '=',
 			]);
+
+			$courses = apply_filters('lighter_lms_woo_give_access', $courses, $product_id);
+
 			if (empty($courses)) continue;
 			$contains_course = true;
 			break;
