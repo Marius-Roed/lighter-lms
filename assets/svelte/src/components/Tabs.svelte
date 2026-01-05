@@ -12,7 +12,7 @@
         activeTab = val;
         const url = new URL(window.location.href);
         url.searchParams.set("tab", toAttr(items[val].label));
-        window.history.pushState([], "", url.toString());
+        window.history.replaceState([], "", url.toString());
     }
 
     function handleKeydown(e, val) {

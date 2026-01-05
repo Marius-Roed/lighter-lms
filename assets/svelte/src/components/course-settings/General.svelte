@@ -1,11 +1,11 @@
 <script>
     import DatePicker from "$components/DatePicker.svelte";
     import FilterSearch from "$components/FilterSearch.svelte";
-    import settings, { displayDate } from "$lib/settings.svelte";
+    import settings, { displayDate, isEmpty } from "$lib/settings.svelte";
     import { course, postStatus } from "$lib/state.svelte";
 
     let src = $derived(
-        (settings.sync_prod_img
+        (settings.sync_prod_img && !isEmpty(settings.product)
             ? settings.product.images?.[0]?.src
             : settings.thumbnail?.src) ??
             "https://placehold.co/350/D2C8E1/663399?text=%3F",
@@ -42,7 +42,7 @@
         frame.on("select", () => {
             const attachment = frame.state().get("selection").first().toJSON();
 
-            if (settings.sync_prod_img) {
+            if (settings.sync_prod_img && !isEmpty(settings.product)) {
                 settings.product.images[0] = {
                     id: attachment.id,
                     src: attachment.url,
