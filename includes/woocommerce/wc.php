@@ -205,7 +205,7 @@ class WC
 	 */
 	public function hide_products($query)
 	{
-		if (!$query->is_main_query() || is_admin()) return;
+		if (!$query->is_main_query() || current_user_can('edit_posts')) return;
 
 		$user = wp_get_current_user();
 		$owned_courses = get_user_meta($user->ID, '_lighter_owned_courses', true);
@@ -246,6 +246,7 @@ class WC
 			]);
 
 			$courses = apply_filters('lighter_lms_woo_give_access', $courses, $product_id);
+			$courses = array_unique($courses);
 
 			if (empty($courses)) continue;
 			$contains_course = true;
@@ -303,6 +304,7 @@ class WC
 			]);
 
 			$courses = apply_filters('lighter_lms_woo_give_access', $courses, $product_id);
+			$courses = array_unique($courses);
 
 			if (empty($courses)) continue;
 			foreach ($courses as $course) {
