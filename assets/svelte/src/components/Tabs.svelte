@@ -16,6 +16,7 @@
     }
 
     function handleKeydown(e, val) {
+        if (e.metaKey) return;
         if (e.key === " " || e.key === "Enter") {
             e.preventDefault();
             setActive(val);

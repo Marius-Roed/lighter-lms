@@ -130,7 +130,7 @@ abstract class Post_Type
 	 * @param string	$column		The column name.
 	 * @param int		$post_id	The post ID.
 	 */
-	public function custom_colums($column, $post_id) {}
+	public function custom_columns($column, $post_id) {}
 
 	/**
 	 * Modifies admin list view columns (override in child class)
