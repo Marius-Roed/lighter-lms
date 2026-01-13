@@ -109,6 +109,12 @@
         display: grid;
     }
 
+    .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
     .col-full {
         grid-column: 1 / -1;
     }
@@ -1167,6 +1173,40 @@
         }
 
         span.row.center.middle { align-items: center; .icon-wrapper { rotate: -90deg; } }
+    }
+
+    #lighter-settings-mount .importexport {
+        display: grid;
+        gap: 2.5rem;
+        padding-block-start: 2em;
+
+        > div {
+            background-color: #fff;
+            padding: 1.5em;
+            border-radius: 1em;
+        }
+
+        table {
+            width: 100%;
+            border: 2px solid #D2C8E1;
+
+            thead td {
+                font-weight: 600 !important;
+            }
+
+            thead tr:last-child td {
+                border-bottom-width: 2px;
+            }
+
+            td {
+                border: 1px solid #D2C8E1;
+                padding: .5em;
+            }
+        }
+
+        .submit {
+            justify-self: end;
+        }
     }
 
     .lighter-settings-foot {

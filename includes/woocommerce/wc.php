@@ -240,6 +240,8 @@ class WC
 			$courses = get_posts([
 				'post_type' => lighter_lms()->course_post_type,
 				'status' => 'publish',
+				'fields' => 'ids',
+				'numberposts' => -1,
 				'meta_key' => '_lighter_product_id',
 				'meta_value' => $product_id,
 				'meta_compare' => '=',
