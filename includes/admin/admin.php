@@ -146,7 +146,7 @@ class Admin
 	{
 		$screen = get_current_screen();
 
-		if (isset($screen->base) && 'post' === $screen->base) {
+		if (isset($screen->base) && 'post' === $screen->base && !$screen->is_block_editor) {
 			$this->in_cpt_header();
 		}
 
