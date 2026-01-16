@@ -164,6 +164,8 @@ class WC
 			'short_description' => $product->get_short_description('edit'),
 			'stock_quantity' => $product->get_stock_quantity('edit'),
 			'menu_order' => $product->get_menu_order('edit'),
+			'catalog_visibility' => $product->get_catalog_visibility('edit'),
+			'sku' => $product->get_sku('edit'),
 		];
 
 		return $obj;
@@ -329,6 +331,7 @@ class WC
 			case 'name':
 			case 'price':
 			case 'sale_price':
+			case 'sku':
 				$val = sanitize_text_field($val);
 				break;
 			case 'description':

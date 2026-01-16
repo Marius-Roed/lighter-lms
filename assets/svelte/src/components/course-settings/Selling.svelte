@@ -18,6 +18,7 @@
     let alt = $derived(settings.product.images?.[0]?.alt ?? "Product image");
 
     let imgContainer = $state();
+    let showMore = $state(false);
 
     let frame;
 
@@ -190,18 +191,6 @@
                 </div>
                 <div>
                     <h4>Additional</h4>
-                    {#if settings.store === "woocommerce"}
-                        <Switch
-                            bind:checked={settings.product.auto_comp}
-                            name="auto_comp"
-                            onLabel="Auto complete WooCommerce status on purchase"
-                        />
-                    {/if}
-                    <Switch
-                        bind:checked={settings.product.auto_hide}
-                        name="auto_hide"
-                        onLabel="Hide the product when bought"
-                    />
                     <label for="store-sort">
                         Menu order
                         <input
@@ -212,9 +201,48 @@
                             min="0"
                         />
                     </label>
+                    <label>
+                        SKU
+                        <input
+                            bind:value={settings.product.sku}
+                            type="text"
+                            name="product_sku"
+                            id="product_sku"
+                        />
+                    </label>
                     <SideModal trigger="Mange access" class="transparent">
                         <CourseAccess />
                     </SideModal>
+                    <button type="button" onclick={() => (showMore = !showMore)}
+                        >Show more</button
+                    >
+                    {#if showMore}
+                        {#if settings.store === "woocommerce"}
+                            <Switch
+                                bind:checked={settings.product.auto_comp}
+                                name="auto_comp"
+                                onLabel="Auto complete WooCommerce status on purchase"
+                            />
+                        {/if}
+                        <Switch
+                            bind:checked={settings.product.auto_hide}
+                            name="auto_hide"
+                            onLabel="Hide the product when bought"
+                        />
+                        <label>
+                            Catalog visibility
+                            <select
+                                name="product_visiblity"
+                                id="prod_vis"
+                                bind:value={settings.product.catalog_visibility}
+                            >
+                                <option value="visible">Search & shop</option>
+                                <option value="catalog">Shop only</option>
+                                <option value="search">Search only</option>
+                                <option value="hidden">Hidden</option>
+                            </select>
+                        </label>
+                    {/if}
                 </div>
             </div>
             <div class="img">

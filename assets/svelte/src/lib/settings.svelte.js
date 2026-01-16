@@ -163,7 +163,9 @@ export function setProduct(args = undefined) {
         sale_price: args?.sale_price,
         short_description: args?.short_description,
         stock_quantity: args?.stock_quantity,
-        menu_order: args?.menu_order
+        menu_order: args?.menu_order ?? 0,
+        sku: args?.sku ?? "",
+        catalog_visibility: args?.catalog_visibility ?? "search_shop",
     }
 
     settings.product = { ...product };
@@ -186,6 +188,8 @@ export function setProduct(args = undefined) {
  * @property {string} short_description
  * @property {number|null} stock_quantity
  * @property {number} menu_order
+ * @property {string} sku
+ * @property {"visible"|"catalog"|"search"|"hidden"} catalog_visibility
  */
 
 /**
