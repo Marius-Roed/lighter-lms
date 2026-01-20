@@ -557,6 +557,79 @@ if (!function_exists('lighter_sanitize_access')) {
 	}
 }
 
+add_action('lighter_lms_import_user', function ($row, $opts) {
+	$fname = sanitize_text_field($row[0] ?? '');
+	$lname = sanitize_text_field($row[1] ?? '');
+	$email = sanitize_email($row[2] ?? '');
+	$phone = sanitize_text_field($row[3] ?? '');
+	$address = [
+		'first_name' => $fname,
+		'last_name' => $lname,
+		'email' => $email,
+		'phone' => $phone,
+	];
+	if (!$opts['userName']) { // Account for whether or not username is email.
+		$skus = trim($row[5] ?? '');
+		$address = [
+			...$address,
+			'address_1' => sanitize_text_field($row[6] ?? ''),
+			'city' => sanitize_text_field($row[7] ?? ''),
+			'postcode' => sanitize_text_field($row[8] ?? ''),
+			'country' => sanitize_text_field($row[9] ?? '')
+		];
+		$notes = sanitize_text_field($row[10] ?? '');
+		$date = sanitize_text_field($row[11] ?? '');
+	} else {
+		$skus = trim($row[4] ?? '');
+		$address = [
+			...$address,
+			'address_1' => sanitize_text_field($row[5] ?? ''),
+			'city' => sanitize_text_field($row[6] ?? ''),
+			'postcode' => sanitize_text_field($row[7] ?? ''),
+			'country' => sanitize_text_field($row[8] ?? '')
+		];
+		$notes = sanitize_text_field($row[9] ?? '');
+		$date = sanitize_text_field($row[10] ?? '');
+	}
+
+	if (!is_email($email)) {
+		throw new Exception("Invalid email address; " . ($row[2] ?? ''));
+	}
+
+	$user = get_user_by('email', $email);
+
+	if (!$user && $opts['skipNew']) {
+		return;
+	} else if (!$user) {
+		$username = !$opts['userName'] ? sanitize_text_field($row[4] ?? '') : $email;
+		$pass = wp_generate_password();
+
+		$user_id = wp_create_user($username, $pass, $email);
+
+		if (is_wp_error($user_id)) {
+			throw new Exception("Could not create user; " . $user_id->get_error_message());
+		}
+
+		$user = get_user_by('id', $user_id);
+
+		if ($opts['notify']) {
+			// TODO: Send notification email.
+		}
+	}
+
+	update_user_meta($user->ID, 'billing_phone', $phone);
+	update_user_meta($user->ID, 'first_name', $fname);
+	update_user_meta($user->ID, 'last_name', $lname);
+
+	// TODO: Handle other stores than just Woo.
+	if (lighter_lms()->connected_store === "woocommerce") {
+		error_log(var_export($opts, true));
+		if ($opts['createOrders'] && !empty($skus)) {
+			WC::create_legacy_orders($user, $skus, $address, $notes, $date);
+		}
+	}
+}, 10, 2);
+
 add_action('lighter_process_import_batch', function ($job_id) {
 	$job = get_option('lighter_job_' . $job_id);
 
@@ -587,7 +660,7 @@ add_action('lighter_process_import_batch', function ($job_id) {
 		while (! $file->eof() && $process_count < $batch_size) {
 			$row = $file->current();
 
-			if ($job['current_line'] === 0 && !empty($job['options']['firstHeader'])) {
+			if ($job['current_line'] === 0 && !empty($job['opts']['firstHeader'])) {
 				$job['current_line']++;
 				$file->next();
 				continue;
@@ -595,7 +668,14 @@ add_action('lighter_process_import_batch', function ($job_id) {
 
 			if (!empty($row)) {
 				try {
-					// Import the user
+					/**
+					 * Imports a user. Erros should be thrown, so they are picked up
+					 * and sent to the front end automatically.
+					 *
+					 * @param array $row The row of user data.
+					 * @param array $job['options'] The options of the current import job.
+					 */
+					do_action('lighter_lms_import_user', $row, $job['opts']);
 				} catch (Exception $e) {
 					$job['errors'][] = "Line {$job['current_line']}: " . $e->getMessage();
 				}

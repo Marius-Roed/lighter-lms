@@ -320,6 +320,77 @@ class WC
 	}
 
 	/**
+	 * Creates a woo order on the user
+	 *
+	 * Helper function to create older orders on a user.
+	 *
+	 * @param WP_User $user
+	 * @param string $skus List of SKUs, separated by a '|'.
+	 * @param array $address The user address.
+	 * @param string $note A note to add to the order.
+	 * @param string $date The date the order was created.
+	 */
+	public static function create_legacy_orders($user, $skus, $address, $note = "", $date = "")
+	{
+		$sku_list = explode('|', $skus);
+		$import_hash = md5($user->ID . $skus); // unique hash to not double import orders
+		$existing = \wc_get_orders([
+			'limit' => 1,
+			'customer_id' => $user->ID,
+			'meta_key' => '_lighter_import_hash',
+			'meta_value' => $import_hash,
+			'return' => 'ids'
+		]);
+
+		if (!empty($existing)) {
+			return;
+		}
+
+		$order = \wc_create_order([
+			'customer_id' => $user->ID,
+			'created_via' => 'lighter_import',
+		]);
+
+		if (is_wp_error($order)) {
+			throw new Exception("Order creation failed; " . $order->get_error_message());
+		}
+
+		foreach ($sku_list as $sku) {
+			$sku = trim($sku);
+			if (empty($sku)) continue;
+
+			$product_id = \wc_get_product_id_by_sku($sku);
+
+			if (!$product_id) {
+				$order->add_order_note("Warning; SKU '$sku' not found during import!");
+				continue;
+			}
+
+			$product = \wc_get_product($product_id);
+
+			$item_id = $order->add_product($product, 1);
+
+			if (!$item_id) {
+				throw new Exception("Failed to add product ID $product_id to order.");
+			}
+		}
+
+		if (!empty($date)) {
+			$order->set_date_created($date);
+			$order->set_date_paid($date);
+			$order->set_date_completed($date);
+		}
+
+		$order->set_address($address, 'billing');
+
+		$order->calculate_totals();
+		if (!empty($note)) $order->add_order_note($note);
+		$order->update_meta_data('_lighter_import_hash', $import_hash);
+		$order->update_status('completed', 'Imported via LighterLMS CSV');
+		$order->save();
+	}
+
+	/**
 	 * Sanitize product field
 	 *
 	 * @paam string $key - The name of the field

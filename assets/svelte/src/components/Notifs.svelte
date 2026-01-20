@@ -36,11 +36,18 @@
                 </div>
                 <div class="actions">
                     {#if job.status === "running" || job.status === "paused"}
-                        <button type="button" class="pause-resume">
+                        <button
+                            type="button"
+                            class="pause-resume"
+                            onclick={() =>
+                                job.status === "running"
+                                    ? importManager.jobs.get(job.id)?.pause()
+                                    : importManager.jobs.get(job.id)?.resume()}
+                        >
                             <Icon
                                 name={job.status === "running"
-                                    ? "play"
-                                    : "pause"}
+                                    ? "pause"
+                                    : "play"}
                             />
                         </button>
                         <button

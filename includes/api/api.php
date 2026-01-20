@@ -557,6 +557,10 @@ class API
 			return new WP_Error("no_file", "No file or options found.", ['status' => 400]);
 		}
 
+		if (!empty($opts)) {
+			$opts = $opts['options'];
+		}
+
 		$file = $file['file'];
 
 		$upload_dir = wp_upload_dir();
@@ -636,7 +640,30 @@ class API
 	public function update_import_job($req)
 	{
 		$job_id = $req->get_param('job_id');
-		return rest_ensure_response([]);
+		$body = json_decode($req->get_body(), true);
+
+		$job = get_option('lighter_job_' . $job_id);
+		if (!$job) {
+			return new WP_Error('not_found', 'Could not find job with id: ' . $job_id, ['status' => 404]);
+		}
+
+		if (isset($body['cancel']) && $body['cancel']) {
+			$job['status'] = "cancelled";
+		} else if (isset($body['paused']) && $body['paused']) {
+			$job['status'] = "paused";
+		} else if (isset($body['resume']) && $body['resume']) {
+			$job['status'] = "running";
+		} else {
+			return new WP_Error('bad_request', "Request should contain a true of either 'cancel', 'paused' or 'resume'.", ['status' => 400]);
+		}
+
+		update_option('lighter_job_' . $job_id, $job, false);
+
+		return rest_ensure_response([
+			'status' => $job['status'],
+			'errors' => $job['errors'],
+			'progress' => ($job['current_line'] / $job['total_lines']) * 100,
+		]);
 	}
 
 	/**

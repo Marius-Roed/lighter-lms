@@ -41,45 +41,72 @@ class Job {
     }
 
     async pause() {
+        const prev = this.status;
         this.status = "paused";
-        this.stopPolling();
-        const res = lighterFetch({
-            path: `import/${this.id}`,
-            method: "PUT",
-            body: JSON.stringify({
-                paused: true,
+        try {
+            this.stopPolling();
+            const res = await /** @type {Promise<Job>} */ (lighterFetch({
+                path: `import/${this.id}`,
+                method: "PUT",
+                body: JSON.stringify({
+                    paused: true,
+                })
             })
-        });
-
-        // TODO: Handle server res.
+            );
+            this.status = res.status;
+            this.progress = res.progress;
+            this.errors = res.errors;
+        } catch (e) {
+            this.status = prev;
+            console.error("Could not pause import:", e);
+        }
     }
 
     async resume() {
+        const prev = this.status;
         this.status = "running";
-        const res = lighterFetch({
-            path: `import/${this.id}`,
-            method: "PUT",
-            body: JSON.stringify({
-                resume: true,
-            })
-        });
+        try {
+            const res = await /** @type {Promise<Job>} */ (
+                lighterFetch({
+                    path: `import/${this.id}`,
+                    method: "PUT",
+                    body: JSON.stringify({
+                        resume: true,
+                    })
+                })
+            );
 
-        // TODO: Handle server res.
+            this.status = res.status;
+            this.progress = res.progress;
+            this.errors = res.errors;
+        } catch (e) {
+            this.status = prev;
+            console.error("Could not resume import:", e);
+        }
     }
 
     async cancel() {
+        const prev = this.status;
         this.status = "cancelled"
-        this.stopPolling();
-        const res = lighterFetch({
-            path: `import/${this.id}`,
-            method: "PUT",
-            body: JSON.stringify({
-                cancel: true,
-            })
-        });
+        try {
+            this.stopPolling();
+            const res = await /** @type {Promise<Job>} */ (
+                lighterFetch({
+                    path: `import/${this.id}`,
+                    method: "PUT",
+                    body: JSON.stringify({
+                        cancel: true,
+                    })
+                })
+            );
 
-
-        // TODO: Handle server res.
+            this.status = res.status;
+            this.progress = res.progress;
+            this.errors = res.errors;
+        } catch (e) {
+            console.error("Could not cancel import:", e);
+            this.status = prev;
+        }
     }
 
     startPolling() {
