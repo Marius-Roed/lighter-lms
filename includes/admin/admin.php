@@ -150,7 +150,11 @@ class Admin
 			$this->in_cpt_header();
 		}
 
-		if (isset($screen->base) && ('edit' === $screen->base && in_array($screen->post_type, lighter_lms()->post_types))) {
+		if (
+			isset($screen->base)
+			&& ('edit' === $screen->base && in_array($screen->post_type, lighter_lms()->post_types))
+			|| strpos($screen->base, 'lighter-lms-settings') !== false
+		) {
 			$this->show_header();
 		}
 	}

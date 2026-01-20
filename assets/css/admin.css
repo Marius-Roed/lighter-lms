@@ -339,7 +339,16 @@
         }
 
         .actions {
+            display: flex;
+            align-items: center;
             gap: 1em;
+
+            #lighter-notif-btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                anchor-name: --lighter-notifs;
+            }
         }
     }
 
@@ -740,6 +749,67 @@
     .lighter .sidebar-modal::backdrop {
         background: oklch(0 0 0 /0.25);
         backdrop-filter: blur(2.5px);
+    }
+
+    .lighter #lighter-notifs .lighter-notif-btn.notify {
+        position: relative;
+
+        &::after {
+            content: "";
+            position: absolute;
+            top: -1px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background: #cf1010;
+            border-radius: 50%;
+        }
+    }
+
+    .lighter #lighter-notifs-panel {
+        position-anchor: --lighter-notifs;
+        inset: unset;
+        top: calc(anchor(bottom) + 1.5em);
+        right: calc(anchor(right) - 1em);
+        flex-direction: column;
+        align-items: start;
+        min-width: 250px;
+
+        p { display: inline-block; margin: 0 !important; }
+
+        .import-job {
+            width: 100%;
+        }
+
+        .top-container {
+            display: flex;
+            justify-content: space-between;
+
+            .info {
+                display: flex;
+                gap: .5em;
+                align-items: center;
+
+                p { color: #777; }
+            }
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        progress { height: 1.5em; width: 80%; }
+
+        button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #555;
+
+            &.dismiss { rotate: 45deg; }
+        }
     }
 
     .tag-search { position: relative; }

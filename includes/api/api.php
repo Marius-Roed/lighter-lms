@@ -2,11 +2,11 @@
 
 namespace LighterLMS\API;
 
+use LighterLMS\Import_Scheduler;
 use LighterLMS\Lesson_Content;
 use LighterLMS\Topics;
 use LighterLMS\User_Access;
 use WP_Error;
-use WP_Posts_List_Table;
 use WP_Query;
 use WP_REST_Response;
 
@@ -19,6 +19,7 @@ class API
 		add_action('rest_api_init', [$this, 'register_lesson_routes']);
 		add_action('rest_api_init', [$this, 'register_topic_routes']);
 		add_action('rest_api_init', [$this, 'register_course_routes']);
+		add_action('rest_api_init', [$this, 'register_import_export_routes']);
 
 		add_filter('rest_' . lighter_lms()->course_post_type . '_query', [$this, 'course_rest'], 10, 2);
 		add_filter('rest_prepare_' . lighter_lms()->lesson_post_type, [$this, 'ensure_fields'], 10, 3);
@@ -489,22 +490,153 @@ class API
 
 	public function register_course_routes()
 	{
-		register_rest_field(lighter_lms()->course_post_type, 'tags', [
-			'get_callback' => [$this, 'get_courses_tags'],
-			'schema' => null,
+		register_rest_route($this->namespace, '/import', [
+			'methods' => 'POST',
+			'callback' => [$this, 'start_import_job'],
+			'permission_callback' => fn() => current_user_can('edit_users'),
 		]);
-		register_rest_field(lighter_lms()->course_post_type, 'columns', [
-			'get_callback' => [$this, 'get_courses_columns'],
-			'schema' => null,
-		], 10, 3);
-		register_rest_field(lighter_lms()->course_post_type, 'bulk_actions', [
-			'get_callback' => [$this, 'get_courses_bulk_actions'],
-			'schema' => null,
-		], 10, 3);
-		register_rest_field(lighter_lms()->course_post_type, 'course_title', [
-			'get_callback' => [$this, 'get_courses_title'],
-			'schema' => null,
+
+		register_rest_route($this->namespace, '/import/(?P<job_id>import_[a-f0-9]{13})', [
+			'methods' => 'POST',
+			'callback' => [$this, 'start_import_job'],
+			'permission_callback' => fn() => current_user_can('edit_users'),
+			'args' => [
+				'job_id' => [
+					'description' => 'Starts a job with supplied ID.',
+					'required' => false,
+					'pattern' => '^import_[a-f0-9]{13}$',
+					'sanitize_callback' => 'sanitize_text_field'
+				],
+			],
 		]);
+
+		register_rest_route($this->namespace, '/import/(?P<job_id>import_[a-f0-9]{13})', [
+			'methods' => 'GET',
+			'callback' => [$this, 'get_import_job'],
+			'permission_callback' => fn() => current_user_can('edit_users'),
+			'args' => [
+				'job_id' => [
+					'required' => true,
+					'pattern' => '^import_[a-f0-9]{13}$',
+					'sanitize_callback' => 'sanitize_text_field'
+				],
+			],
+		]);
+
+		register_rest_route($this->namespace, '/import/(?P<job_id>import_[a-f0-9]{13})', [
+			'methods' => 'PUT,PATCH',
+			'callback' => [$this, 'update_import_job'],
+			'permission_callback' => fn() => current_user_can('edit_users'),
+			'args' => [
+				'job_id' => [
+					'required' => true,
+					'pattern' => '^import_[a-f0-9]{13}$',
+					'sanitize_callback' => 'sanitize_text_field'
+				],
+			],
+		]);
+	}
+
+	/**
+	 * Starts and import job
+	 *
+	 * @param \WP_REST_Request $req
+	 * @return \WP_REST_Response | \WP_Error
+	 */
+	public function start_import_job($req)
+	{
+		$job_id = $req->get_param('job_id') ?? uniqid('import_');
+		$opts = json_decode($req->get_param('options'), true);
+		$file = $req->get_file_params();
+
+		if (empty($file) && empty($_POST) && $_SERVER['CONTENT_LENGTH'] > 0) {
+			return new WP_Error('file_too_large', 'File exceeds server size limits.', ['status' => 413]);
+		}
+
+		if (!$opts || !$file) {
+			return new WP_Error("no_file", "No file or options found.", ['status' => 400]);
+		}
+
+		$file = $file['file'];
+
+		$upload_dir = wp_upload_dir();
+		$target_dir = $upload_dir['basedir'] . '/lighter-imports/';
+
+		if (!file_exists($target_dir)) {
+			mkdir($target_dir, 0755, true);
+			file_put_contents($target_dir . '.htaccess', 'deny from all');
+		}
+
+		$file_path = $target_dir . $job_id . '.csv';
+		move_uploaded_file($file['tmp_name'], $file_path);
+
+		// TODO: Maybe find a better way to read the line count??
+		$line_count = 0;
+		$handle = fopen($file_path, "r");
+		if (!$handle) {
+			return new WP_Error('not_found', "Could not find file at {$file_path}", ['status' => 404]);
+		}
+
+		while (!feof($handle)) {
+			fgets($handle);
+			$line_count++;
+		}
+		fclose($handle);
+
+		$init_state = [
+			'id' => $job_id,
+			'filename' => $file['name'],
+			'status' => 'running',
+			'file_path' => $file_path,
+			'total_lines' => $line_count,
+			'current_line' => 0,
+			'errors' => [],
+			'opts' => $opts
+		];
+
+		add_option('lighter_job_' . $job_id, $init_state, '', false);
+
+		Import_Scheduler::schedule_batch($job_id);
+
+		return rest_ensure_response(['job' => $init_state]);
+	}
+
+	/**
+	 * Gets an import job based on ID.
+	 *
+	 * @param \WP_REST_Request $req
+	 * @return \WP_REST_Response | \WP_Error
+	 */
+	public function get_import_job($req)
+	{
+		$job_id = $req->get_param('job_id');
+		$job = get_option('lighter_job_' . $job_id);
+
+		if (!$job) {
+			return new WP_Error('not_found', 'Could not find job with id: ' . $job_id, ['status' => 404]);
+		}
+
+		return rest_ensure_response([
+			'id' => $job['id'],
+			'filename' => $job['filename'],
+			'status' => $job['status'],
+			'progress' => ($job['current_line'] / $job['total_lines']) * 100,
+			'current' => $job['current_line'],
+			'total' => $job['total_lines'],
+			'errors' => $job['errors'],
+		]);
+	}
+
+	/**
+	 * Fetch mutliple topics.
+	 *
+	 * @param \WP_REST_Request $req
+	 * @return \WP_REST_Response | \WP_Error
+	 */
+	public function update_import_job($req)
+	{
+		$job_id = $req->get_param('job_id');
+		return rest_ensure_response([]);
 	}
 
 	/**
@@ -628,6 +760,26 @@ class API
 		return apply_filters("manage_{$post_type}_posts_columns", $columns);
 	}
 
+	public function register_import_export_routes()
+	{
+		register_rest_field('import', '', [
+			'get_callback' => [$this, 'get_'],
+			'schema' => null,
+		]);
+		register_rest_field(lighter_lms()->course_post_type, 'columns', [
+			'get_callback' => [$this, 'get_courses_columns'],
+			'schema' => null,
+		], 10, 3);
+		register_rest_field(lighter_lms()->course_post_type, 'bulk_actions', [
+			'get_callback' => [$this, 'get_courses_bulk_actions'],
+			'schema' => null,
+		], 10, 3);
+		register_rest_field(lighter_lms()->course_post_type, 'course_title', [
+			'get_callback' => [$this, 'get_courses_title'],
+			'schema' => null,
+		]);
+	}
+
 	/**
 	 * Ensures title is always on rest requets.
 	 *
@@ -663,5 +815,10 @@ class API
 
 		$resp->set_data($data);
 		return $resp;
+	}
+
+	private function _parse_csv($csv, $opts)
+	{
+		return $csv;
 	}
 }

@@ -1,61 +1,88 @@
 <script>
     import Switch from "$components/Switch.svelte";
+    import importManager from "$lib/import.svelte";
+    import lighterFetch from "$lib/lighterFetch";
     import settings from "$lib/settings.svelte";
 
+    let importing = false;
     /** @type {FileList | undefined} */
     let files = $state();
+    /** @type {File} */
+    let selectedFile = $state();
     let firstHeader = $state(true);
     let createOrders = $state(false);
     let userName = $state(true);
+    let skipNew = $state(false);
+    let notify = $state(true);
     let separator = $state(",");
     let rows = $state([]);
 
-    const baseHeaders = {
-        fname: "First name",
-        lname: "Last name",
-        email: "Email",
-        phone: "Phone",
-        courses: "Courses",
+    const fields = {
+        fname: { label: "First name", always: true },
+        lname: { label: "Last name", always: true },
+        email: { label: "Email", always: true },
+        phone: { label: "phone", always: true },
+        username: { label: "Username", when: () => !userName },
+        courses: { label: "Courses", when: () => !createOrders },
+        products: { label: "Product SKUs", when: () => createOrders },
+        address: { label: "Address", when: () => createOrders },
+        city: { label: "City", when: () => createOrders },
+        postcode: { label: "Postcode", when: () => createOrders },
+        country: { label: "Country", when: () => createOrders },
+        orderNodes: { label: "Notes", when: () => createOrders },
+        creationDate: { label: "Date created", when: () => createOrders },
     };
-    const orderHeaders = {
-        address: "Address",
-        city: "City",
-        postcode: "Postcode",
-        country: "Country",
-    };
+    const activeFields = $derived(
+        Object.entries(fields)
+            .filter(([_, def]) => def.always || (def.when && def.when()))
+            .map(([key]) => key),
+    );
 
-    const headers = $derived({
-        ...baseHeaders,
-        ...(userName ? {} : { username: "User name" }),
-        ...(createOrders ? orderHeaders : {}),
-    });
+    const headers = $derived(
+        Object.fromEntries(activeFields.map((key) => [key, fields[key].label])),
+    );
 
-    const parseCSV = async (sep, header) => {
-        const file = files?.[0];
-        if (!file) {
+    /**
+     * @type {(sep: string, header: boolean, full?: boolean) => Promise}
+     */
+    const parseCSV = async (sep, header, full) => {
+        if (!selectedFile) {
             rows = [];
             return;
         }
 
         try {
-            const text = await file.text();
-            const lines = text.split("\n").filter((line) => line.trim());
-            const dataRows = header ? lines.slice(1, 6) : lines.slice(0, 5);
+            const text = await selectedFile.text();
+            const lines = text
+                .split("\n")
+                .map((l) => l.trim())
+                .filter(Boolean);
+            const start = header ? 1 : 0;
 
-            rows = dataRows.map((line) => {
+            if (full) {
+                return Promise.resolve(
+                    lines.slice(start, -1).map((line) => {
+                        const values = line.split(sep).map((v) => v.trim());
+                        const row = {};
+                        activeFields.forEach((key, idx) => {
+                            row[key] = values[idx] ?? "";
+                        });
+
+                        return row;
+                    }),
+                );
+            }
+
+            const preview = lines.slice(start, start + 5);
+
+            rows = preview.map((line) => {
                 const values = line.split(sep).map((v) => v.trim());
-                return {
-                    fname: values[0] || "",
-                    lname: values[1] || "",
-                    uname: values[2] || "",
-                    email: values[3] || "",
-                    phone: values[4] || "",
-                    courses: values[5] || "",
-                    address: values[6] || "",
-                    city: values[7] || "",
-                    postcode: values[8] || "",
-                    country: values[9] || "",
-                };
+                const row = {};
+                activeFields.forEach((key, idx) => {
+                    row[key] = values[idx] ?? "";
+                });
+
+                return row;
             });
         } catch (e) {
             console.error("Error parsing csv", e);
@@ -63,8 +90,67 @@
         }
     };
 
+    /**
+     * @type {(e: Event) => Promise}
+     */
+    const handleImport = async (e) => {
+        e.preventDefault();
+        if (importing) return;
+
+        if (!selectedFile) {
+            // TODO: Toast "no csv found" error
+            console.error("no csv found");
+            return;
+        }
+        importing = true;
+        const csv = await parseCSV(separator, firstHeader, true);
+
+        if (!csv || !csv[0].email) {
+            // TODO: Show error state
+            return;
+        }
+
+        try {
+            const formdata = new FormData();
+            formdata.append("file", selectedFile);
+            formdata.append(
+                "options",
+                JSON.stringify({
+                    options: {
+                        separator,
+                        firstHeader,
+                        createOrders,
+                        userName,
+                        skipNew,
+                        notify,
+                    },
+                }),
+            );
+
+            const res = await lighterFetch({
+                path: "import",
+                method: "POST",
+                body: formdata,
+            });
+
+            importManager.addJob(res.job);
+
+            let notifBtn = document.getElementById("lighter-notifs-panel");
+            notifBtn?.showPopover();
+        } catch (e) {
+            // TODO: Show fail
+            console.error("Could not start import job", e);
+        } finally {
+            importing = false;
+        }
+    };
+
     $effect(() => {
-        if (files?.[0]) parseCSV(separator, firstHeader);
+        activeFields;
+        if (files?.[0]) {
+            selectedFile = files[0];
+        }
+        parseCSV(separator, firstHeader);
     });
 </script>
 
@@ -72,9 +158,11 @@
     <h2>Import users</h2>
     <p>Import users and give them their appropriate courses.</p>
     <div class="example">
-        <p>Example CSV file:</p>
-        {#if files}
-            File: {files[0].name}
+        {#if selectedFile}
+            <p>File: {selectedFile.name}</p>
+            Preview:
+        {:else}
+            <p>Example CSV file:</p>
         {/if}
         <table>
             <thead>
@@ -106,6 +194,8 @@
                             <td>New York</td>
                             <td>10001</td>
                             <td>USA</td>
+                            <td>(Old order #)35134</td>
+                            <td>{new Date("1").toISOString()}</td>
                         {/if}
                     </tr>
                     <tr>
@@ -120,6 +210,8 @@
                             <td>Boston</td>
                             <td>02101</td>
                             <td>USA</td>
+                            <td>I will show up in the order notes</td>
+                            <td>{new Date().toISOString()}</td>
                         {/if}
                     </tr>
                 {/if}
@@ -135,13 +227,21 @@
                 name="first_header"
                 bind:checked={firstHeader}
             />
-            <Switch onLabel="Skip new users" name="skip_new" />
+            <Switch
+                onLabel="Skip new users"
+                name="skip_new"
+                bind:checked={skipNew}
+            />
             <Switch
                 onLabel="Use email as user login"
                 name="login_email"
                 bind:checked={userName}
             />
-            <Switch onLabel="Notify users" name="notify" checked />
+            <Switch
+                onLabel="Notify users"
+                name="notify"
+                bind:checked={notify}
+            />
             <Switch
                 onLabel={"Create order in " + (settings.store ?? "store")}
                 name="orders"
@@ -208,7 +308,9 @@
         />
     </div>
     <div class="submit">
-        <input type="submit" class="lighter-btn" value="import" />
+        <button type="button" class="lighter-btn" onclick={handleImport}
+            >Import</button
+        >
     </div>
 </div>
 

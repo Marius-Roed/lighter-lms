@@ -1,12 +1,9 @@
 import apiFetch from "@wordpress/api-fetch";
 
-/** @typedef {import('@wordpress/api-fetch').default} APIFetch */
-
 /**
  * Configure apiFetch with nonce + root url
  * @param {string} restUrl - The base REST namespace
  * @param {string} nonce - The REST API nonce
- * @returns {APIFetch}
  */
 export function setupApiFetch(restUrl, nonce) {
     apiFetch.use(apiFetch.createRootURLMiddleware(restUrl));
@@ -15,9 +12,10 @@ export function setupApiFetch(restUrl, nonce) {
 }
 
 /**
- * Preconfigured apiFetch
- * @type {APIFetch}
+ * Preconfigured wordpress apiFetch
+ * @template T
+ * @type {<T>(options: import('@wordpress/api-fetch').APIFetchOptions) => Promise<T>}
  */
-const lighterFetch = setupApiFetch(window.LighterLMS.restUrl, window.LighterLMS.nonce);
+const lighterFetch = /** @type {any} */ (setupApiFetch(window.LighterLMS.restUrl, window.LighterLMS.nonce));
 
 export default lighterFetch;

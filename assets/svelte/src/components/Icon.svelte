@@ -2,9 +2,12 @@
     import type { HTMLAttributes } from "svelte/elements";
 
     import BeaverBuilderLogo from "$icons/beaver-builder-logo.svg?raw";
+    import BellIcon from "$icons/bell.svg?raw";
+    import BellFilled from "$icons/bell-fill.svg?raw";
     import BreackdanceLogo from "$icons/breakdance-logo.svg?raw";
     import BricksLogo from "$icons/bricks-logo.svg?raw";
     import BrizyLogo from "$icons/brizy-logo.svg?raw";
+    import CancelIcon from "$icons/cancel.svg?raw";
     import CheckmarkIcon from "$icons/checkmark.svg";
     import ChevronIcon from "$icons/chevron-down.svg?raw";
     import DiviLogo from "$icons/divi-logo.svg?raw";
@@ -14,7 +17,9 @@
     import LoopIcon from "$icons/loop.svg?raw";
     import MinusIcon from "$icons/minus.svg?raw";
     import OxygenLogo from "$icons/oxygen-logo.svg?raw";
+    import PauseIcon from "$icons/pause.svg?raw";
     import PencilIcon from "$icons/pencil.svg?raw";
+    import PlayIcon from "$icons/play.svg?raw";
     import PlusIcon from "$icons/plus.svg?raw";
     import SaveIcon from "$icons/save.svg?raw";
     import SixDotsIcon from "$icons/six-dots.svg?raw";
@@ -26,9 +31,12 @@
 
     const iconMap = {
         "beaver-builder": BeaverBuilderLogo,
+        bell: BellIcon,
+        bellFilled: BellFilled,
         breakdance: BreackdanceLogo,
         bricks: BricksLogo,
         brizy: BrizyLogo,
+        cancel: CancelIcon,
         checkmark: CheckmarkIcon,
         chevron: ChevronIcon,
         divi: DiviLogo,
@@ -38,7 +46,9 @@
         loop: LoopIcon,
         minus: MinusIcon,
         oxygen: OxygenLogo,
+        pause: PauseIcon,
         pencil: PencilIcon,
+        play: PlayIcon,
         plus: PlusIcon,
         save: SaveIcon,
         sixDots: SixDotsIcon,
@@ -69,13 +79,10 @@
         ...rest
     }: IconProps = $props();
 
-    let svgContent = $state(
-        '<svg viewBox="0 0 24 24" fill="red"><circle cx="12" cy="12" r="10" fill="red"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="white">!</text></svg>',
-    );
+    let fallback =
+        '<svg viewBox="0 0 24 24" fill="red"><circle cx="12" cy="12" r="10" fill="red"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="white">!</text></svg>';
 
-    if (name in iconMap) {
-        svgContent = iconMap[name];
-    }
+    let svgContent = $derived(iconMap[name] ?? fallback);
 </script>
 
 <div

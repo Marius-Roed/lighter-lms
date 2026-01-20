@@ -1,5 +1,6 @@
 <?php
 
+use LighterLMS\Import_Scheduler;
 use LighterLMS\Types;
 use LighterLMS\Lessons;
 use LighterLMS\Randflake;
@@ -555,3 +556,67 @@ if (!function_exists('lighter_sanitize_access')) {
 		return $access_obj;
 	}
 }
+
+add_action('lighter_process_import_batch', function ($job_id) {
+	$job = get_option('lighter_job_' . $job_id);
+
+	if (!$job || $job['status'] !== 'running' || !file_exists($job['file_path'])) {
+		error_log("Lighter Error: Tried to process unfound import of id " . $job_id);
+		return;
+	}
+
+	$batch_size = 50;
+	$process_count = 0;
+
+	if (function_exists('set_time_limit')) {
+		set_time_limit(300);
+	}
+
+	try {
+		$file = new SplFileObject($job['file_path']);
+		$file->setFlags(SplFileObject::READ_CSV | SplFileObject::SKIP_EMPTY);
+
+		$file->seek($job['current_line']);
+
+		if ($file->key() !== $job['current_line']) {
+			$job['status'] = 'completed';
+			update_option('lighter_job_' . $job_id, $job, false);
+			return;
+		}
+
+		while (! $file->eof() && $process_count < $batch_size) {
+			$row = $file->current();
+
+			if ($job['current_line'] === 0 && !empty($job['options']['firstHeader'])) {
+				$job['current_line']++;
+				$file->next();
+				continue;
+			}
+
+			if (!empty($row)) {
+				try {
+					// Import the user
+				} catch (Exception $e) {
+					$job['errors'][] = "Line {$job['current_line']}: " . $e->getMessage();
+				}
+			}
+
+			$job['current_line']++;
+			$process_count++;
+			$file->next();
+		}
+
+		update_option('lighter_job_' . $job_id, $job, false);
+
+		if ($file->eof() || $job['current_line'] >= $job['total_lines']) {
+			$job['status'] = 'completed';
+			return update_option('lighter_job_' . $job_id, $job, false);
+		} else {
+			Import_Scheduler::schedule_batch($job_id, true);
+		}
+	} catch (Exception $e) {
+		$job['status'] = 'failed';
+		$job['errors'][] = "Fatal error: " . $e->getMessage();
+		update_option('lighter_job_' . $job_id, $job, false);
+	}
+});
