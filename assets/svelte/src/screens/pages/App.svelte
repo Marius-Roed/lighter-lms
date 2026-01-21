@@ -5,6 +5,8 @@
     import { CoursesStore } from "$lib/posts.svelte";
     import { setContext } from "svelte";
 
+    let { nonce } = $props();
+
     var lighterCourses = window.lighterCourses;
 
     let courseStore = new CoursesStore(lighterCourses);
@@ -14,7 +16,7 @@
     let { actions } = lighterCourses;
 </script>
 
-<form action="get" id="posts-filter">
+<form id="posts-filter" method="get">
     <input
         type="hidden"
         name="post_status"
@@ -27,7 +29,7 @@
         class="post_type_page"
         value="lighter_courses"
     />
-    <input type="hidden" id="_wpnonce" name="_wpnonce" value="179d2ab63e" />
+    <input type="hidden" id="_wpnonce" name="_wpnonce" value={nonce} />
     <input
         type="hidden"
         name="_wp_http_referer"

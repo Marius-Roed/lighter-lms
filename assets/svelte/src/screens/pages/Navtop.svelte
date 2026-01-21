@@ -3,6 +3,8 @@
     import ListFilter from "$components/ListFilter.svelte";
 
     let { actions } = $props();
+
+    let search = new URL(window.location.href).searchParams;
 </script>
 
 <div class="tablenav top">
@@ -30,7 +32,12 @@
             <label class="screen-reader-text" for="post-search-input"
                 >Search Courses:</label
             >
-            <input type="search" id="post-search-input" name="s" value="" />
+            <input
+                type="search"
+                id="post-search-input"
+                name="s"
+                value={search.get("s")}
+            />
         </p>
     </div>
 </div>

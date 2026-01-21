@@ -93,19 +93,3 @@
 >
     {@html svgContent}
 </div>
-
-<style>
-    .icon-wrapper {
-        width: var(--icon-size, 1em);
-        height: var(--icon-size, 1em);
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        color: var(--icon-color, #333);
-
-        :global(svg) {
-            width: 100%;
-            height: 100%;
-        }
-    }
-</style>

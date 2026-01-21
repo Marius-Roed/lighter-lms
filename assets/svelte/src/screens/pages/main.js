@@ -25,6 +25,7 @@ import App from './App.svelte'
  */
 
 const target = document.querySelector('.wrap');
+const nonce = document.getElementById("_wpnonce")?.value; // Grab nonce before hydration!
 
 if (!target) {
     throw new Error('Could not mount lighter-lms');
@@ -38,6 +39,7 @@ function getPostData() {
     if (lighterCourses) {
         app = hydrate(App, {
             target: target,
+            props: { nonce }
         });
     }
 }
