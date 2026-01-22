@@ -154,7 +154,7 @@ if (! function_exists('lighter_save_product')) {
 	 */
 	function lighter_save_product($args, $post_id = 0)
 	{
-		$store = lighter_lms()->connected_store;
+		$store = lighter_lms()->defaults()->store;
 
 		if ('woocommerce' === $store) {
 			return WC::save_product($args, $post_id);
@@ -178,7 +178,7 @@ if (! function_exists('ligter_get_course_product')) {
 			return (object) [];
 		}
 
-		if ("woocommerce" === lighter_lms()->connected_store) {
+		if ("woocommerce" === lighter_lms()->defaults()->store) {
 			return WC::get_product($product_id);
 		}
 	}
@@ -218,7 +218,7 @@ if (! function_exists('lighter_get_course_settings')) {
 			'displaySidebar' => get_post_meta($post_id, '_course_display_theme_sidebar', true) ?: lighter_lms()->defaults()->course_hide_theme_sidebar,
 			'displayFooter' => get_post_meta($post_id, '_course_display_theme_footer', true) ?: lighter_lms()->defaults()->course_hide_theme_footer,
 			'product' => lighter_get_course_product($product_id),
-			'store' => lighter_lms()->connected_store,
+			'store' => lighter_lms()->defaults()->store,
 			'sync_prod_img' => get_post_meta($post_id, '_course_sync_prod_img', true) ?: lighter_lms()->defaults()->course_sync_prod_img,
 			'editor' => lighter_lms()->defaults()->editor,
 			'baseUrl' => 'kurser',
@@ -622,7 +622,7 @@ add_action('lighter_lms_import_user', function ($row, $opts) {
 	update_user_meta($user->ID, 'last_name', $lname);
 
 	// TODO: Handle other stores than just Woo.
-	if (lighter_lms()->connected_store === "woocommerce") {
+	if (lighter_lms()->defaults()->store === "woocommerce") {
 		error_log(var_export($opts, true));
 		if ($opts['createOrders'] && !empty($skus)) {
 			WC::create_legacy_orders($user, $skus, $address, $notes, $date);

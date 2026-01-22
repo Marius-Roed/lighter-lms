@@ -17,6 +17,10 @@ class Admin
 		add_action('admin_post_nopriv_lighter_complete_lesson', [$this, 'complete_lesson']);
 		add_action('edit_user_profile', [$this, 'user_access'], 5);
 		add_action('show_user_profile', [$this, 'user_access'], 5);
+		add_action('user_new_form', [$this, 'user_access'], 5);
+		add_action('edit_user_profile_update', [$this, 'save_user_access']);
+		add_action('personal_options_update', [$this, 'save_user_access']);
+		add_action('user_register', [$this, 'save_user_access']);
 
 		add_filter('menu_order', [$this, 'menu_order']);
 		add_filter('admin_body_class', [$this, 'dialog_editor']);
@@ -75,6 +79,10 @@ class Admin
 						'plugins' => lighter_lms()->get_builders('all'),
 						'active' => lighter_lms()->defaults()->editor,
 					],
+					'stores' => [
+						'plugins' => lighter_lms()->get_stores('all'),
+						'active' => lighter_lms()->defaults()->store,
+					],
 					'courses' => lighter_lms()->get_courses(),
 				];
 			}
@@ -96,9 +104,30 @@ class Admin
 
 	public function user_access($user)
 	{
-		if (!current_user_can('edit_user', $user->ID)) return;
+		if (is_string($user) ? $user !== "add-new-user" : !current_user_can('edit_user', $user->ID)) {
+			return;
+		}
 
 		lighter_view('user-access', ['admin' => true, 'user' => $user]);
+	}
+
+	public function save_user_access($user_id)
+	{
+		if (!current_user_can('edit_user', $user_id)) return false;
+
+		if (!isset($_POST['lighter_lms_access_nonce']) || !wp_verify_nonce($_POST['lighter_lms_access_nonce'], 'lighter_lms_access_update')) {
+			return false;
+		}
+
+		$courses = $_POST['lighter-courses'] ?? false;
+
+		if (!$courses) return false;
+
+		$ua = new User_Access($user_id);
+
+		foreach ($courses as $course_id => $lessons) {
+			$ua->update_course_access($course_id, $lessons);
+		}
 	}
 
 	/**

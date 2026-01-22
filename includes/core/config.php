@@ -3,6 +3,8 @@
 namespace LighterLMS\Core;
 
 use LighterLMS\Lessons;
+use LighterLMS\Third_Party\Builders;
+use LighterLMS\Third_Party\Stores;
 use LighterLMS\Topics;
 use WP_Query;
 
@@ -29,135 +31,6 @@ class Config
 	private static $_instance = null;
 
 	private $_settings = [];
-
-	private $_builders = [
-		"fl-builder" => [
-			"name" => ["Beaver Builder", "Beaver Builder Plugin (Lite Version)"],
-			"slug" => "beaver-builder",
-			"foreground" => "#00000000",
-			"background" => "#FEAF52",
-		],
-		"brizy" => [
-			"name" => ["Brizy"],
-			"slug" => "brizy",
-			"foreground" => "#00000000",
-			"background" => "#0E0736",
-		],
-		"breakdance/plugin.php" => [
-			"name" => ["Breakdance"],
-			"slug" => "breakdance",
-			"foreground" => "#000000",
-			"background" => "#FFC514",
-		],
-		"classic-editor" => [
-			"name" => ["Classic Editor"],
-			"slug" => "classic-editor",
-			"foreground" => "#25719B",
-			"background" => "#F0F0F1",
-		],
-		"cornerstone-page-builder" => [
-			"name" => ["Cornerstone Page Builder"],
-			"slug" => "cornerstone",
-			"foreground" => "#00000000",
-			"background" => "#00000000",
-		],
-		"divi" => [
-			"name" => ["Divi Builder"],
-			"slug" => "divi",
-			"foreground" => "#FFFFFFF",
-			"background" => "#00000000",
-		],
-		"elementor" => [
-			"name" => ["Elementor", "Elementor Pro"],
-			"slug" => "elementor",
-			"foreground" => "#F0F0F1",
-			"background" => "#92003B",
-		],
-		"gutenberg" => [
-			"name" => ["Gutenberg"],
-			"slug" => "gutenberg",
-			"foreground" => "#1E1E1E",
-			"background" => "#F0F0F1",
-		],
-		"fusion-builder" => [
-			"name" => ["Fusion Builder"],
-			"slug" => "fusion",
-			"foreground" => "#FFFFFF",
-			"background" => "#50B3C4",
-		],
-		"flatsome-Builder" => [
-			"name" => ["Flatsome UX Builder"],
-			"slug" => "flatsome",
-			"foreground" => "#00000000",
-			"background" => "#00000000",
-		],
-		"kingcomposer" => [
-			"name" => ["KingComposer"],
-			"slug" => "kingcomposer",
-			"foreground" => "#00000000",
-			"background" => "#00000000",
-		],
-		"live-composer" => [
-			"name" => ["Live Composer"],
-			"slug" => "live-composer",
-			"foreground" => "#00000000",
-			"background" => "#2EDCE7",
-		],
-		"layers" => [
-			"name" => ["Layers WP"],
-			"slug" => "layers",
-			"foreground" => "#00000000",
-			"background" => "#00000000",
-		],
-		"motopress-content-editor" => [
-			"name" => ["MotoPress Content Editor"],
-			"slug" => "motopress",
-			"foreground" => "#00000000",
-			"background" => "#00000000",
-		],
-		"oxygen-builder" => [
-			"name" => ["Oxygen Builder"],
-			"slug" => "oxygen",
-			"foreground" => "#FFFFFF",
-			"background" => "#000000",
-		],
-		"siteorigin-page-builder" => [
-			"name" => ["SiteOrigin Page Builder"],
-			"slug" => "siteorigin",
-			"foreground" => "#00000000",
-			"background" => "#00000000",
-		],
-		"ultimate-addons-for-gutenberg" => [
-			"name" => ["Spectra"],
-			"slug" => "spectra",
-			"foreground" => "#F0F0F1",
-			"background" => "#5733FF",
-		],
-		"thrive-architect" => [
-			"name" => ["Thrive Architect"],
-			"slug" => "thrive",
-			"foreground" => "#00000000",
-			"background" => "#00000000",
-		],
-		"visual-composer-website-builder" => [
-			"name" => ["Visual Composer Website Builder"],
-			"slug" => "visual-composer",
-			"foreground" => "#00000000",
-			"background" => "#00000000",
-		],
-		"wpbakery-page-builder" => [
-			"name" => ["WPBakery Page Builder"],
-			"slug" => "wpbakery",
-			"foreground" => "#00000000",
-			"background" => "#00000000",
-		],
-		"yellow-pencil" => [
-			"name" => ["Yellow Pencil"],
-			"slug" => "yellow",
-			"foreground" => "#00000000",
-			"background" => "#00000000",
-		],
-	];
 
 	public static function get_instance()
 	{
@@ -194,7 +67,6 @@ class Config
 			'admin_page_path' => 'admin.php?page=' . $admin_url,
 			'admin_url' => $admin_url,
 			'development' => $this->detect_dev(),
-			'connected_store' => 'woocommerce'
 		];
 	}
 
@@ -222,14 +94,15 @@ class Config
 	 * Gets all courses.
 	 *
 	 * Gets all the courses in an associated list of course->topics->lessons.
+	 * @param int $limit The number of courses to get. Default is -1, all posts.
 	 */
-	public function get_courses()
+	public function get_courses($limit = -1)
 	{
 		$courses = [];
 		$args = [
 			'post_type' => $this->course_post_type,
 			'post_status' => 'any',
-			'posts_per_page' => -1,
+			'posts_per_page' => $limit,
 		];
 
 		$query = new WP_Query($args);
@@ -323,31 +196,13 @@ class Config
 	{
 		if (!current_user_can('manage_options')) return [];
 
-		$plugins = get_option('active_plugins');
-		$builders = [];
+		return Builders::get_builders($property);
+	}
 
-		foreach ($plugins as $plugin) {
-			$slug = substr(
-				$plugin,
-				strpos($plugin, '/') + 1,
-				strpos($plugin, '.') - strpos($plugin, '/') - 1
-			);
-			if (isset($this->_builders[$slug])) {
-				$builders[] = $this->_builders[$slug];
-			} elseif (isset($this->_builders[$plugin])) {
-				$builders[] = $this->_builders[$plugin];
-			}
-		}
+	public function get_stores($property = "name")
+	{
+		if (!current_user_can('manage_options')) return [];
 
-		$props = [];
-		if ($property == "all") {
-			return $builders;
-		} else if (in_array($property, array_keys($this->_builders['Classic Editor']))) {
-			$props = array_column($builders, $property);
-		} else {
-			$props = array_column($builders, 'name');
-		}
-
-		return $props;
+		return Stores::get_stores($property);
 	}
 }

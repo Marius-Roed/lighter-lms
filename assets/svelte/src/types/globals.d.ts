@@ -27,6 +27,10 @@ declare global {
                     plugins: Array<string>;
                     active: string;
                 }
+                stores: {
+                    plugins: Array<string>;
+                    active: string;
+                }
             }
             addAction: Function;
             addFilter: Function;

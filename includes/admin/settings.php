@@ -11,12 +11,12 @@ class Settings
 
 	public function __construct()
 	{
-		self::$tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : false;
+		self::$tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
 	}
 
 	public static function render()
 	{
-		self::$tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : false;
+		self::$tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general';
 
 		lighter_view('settings', ['admin' => true, 'tab' => self::$tab]);
 	}
@@ -34,11 +34,15 @@ class Settings
 		$to_update = [];
 
 		$editor = $_POST['default-editor'] ?? '';
+		$store = $_POST['default-store'] ?? '';
 		$courses = $_POST['courses'] ?? [];
 		$users = $_POST['users'] ?? [];
 
 		if ($editor) {
 			$to_update['lighter_lms_default_builder'] = $editor;
+		}
+		if ($store) {
+			$to_update['lighter_lms_default_store'] = $store;
 		}
 
 		if (empty($to_update)) {

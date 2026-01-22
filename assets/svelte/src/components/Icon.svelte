@@ -27,6 +27,7 @@
     import SpectraLogo from "$icons/spectra-logo.svg?raw";
     import ThreeDotsIcon from "$icons/three-dots.svg?raw";
     import TrashIcon from "$icons/trash.svg?raw";
+    import WoocommerceLogo from "$icons/woocommerce-logo.svg?raw";
     import WordpressLogo from "$icons/wordpress-logo.svg?raw";
 
     const iconMap = {
@@ -56,6 +57,7 @@
         spectra: SpectraLogo,
         threeDots: ThreeDotsIcon,
         trash: TrashIcon,
+        woocommerce: WoocommerceLogo,
         "classic-editor": WordpressLogo,
         gutenberg: WordpressLogo,
     } as const;

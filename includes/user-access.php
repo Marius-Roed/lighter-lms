@@ -4,6 +4,11 @@ namespace LighterLMS;
 
 use DateTime;
 
+/**
+ * Class containing logic for granting and revoking access to lighter courses.
+ *
+ * @param int|\WP_User|null [$user_id=null] The ID of the user. Defaults to current logged in user.
+ */
 class User_Access
 {
 	private string $owned_courses = '_lighter_owned_courses';
@@ -12,11 +17,9 @@ class User_Access
 	protected \WP_User $user;
 	protected array $owned = [];
 
-	/**
-	 * @param int|\WP_User|null $user_id The ID of the user. Will default to current logged in user or 0 for guests.
-	 */
 	public function __construct($user = null)
 	{
+		if ($user === "add-new-user" || $user === "add-exisiting-user") return;
 		$this->user = isset($user) ? (is_int($user) ? new \WP_User($user) : $user) : wp_get_current_user();
 		$owned = get_user_meta($this->user->ID, $this->owned_courses, true);
 		$this->owned = $owned ? json_decode($owned, true) : [];
@@ -40,6 +43,7 @@ class User_Access
 			return;
 		}
 		$lesson_query = new Lessons(['parent' => $course_id]);
+		// TODO: Don't trust $access_type. Lessons should be source of truth.
 		$lessons = $access_type == "partial" ? $unlock : array_map(fn($post) => $post->ID, $lesson_query->get_lessons());
 		$exists = false;
 		foreach ($this->owned as &$entry) {
@@ -47,6 +51,7 @@ class User_Access
 				$exists = true;
 				$entry['lessons'] = $lessons;
 				$entry['access_type'] = $access_type;
+				$entry['expires'] = $expires;
 				break;
 			}
 		}
@@ -114,6 +119,7 @@ class User_Access
 			if ($entry['course_id'] == $course_id) {
 				$exists = true;
 				$entry['access_type'] = 'revoked';
+				$entry['expires'] = strtotime('yesterday');
 				break;
 			}
 		}
@@ -134,7 +140,49 @@ class User_Access
 
 		update_user_meta($this->user->ID, $this->owned_courses, wp_json_encode($this->owned));
 
+		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
+
+		if (!$progress || !$progress[$course_id]) {
+			error_log(
+				sprintf(
+					"Lighter LMS: Tried to revoke course access for user (%d) on course with no progress found. Access may not be revoked correctly. Exiting silently",
+					$this->user->ID
+				)
+			);
+			delete_transient('lighter_lms_access_check_' . $this->user->ID . '_*');
+			return;
+		}
+
+		$progress = json_decode($progress, true);
+
+		$progress[$course_id]['unlocked_lessons'] = [];
+		$progress[$course_id]['max_unlocked_lesson'] = 0;
+
+		update_user_meta($this->user->ID, $this->course_progress, wp_json_encode($progress));
+
 		delete_transient('lighter_lms_access_check_' . $this->user->ID . '_*');
+	}
+
+	/**
+	 * Update user course access
+	 *
+	 * Updates the user course access. Grants or revokes based on lessons supplied.
+	 *
+	 * @param int|\WP_Post $course_id The ID or WP_Post object of the course.
+	 */
+	public function update_course_access($course, $lessons = [])
+	{
+		$course = get_post($course);
+
+		if (!$course || $course->post_type !== lighter_lms()->course_post_type) return;
+
+		$lessons = array_filter($lessons, fn($l) => $l !== 'false');
+
+		if (!$lessons) {
+			return $this->revoke_course_access($course->ID);
+		} else {
+			$this->grant_course_access($course->ID, 'partial', array_keys($lessons));
+		}
 	}
 
 	/**
@@ -205,6 +253,15 @@ class User_Access
 		return false;
 	}
 
+	/**
+	 * Get user owned courses
+	 *
+	 * Returns the owned object of all courses, or the specific course if supplied.
+	 *
+	 * @param int|\WP_Post|null $course The course to return the owned object of. Optional.
+	 *
+	 * @return object
+	 */
 	public function get_owned($course = null)
 	{
 		$owned = $this->owned;
@@ -220,6 +277,15 @@ class User_Access
 		return $owned;
 	}
 
+	/**
+	 * Get user courses progress.
+	 *
+	 * Returns the progress object of all courses, or the specific course if supplied.
+	 *
+	 * @param int|\WP_Post|null $course The course to return the progress object of. Optional.
+	 *
+	 * @return object
+	 */
 	public function get_progress($course = null)
 	{
 		$progress = get_user_meta($this->user->ID, $this->course_progress, true);

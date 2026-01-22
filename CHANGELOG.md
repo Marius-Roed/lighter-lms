@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file
 
+## [1.0.0-alpha.19] - 2026-01-20
+
+### Added
+
+- Show Woo SKU and product visibility in the selling section of courses.
+- Import users and orders.
+- Grant user access on user profile page and creation.
+- Default store picker in settings.
+
+### Fixes
+
+- Course thumbnail and product thumbnail issue.
+- Table list generation and search.
+- Table list view navigation.
+- Grant access on woo purchase hook.
+- Don't show the lighter header in the block editor.
+- Assume woo default store.
+
 ## [1.0.0-alpha.18] - 2026-01-02
 
 ### Added

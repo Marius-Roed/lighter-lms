@@ -17,6 +17,7 @@ if (! defined('ABSPATH')) {
  * @property bool $course_hide_theme_sidebar
  * @property bool $course_hide_theme_footer
  * @property string $editor
+ * @property string $store
  */
 class Defaults
 {
@@ -47,7 +48,8 @@ class Defaults
 			'course_hide_theme_sidebar' => false,
 			'course_hide_theme_footer' => true,
 			'course_sync_prod_img' => true,
-			'editor' => get_option('lighter_lms_default_builder', 'classic-editor')
+			'editor' => get_option('lighter_lms_default_builder', 'classic-editor'),
+			'store' => get_option('lighter_lms_default_store')
 		];
 	}
 
