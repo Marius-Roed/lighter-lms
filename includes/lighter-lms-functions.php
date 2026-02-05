@@ -625,7 +625,15 @@ add_action('lighter_lms_import_user', function ($row, $opts) {
 	if (lighter_lms()->defaults()->store === "woocommerce") {
 		error_log(var_export($opts, true));
 		if ($opts['createOrders'] && !empty($skus)) {
+			add_filter('woocommerce_email_enabled_customer_completed_order', '__return_false');
+			add_filter('woocommerce_email_enabled_customer_processing_order', '__return_false');
+			add_filter('woocommerce_email_enabled_new_order', '__return_false');
+
 			WC::create_legacy_orders($user, $skus, $address, $notes, $date);
+
+			remove_filter('woocommerce_email_enabled_customer_completed_order', '__return_false');
+			remove_filter('woocommerce_email_enabled_customer_processing_order', '__return_false');
+			remove_filter('woocommerce_email_enabled_new_order', '__return_false');
 		}
 	}
 }, 10, 2);
@@ -640,6 +648,7 @@ add_action('lighter_process_import_batch', function ($job_id) {
 
 	$batch_size = 50;
 	$process_count = 0;
+	$separator = $job['opts']['separator'] ?? ',';
 
 	if (function_exists('set_time_limit')) {
 		set_time_limit(300);
@@ -648,7 +657,7 @@ add_action('lighter_process_import_batch', function ($job_id) {
 	try {
 		$file = new SplFileObject($job['file_path']);
 		$file->setFlags(SplFileObject::READ_CSV | SplFileObject::SKIP_EMPTY);
-
+		$file->setCsvControl($separator);
 		$file->seek($job['current_line']);
 
 		if ($file->key() !== $job['current_line']) {

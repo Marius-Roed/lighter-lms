@@ -14,7 +14,7 @@ export function tooltip(text = "hover me") {
             if (tooltipEl) return;
 
             tooltipEl = document.createElement('div');
-            tooltipEl.textContent = text;
+            tooltipEl.innerHTML = parseMD(text);
             tooltipEl.className = "lighter-tooltip";
             document.body.appendChild(tooltipEl);
 
@@ -54,4 +54,24 @@ export function tooltip(text = "hover me") {
             element.removeEventListener("blur", hide)
         };
     };
+}
+
+function parseMD(t) {
+    let newText = t;
+    if (t.match(/\`/g).length % 2 === 0) {
+        newText = t.split('`').reduce((acc, str, i) => i % 2 !== 0 ? acc + '<code>' + str + '</code>' : acc + str, '');
+    }
+
+    if (t.match(/\n/g)?.length) {
+        newText = newText.split('\n').reduce((acc, str) => acc + str + '<br>', '');
+    }
+
+    if (t.match('<script>')) {
+        let temp = newText.split('<script>');
+        newText = '';
+        for (let i = 0; i < t.match('<script>').length; i += 2) {
+            newText += temp[i];
+        }
+    }
+    return '<p>' + newText + '</p>';
 }

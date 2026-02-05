@@ -285,7 +285,7 @@ class WC
 	 *
 	 * @param int $order_id The order ID.
 	 */
-	public function give_access($order_id)
+	public static function give_access($order_id)
 	{
 		$order = \wc_get_order($order_id);
 		if (!$order) return;
@@ -381,13 +381,37 @@ class WC
 			$order->set_date_completed($date);
 		}
 
-		$order->set_address($address, 'billing');
+		$billing_address = self::_merge_address($user->ID, $address, 'billing');
+		$order->set_address($billing_address, 'billing');
 
 		$order->calculate_totals();
 		if (!empty($note)) $order->add_order_note($note);
 		$order->update_meta_data('_lighter_import_hash', $import_hash);
-		$order->update_status('completed', 'Imported via LighterLMS CSV');
+		$order->update_status('completed', 'Imported via LighterLMS CSV.');
 		$order->save();
+
+		self::give_access($order->get_id());
+	}
+
+	/**
+	 * Merges two addresses. Always prefer what is already on the user.
+	 *
+	 * @param int $user_id The user ID.
+	 * @param array $address An associative array containing address fields.
+	 * @param string $type The address type to get.
+	 */
+	private static function _merge_address($user_id, $address, $type = 'billing')
+	{
+		$customer = new \WC_Customer($user_id);
+		$exisiting_address = $customer->get_address($type);
+
+		$final_address = [];
+
+		foreach ($exisiting_address as $key => $value) {
+			$final_address[$key] = $value ?: ($address[$key] ?? '');
+		}
+
+		return $final_address;
 	}
 
 	/**

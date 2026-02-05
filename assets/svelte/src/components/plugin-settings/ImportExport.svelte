@@ -3,6 +3,7 @@
     import importManager from "$lib/import.svelte";
     import lighterFetch from "$lib/lighterFetch";
     import settings from "$lib/settings.svelte";
+    import { tooltip } from "$lib/tooltip";
 
     let importing = false;
     /** @type {FileList | undefined} */
@@ -13,7 +14,7 @@
     let createOrders = $state(false);
     let userName = $state(true);
     let skipNew = $state(false);
-    let notify = $state(true);
+    let notify = $state(false);
     let separator = $state(",");
     let rows = $state([]);
 
@@ -45,7 +46,7 @@
     /**
      * @type {(sep: string, header: boolean, full?: boolean) => Promise}
      */
-    const parseCSV = async (sep, header, full) => {
+    const parseCSV = async (sep, header, full = false) => {
         if (!selectedFile) {
             rows = [];
             return;
@@ -61,7 +62,7 @@
 
             if (full) {
                 return Promise.resolve(
-                    lines.slice(start, -1).map((line) => {
+                    lines.slice(start).map((line) => {
                         const values = line.split(sep).map((v) => v.trim());
                         const row = {};
                         activeFields.forEach((key, idx) => {
@@ -237,11 +238,19 @@
                 name="login_email"
                 bind:checked={userName}
             />
-            <Switch
-                onLabel="Notify users"
-                name="notify"
-                bind:checked={notify}
-            />
+            <div>
+                <Switch
+                    onLabel="Notify users"
+                    name="notify"
+                    bind:checked={notify}
+                />
+                <span
+                    style="width:1.2lh;height:1.2lh;border-radius:50%;background:#555;color:white;display:inline-grid;align-items:center;justify-content:center;cursor:pointer;"
+                    {@attach tooltip(
+                        "Uses the `wp_new_user_notification()` function, to send emails.\n\nBe careful of using this, when importing in bulk.",
+                    )}>?</span
+                >
+            </div>
             <Switch
                 onLabel={"Create order in " + (settings.store ?? "store")}
                 name="orders"

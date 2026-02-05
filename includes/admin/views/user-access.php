@@ -4,7 +4,6 @@ use LighterLMS\User_Access;
 
 $ua = new User_Access($user);
 $owned = $ua->get_owned();
-do_action('qm/debug', $owned);
 
 $courses_limit = $_GET['lighter-courses'] ?? 6;
 $courses = lighter_lms()->get_courses($courses_limit);
