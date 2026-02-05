@@ -620,11 +620,14 @@ class API
 			return new WP_Error('not_found', 'Could not find job with id: ' . $job_id, ['status' => 404]);
 		}
 
+		$progress = ($job['current_line'] / $job['total_lines']) * 100;
+		if ($progress > 100) $progress = 100;
+
 		return rest_ensure_response([
 			'id' => $job['id'],
 			'filename' => $job['filename'],
 			'status' => $job['status'],
-			'progress' => ($job['current_line'] / $job['total_lines']) * 100,
+			'progress' => $progress,
 			'current' => $job['current_line'],
 			'total' => $job['total_lines'],
 			'errors' => $job['errors'],
