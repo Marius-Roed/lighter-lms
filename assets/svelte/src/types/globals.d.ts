@@ -24,16 +24,20 @@ declare global {
             }
             settings: {
                 builders: {
-                    plugins: Array<string>;
+                    plugins: string[];
                     active: string;
                 }
                 stores: {
-                    plugins: Array<string>;
+                    plugins: string[];
                     active: string;
                 }
             }
             user?: {
-                courses: Array<Course>
+                courses: Course[]
+                owns: {
+                    course_id: number,
+                    lessons: number[]
+                }[]
             }
             addAction: Function;
             addFilter: Function;
@@ -50,7 +54,12 @@ declare global {
     interface Course {
         id: number,
         title: string,
-        topics: Array<Topic>
+        image: {
+            src: string
+        }
+        topics: Topic[]
+        open?: boolean
+        hidden?: boolean
     }
 
     interface Topic {
@@ -58,7 +67,8 @@ declare global {
         post_id: string,
         sort_order: string,
         title: string,
-        lessons: Array<Lesson>
+        lessons: Lesson[]
+        group?: string[]
     }
 
     interface Lesson {
@@ -145,8 +155,8 @@ declare global {
 
     interface lighterCourse {
         tags: {
-            all: Array<tag>;
-            selected: Array<tag>;
+            all: tag[];
+            selected: tag[];
         }
     }
 

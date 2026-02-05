@@ -4,6 +4,7 @@ namespace LighterLMS\Admin;
 
 use LighterLMS\Lessons;
 use LighterLMS\User_Access;
+use WP_User;
 
 class Admin
 {
@@ -86,8 +87,11 @@ class Admin
 					'courses' => lighter_lms()->get_courses(),
 				];
 			} elseif (in_array($screen_id, ['user', 'user-edit', 'profile'])) {
+				$user = isset($_GET['user_id']) ? (int) wp_unslash($_GET['user_id']) : null;
+				$user_access = new User_Access($user);
 				$obj['user'] = [
 					'courses' => lighter_lms()->get_courses(),
+					'owns' => $user_access->get_owned_key(['course_id', 'lessons']),
 				];
 			}
 			return $obj;
@@ -285,8 +289,6 @@ class Admin
 
 		$screen_id = function_exists('get_current_screen') ? get_current_screen()->id : $hook_suffix;
 		$screen_id = str_contains($screen_id, "_page_") ? substr($screen_id, 17) : $screen_id;
-
-		do_action('qm/debug', $screen_id);
 
 		if (! isset($screen_map[$screen_id])) {
 			return;

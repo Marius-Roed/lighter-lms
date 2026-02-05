@@ -1,5 +1,7 @@
 <?php
 
+defined('ABSPATH') || exit;
+
 use LighterLMS\User_Access;
 
 $ua = new User_Access($user);
@@ -15,9 +17,9 @@ $courses = lighter_lms()->get_courses($courses_limit);
 	<table class="form-table lighter-user-courses">
 		<tr>
 			<th>
-				<label>
+				<p>
 					<?php _e('Grant access', 'textdomain') ?>
-				</label>
+				</p>
 			</th>
 			<td class="lighter-course-access-container bordered" id="lighter-course-user-access">
 				<?php if (count($courses)): ?>
@@ -27,7 +29,15 @@ $courses = lighter_lms()->get_courses($courses_limit);
 					<div class="lighter-courses small">
 						<?php foreach ($courses as $course): ?>
 							<div class="lighter-course bordered">
-								<?php echo get_the_post_thumbnail($course['id']); ?>
+								<?php
+								if (get_post_thumbnail_id($course['id'])) {
+									echo get_the_post_thumbnail($course['id']);
+								} else {
+									printf(
+										'<img src="%s" alt="course thumbnail placeholder" loading="lazy"',
+										esc_attr(esc_url("https://placehold.co/230/D2C8E1/663399?text=%3F"))
+									);
+								}	?>
 								<h3><?php echo esc_html($course['title']); ?></h3>
 								<?php if (count($course['topics'])):
 									foreach ($course['topics'] as $topic): ?>
@@ -44,9 +54,9 @@ $courses = lighter_lms()->get_courses($courses_limit);
 											?>
 												<div>
 													<label>
+														<?php echo esc_html($lesson->post_title); ?>
 														<input type="hidden" name="<?php echo esc_attr("lighter-courses[" . $course['id'] . "][" . $lesson->ID . "]") ?>" value="false" />
 														<input type="checkbox" name="<?php echo esc_attr("lighter-courses[" . $course['id'] . "][" . $lesson->ID . "]") ?>" id="<?php echo esc_attr($lesson->ID); ?>" value="<?php echo esc_attr($lesson->ID) ?>" <?php echo ($owns_lesson ? esc_attr("checked") : "") ?> />
-														<?php echo esc_html($lesson->post_title); ?>
 													</label>
 												</div>
 											<?php endforeach; ?>

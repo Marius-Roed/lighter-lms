@@ -134,6 +134,9 @@ class Config
 			$courses[] = [
 				'id' => $post->ID,
 				'title' => $post->post_title,
+				'image' => [
+					'src' => get_post_thumbnail_id($post->ID) ? wp_get_attachment_image_src(get_post_thumbnail_id($post->ID), [200, 200])[0] : null,
+				],
 				'topics' => [
 					...$topics
 				]

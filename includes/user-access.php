@@ -266,6 +266,10 @@ class User_Access
 	{
 		$owned = $this->owned;
 
+		if (empty($owned)) {
+			return [];
+		}
+
 		if ($course) {
 			$course = get_post($course);
 			$key = array_key_first(array_filter($owned, fn($access) => $access['course_id'] == $course->ID) ?? []);
@@ -275,6 +279,29 @@ class User_Access
 		}
 
 		return $owned;
+	}
+
+	/**
+	 * Get user owned courses specified by keys
+	 *
+	 * Returns partial user owned object, by the specified key(s). Valid keys are: "course_id", "lessons", "access_type", "drip_interval", "expires", "start_date".
+	 *
+	 * @param string|array $key The key or keys to return
+	 *
+	 * @return array<object>
+	 */
+	public function get_owned_key($key)
+	{
+		if (empty($this->owned)) {
+			return [];
+		}
+
+		$keys = (array) $key;
+
+		return array_map(
+			fn($own) => array_intersect_key($own, array_flip($keys)),
+			$this->owned
+		);
 	}
 
 	/**
