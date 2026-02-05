@@ -85,6 +85,10 @@ class Admin
 					],
 					'courses' => lighter_lms()->get_courses(),
 				];
+			} elseif (in_array($screen_id, ['user', 'user-edit', 'profile'])) {
+				$obj['user'] = [
+					'courses' => lighter_lms()->get_courses(),
+				];
 			}
 			return $obj;
 		}, 10, 2);
@@ -264,11 +268,25 @@ class Admin
 			'lighter-lms-settings' => [
 				'entry' => 'settings',
 				'dev' => 'src/screens/settings/main.js',
+			],
+			'user' => [
+				'entry' => 'user',
+				'dev' => 'src/screens/user/main.js',
+			],
+			'user-edit' => [
+				'entry' => 'user',
+				'dev' => 'src/screens/user/main.js',
+			],
+			'profile' => [
+				'entry' => 'user',
+				'dev' => 'src/screens/user/main.js',
 			]
 		];
 
 		$screen_id = function_exists('get_current_screen') ? get_current_screen()->id : $hook_suffix;
 		$screen_id = str_contains($screen_id, "_page_") ? substr($screen_id, 17) : $screen_id;
+
+		do_action('qm/debug', $screen_id);
 
 		if (! isset($screen_map[$screen_id])) {
 			return;
