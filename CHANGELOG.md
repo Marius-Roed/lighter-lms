@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file
 
+## [1.0.0-alpha.20] - 2026-02-06
+
+### Added
+
+- User access js enhancement
+
+### Fixes
+
+- Import ui
+- Fixed an issue where the import api returns a progress > 100%.
+
+### General
+
+- refactor user access functions
+- Update woo notes to only have one.
+- Woo notes doesn't contain already owned courses.
+
 ## [1.0.0-alpha.19] - 2026-01-20
 
 ### Added

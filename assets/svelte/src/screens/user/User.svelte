@@ -51,20 +51,57 @@
     });
 
     /**
-     * @param {Topic} topic
-     * @returns {boolean}
+     * Type guard check
+     * @param {Topic | Course} obj
+     * @returns {obj is Course}
      */
-    function isIndeterminate(topic) {
-        const selected = topic.group.length;
-        return selected > 0 && selected < topic.lessons.length;
+    function isCourse(obj) {
+        return "topics" in obj;
     }
 
     /**
-     * @param {Topic} topic
+     * @param {Topic | Course} obj
+     * @returns {{total: number, selected: number}}
+     */
+    function getStats(obj) {
+        const topics = isCourse(obj) ? obj.topics : [obj];
+        return topics.reduce(
+            (acc, t) => {
+                acc.total += t.lessons.length;
+                acc.selected += t.group.length;
+                return acc;
+            },
+            { total: 0, selected: 0 },
+        );
+    }
+
+    /**
+     * @param {Topic|Course} obj
+     * @returns {boolean}
+     */
+    function isIndeterminate(obj) {
+        const { selected, total } = getStats(obj);
+        return selected > 0 && selected < total;
+    }
+
+    /**
+     * @param {Topic | Course} obj
+     */
+    function isChecked(obj) {
+        const { selected, total } = getStats(obj);
+        return total > 0 && selected === total;
+    }
+
+    /**
+     * @param {Topic|Course} obj
      * @param {boolean} checked
      */
-    function toggleAllLessons(topic, checked) {
-        topic.group = checked ? Array.from(topic.lessons.map((l) => l.ID)) : [];
+    function toggleAllLessons(obj, checked) {
+        const topics = isCourse(obj) ? obj.topics : [obj];
+
+        topics.forEach((topic) => {
+            topic.group = checked ? topic.lessons.map((l) => l.ID) : [];
+        });
     }
 
     /**
@@ -130,17 +167,29 @@
                 />
 
                 {#if course.topics.length}
-                    <button
-                        class="row middle course-btn"
-                        style="justify-content:space-between;width:100%;"
-                        type="button"
-                        onclick={() => toggleCourse(course)}
-                        aria-expanded={course.open}
-                        aria-label="Toggle {course.title} topics"
-                    >
-                        <h3>{course.title}</h3>
-                        <Icon name="chevron" />
-                    </button>
+                    <div style="display:flex;align-items:baseline;">
+                        <input
+                            type="checkbox"
+                            checked={isChecked(course)}
+                            onchange={(e) =>
+                                toggleAllLessons(
+                                    course,
+                                    e.currentTarget.checked,
+                                )}
+                            indeterminate={isIndeterminate(course)}
+                        />
+                        <button
+                            class="row middle course-btn"
+                            style="justify-content:space-between;width:100%;"
+                            type="button"
+                            onclick={() => toggleCourse(course)}
+                            aria-expanded={course.open}
+                            aria-label="Toggle {course.title} topics"
+                        >
+                            <h3>{course.title}</h3>
+                            <Icon name="chevron" />
+                        </button>
+                    </div>
                 {:else}
                     <div>
                         <h3>{course.title}</h3>
@@ -155,8 +204,7 @@
                             <b>{topic.title}</b>
                             <input
                                 type="checkbox"
-                                checked={topic.group.length ===
-                                    topic.lessons.length}
+                                checked={isChecked(topic)}
                                 indeterminate={isIndeterminate(topic)}
                                 onchange={(e) => {
                                     toggleAllLessons(

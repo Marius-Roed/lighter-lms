@@ -294,6 +294,7 @@ class WC
 		if (!$user_id) return;
 
 		$user = new User_Access($user_id);
+		$granted = [];
 
 		foreach ($order->get_items() as $item) {
 			$product_id = $item->get_product_id();
@@ -311,11 +312,15 @@ class WC
 			$courses = array_unique($courses);
 
 			if (empty($courses)) continue;
-			foreach ($courses as $course) {
-				$user->grant_course_access($course);
-
-				$order->add_order_note('Granted user (' . $user_id . ') access to course ' . $course);
+			foreach ($courses as $course_id) {
+				if (!$user->get_owned($course_id)) continue;
+				$user->grant_course_access($course_id);
+				$granted[] = $course_id;
 			}
+		}
+
+		if (!empty($granted)) {
+			$order->add_order_note('Granted user (' . $user_id . ') access to course ' . implode(', ', array_unique($granted)));
 		}
 	}
 

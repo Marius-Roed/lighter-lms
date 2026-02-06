@@ -260,25 +260,31 @@ class User_Access
 	 *
 	 * @param int|\WP_Post|null $course The course to return the owned object of. Optional.
 	 *
-	 * @return object
+	 * @return object|array
 	 */
 	public function get_owned($course = null)
 	{
-		$owned = $this->owned;
-
-		if (empty($owned)) {
+		if (empty($this->owned)) {
 			return [];
 		}
 
-		if ($course) {
-			$course = get_post($course);
-			$key = array_key_first(array_filter($owned, fn($access) => $access['course_id'] == $course->ID) ?? []);
-			if (!empty($owned)) {
-				$owned = $owned[$key];
-			}
+		if (!$course) {
+			return $this->owned;
 		}
 
-		return $owned;
+		$course = get_post($course);
+
+		if (!$course || $course->post_type !== lighter_lms()->course_post_type) {
+			return [];
+		}
+
+		$course_id = $course->ID;
+		$filtered = array_filter(
+			$this->owned,
+			fn($access) => $access['course_id'] == $course_id
+		);
+
+		return $filtered ? reset($filtered) : [];
 	}
 
 	/**
