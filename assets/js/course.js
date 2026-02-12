@@ -39,6 +39,12 @@ class Sidebar {
         this.cache = new Map();
 
         this.attachListener();
+
+        if (window.screen.width <= 767) {
+            this.topics.forEach(t => {
+                this.toggleTopic(t);
+            });
+        }
     }
 
     attachListener() {
