@@ -648,6 +648,7 @@ add_action('lighter_process_import_batch', function ($job_id) {
 
 	$batch_size = 50;
 	$process_count = 0;
+	$update_freq = 6; // It costs a lot to update the job info on each loop. Do this in batches instead.
 	$separator = $job['opts']['separator'] ?? ',';
 
 	if (function_exists('set_time_limit')) {
@@ -692,6 +693,11 @@ add_action('lighter_process_import_batch', function ($job_id) {
 
 			$job['current_line']++;
 			$process_count++;
+
+			if ($job['current_line'] <= $job['total_lines'] && $process_count % $update_freq == 0) {
+				update_option('lighter_job_' . $job_id, $job, false);
+			}
+
 			$file->next();
 		}
 
