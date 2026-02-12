@@ -54,6 +54,7 @@ export default defineConfig({
         settings: path.resolve(__dirname, 'src/screens/settings/main.js'),
         tablelist: path.resolve(__dirname, 'src/screens/pages/main.js'),
         hooks: path.resolve(__dirname, 'src/hooks.js'),
+        user: path.resolve(__dirname, 'src/screens/user/main.js'),
       },
       output: {
         entryFileNames: (info) => {

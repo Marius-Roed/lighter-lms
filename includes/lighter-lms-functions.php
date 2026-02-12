@@ -613,7 +613,7 @@ add_action('lighter_lms_import_user', function ($row, $opts) {
 		$user = get_user_by('id', $user_id);
 
 		if ($opts['notify']) {
-			// TODO: Send notification email.
+			wp_send_new_user_notifications($user_id, 'user');
 		}
 	}
 

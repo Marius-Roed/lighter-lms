@@ -326,7 +326,7 @@ class User_Access
 
 		if ($course) {
 			$course = get_post($course);
-			$progress = $progress[$course->ID];
+			$progress = isset($progress[$course->ID]) ? $progress[$course->ID] : [];
 		}
 
 		return $progress;
