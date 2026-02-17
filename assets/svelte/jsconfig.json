@@ -2,14 +2,33 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "$icons/*": ["./../icons/*"],
-      "$lib/*": ["./src/lib/*"],
-      "$components/*": ["./src/components/*"],
-      "$/*": ["./src/*"],
+      "$icons/*": [
+        "./../icons/*"
+      ],
+      "$lib/*": [
+        "./src/lib/*"
+      ],
+      "$components/*": [
+        "./src/components/*"
+      ],
+      "$types/*": [
+        "./src/types/*"
+      ],
+      "$state/*": [
+        "./src/lib/models/state/*"
+      ],
+      "$api/*": [
+        "./src/lib/api/*"
+      ],
+      "$/*": [
+        "./src/*"
+      ]
     },
-    "moduleResolution": "bundler",
+    "moduleResolution": "node16",
     "target": "ESNext",
-    "module": "ESNext",
+    "module": "node16",
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true,
     /**
      * svelte-preprocess cannot figure out whether you have
      * a value or a type, so tell TypeScript to enforce using
@@ -38,8 +57,12 @@
   "include": [
     "src/**/*.d.ts",
     "src/**/*.js",
+    "src/**/*.ts",
     "src/**/*.svelte",
     "../icons/*.svg"
   ],
-  "exclude": [ "node_modules", "dist" ]
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

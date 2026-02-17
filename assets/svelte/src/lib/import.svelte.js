@@ -1,4 +1,4 @@
-import lighterFetch from "$lib/lighterFetch";
+import { lighterFetch } from "$api/lighter-fetch";
 import { SvelteMap } from "svelte/reactivity";
 
 const STORAGE_KEY = 'lighter-jobs';

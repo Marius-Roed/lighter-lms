@@ -8,7 +8,7 @@
 - Notes: You can sanitize the value with the "sanitize" attribute, which requires a callback.
 -->
 <script>
-    import { tooltip } from "$lib/tooltip";
+    import { tooltip } from "$lib/tooltip.ts";
     import Icon from "./Icon.svelte";
 
     /**

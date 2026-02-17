@@ -1,5 +1,18 @@
-export default class Randflake {
+
+export class Randflake {
+    readonly machineId: number;
+
+    static #instance: Randflake = null;
+
+    sequence: number;
+    lastTimestamp: number;
+
     constructor(machineId = 0) {
+        if (Randflake.#instance) {
+            return Randflake.#instance;
+        }
+        Randflake.#instance = this;
+
         this.machineId = machineId & 0x3ff;
         this.sequence = 0;
         this.lastTimestamp = -1;

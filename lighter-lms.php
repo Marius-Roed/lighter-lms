@@ -14,14 +14,14 @@
  * @package Lighter
  */
 
-if (! defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define('LIGHTER_LMS__FILE__', __FILE__);
-define('LIGHTER_LMS_PATH', plugin_dir_path(LIGHTER_LMS__FILE__));
-define('LIGHTER_LMS_URL', plugin_dir_url(LIGHTER_LMS__FILE__));
-define('LIGHTER_LMS_VERSION', "1.0.0-alpha.20");
+define( 'LIGHTER_LMS__FILE__', __FILE__ );
+define( 'LIGHTER_LMS_PATH', plugin_dir_path( LIGHTER_LMS__FILE__ ) );
+define( 'LIGHTER_LMS_URL', plugin_dir_url( LIGHTER_LMS__FILE__ ) );
+define( 'LIGHTER_LMS_VERSION', '1.0.0-alpha.20' );
 
 // Autoloader
 require_once LIGHTER_LMS_PATH . 'includes/autoloader.php';

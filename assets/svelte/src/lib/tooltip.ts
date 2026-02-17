@@ -1,20 +1,22 @@
+import type { Attachment } from "svelte/attachments";
+
 /**
  * Show a tooltip on hover and focus
  *
  * @param {string} [text="hover me"] - The text to show.
  * @returns {import('svelte/attachments').Attachment}
  */
-export function tooltip(text = "hover me") {
-    return (/** @type {HTMLElement} */ element) => {
-        let tooltipEl;
-        let showTimeout;
+export function tooltip(text = "hover me"): Attachment {
+    return (element: HTMLElement) => {
+        let tooltipEl: HTMLElement;
+        let showTimeout: number;
         let isActive = false;
 
         function createTooltip() {
             if (tooltipEl) return;
 
             tooltipEl = document.createElement('div');
-            tooltipEl.innerHTML = parseMD(text);
+            tooltipEl.innerHTML = parseMD(text ?? '');
             tooltipEl.className = "lighter-tooltip";
             document.body.appendChild(tooltipEl);
 
@@ -56,9 +58,9 @@ export function tooltip(text = "hover me") {
     };
 }
 
-function parseMD(t) {
+function parseMD(t: string): string {
     let newText = t;
-    if (t.match(/\`/g).length % 2 === 0) {
+    if ((t.match(/\`/g)?.length ?? 0) % 2 === 0) {
         newText = t.split('`').reduce((acc, str, i) => i % 2 !== 0 ? acc + '<code>' + str + '</code>' : acc + str, '');
     }
 

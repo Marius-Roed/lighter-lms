@@ -6,135 +6,142 @@ use LighterLMS\Lessons;
 use LighterLMS\User_Access;
 use WP_User;
 
-class Admin
-{
-	public function __construct()
-	{
-		add_action('admin_enqueue_scripts', [$this, 'admin_app']);
-		add_action('admin_menu', [$this, 'admin_menu'], 9);
-		add_action('current_screen', [$this, 'current_screen']);
-		add_action('admin_init', [$this, 'admin_init']);
-		add_action('admin_post_lighter_complete_lesson', [$this, 'complete_lesson']);
-		add_action('admin_post_nopriv_lighter_complete_lesson', [$this, 'complete_lesson']);
-		add_action('edit_user_profile', [$this, 'user_access'], 5);
-		add_action('show_user_profile', [$this, 'user_access'], 5);
-		add_action('user_new_form', [$this, 'user_access'], 5);
-		add_action('edit_user_profile_update', [$this, 'save_user_access']);
-		add_action('personal_options_update', [$this, 'save_user_access']);
-		add_action('user_register', [$this, 'save_user_access']);
+class Admin {
 
-		add_filter('menu_order', [$this, 'menu_order']);
-		add_filter('admin_body_class', [$this, 'dialog_editor']);
-		add_filter('screen_options_show_screen', [$this, 'remove_options'], 10, 2);
+	public function __construct() {
+		add_action( 'admin_enqueue_scripts', array( $this, 'admin_app' ) );
+		add_action( 'admin_menu', array( $this, 'admin_menu' ), 9 );
+		add_action( 'current_screen', array( $this, 'current_screen' ) );
+		add_action( 'admin_init', array( $this, 'admin_init' ) );
+		add_action( 'admin_post_lighter_complete_lesson', array( $this, 'complete_lesson' ) );
+		add_action( 'admin_post_nopriv_lighter_complete_lesson', array( $this, 'complete_lesson' ) );
+		add_action( 'edit_user_profile', array( $this, 'user_access' ), 5 );
+		add_action( 'show_user_profile', array( $this, 'user_access' ), 5 );
+		add_action( 'user_new_form', array( $this, 'user_access' ), 5 );
+		add_action( 'edit_user_profile_update', array( $this, 'save_user_access' ) );
+		add_action( 'personal_options_update', array( $this, 'save_user_access' ) );
+		add_action( 'user_register', array( $this, 'save_user_access' ) );
+
+		add_filter( 'menu_order', array( $this, 'menu_order' ) );
+		add_filter( 'admin_body_class', array( $this, 'dialog_editor' ) );
+		add_filter( 'screen_options_show_screen', array( $this, 'remove_options' ), 10, 2 );
 	}
 
-	public function dialog_editor($classes)
-	{
+	public function dialog_editor( $classes ) {
 		$in_dialog = $_GET['in_dialog'] ?? false;
-		if ($in_dialog) {
+		if ( $in_dialog ) {
 			$classes .= ' dia-editor ';
 		}
 
 		return $classes;
 	}
 
-	public function admin_menu()
-	{
+	public function admin_menu() {
 		global $menu, $submenu;
 
-		if (current_user_can('edit_posts')) {
-			$menu[] = ['', 'read', 'separator-lighter', '', 'wp-menu-separator lighter'];
+		if ( current_user_can( 'edit_posts' ) ) {
+			$menu[] = array( '', 'read', 'separator-lighter', '', 'wp-menu-separator lighter' );
 		}
 
 		add_menu_page(
-			__('Lighter LMS', 'lighterlms'),
-			__('Lighter LMS', 'lighterlms'),
+			__( 'Lighter LMS', 'lighterlms' ),
+			__( 'Lighter LMS', 'lighterlms' ),
 			'edit_posts',
 			lighter_lms()->admin_url,
-			[$this, 'app'],
+			array( $this, 'app' ),
 			'dashicons-book-alt',
 			38
 		);
 
 		add_submenu_page(
 			lighter_lms()->admin_url,
-			__('Settings'),
-			__('Settings'),
+			__( 'Settings' ),
+			__( 'Settings' ),
 			'edit_others_posts',
 			'lighter-lms-settings',
-			[$this, 'settings'],
+			array( $this, 'settings' ),
 		);
 	}
 
-	public function admin_init()
-	{
-		$per_page = isset($_GET['limit']) ? (int) $_GET['limit'] : 20;
-		$per_page = max(1, min(100, $per_page));
-		add_filter("edit_" . lighter_lms()->course_post_type . "_per_page", fn() => $per_page);
-		add_filter("edit_" . lighter_lms()->lesson_post_type . "_per_page", fn() => $per_page);
+	public function admin_init() {
+		$per_page = isset( $_GET['limit'] ) ? (int) $_GET['limit'] : 20;
+		$per_page = max( 1, min( 100, $per_page ) );
+		add_filter( 'edit_' . lighter_lms()->course_post_type . '_per_page', fn() => $per_page );
+		add_filter( 'edit_' . lighter_lms()->lesson_post_type . '_per_page', fn() => $per_page );
 
-		add_filter('lighter_lms_admin_object', function ($obj, $screen_id) {
-			if ($screen_id == "lighter-lms-settings") {
-				$obj['settings'] = [
-					'builders' => [
-						'plugins' => lighter_lms()->get_builders('all'),
-						'active' => lighter_lms()->defaults()->editor,
-					],
-					'stores' => [
-						'plugins' => lighter_lms()->get_stores('all'),
-						'active' => lighter_lms()->defaults()->store,
-					],
-					'courses' => lighter_lms()->get_courses(),
-				];
-			} elseif (in_array($screen_id, ['user', 'user-edit', 'profile'])) {
-				$user = isset($_GET['user_id']) ? (int) wp_unslash($_GET['user_id']) : null;
-				$user_access = new User_Access($user);
-				$obj['user'] = [
-					'courses' => lighter_lms()->get_courses(),
-					'owns' => $user_access->get_owned_key(['course_id', 'lessons']),
-				];
-			}
-			return $obj;
-		}, 10, 2);
+		add_filter(
+			'lighter_lms_admin_object',
+			function ( $obj, $screen_id ) {
+				if ( $screen_id == 'lighter-lms-settings' ) {
+					$obj['settings'] = array(
+						'builders' => array(
+							'plugins' => lighter_lms()->get_builders( 'all' ),
+							'active'  => lighter_lms()->defaults()->editor,
+						),
+						'stores'   => array(
+							'plugins' => lighter_lms()->get_stores( 'all' ),
+							'active'  => lighter_lms()->defaults()->store,
+						),
+						'courses'  => lighter_lms()->get_courses(),
+					);
+				} elseif ( in_array( $screen_id, array( 'user', 'user-edit', 'profile' ) ) ) {
+					$user        = isset( $_GET['user_id'] ) ? (int) wp_unslash( $_GET['user_id'] ) : null;
+					$user_access = new User_Access( $user );
+					$obj['user'] = array(
+						'courses' => lighter_lms()->get_courses(),
+						'owns'    => $user_access->get_owned_key( array( 'course_id', 'lessons' ) ),
+					);
+				}
+				return $obj;
+			},
+			10,
+			2
+		);
 	}
 
-	public function app()
-	{
-?>
-		<div id="lighter-lms-mount" data-screen="<?= esc_attr(get_current_screen()->id) ?>"></div>
-<?php
+	public function app() {
+		?>
+		<div id="lighter-lms-mount" data-screen="<?php echo esc_attr( get_current_screen()->id ); ?>"></div>
+		<?php
 	}
 
-	public function settings()
-	{
+	public function settings() {
 		Settings::render();
 	}
 
-	public function user_access($user)
-	{
-		if (is_string($user) ? $user !== "add-new-user" : !current_user_can('edit_user', $user->ID)) {
+	public function user_access( $user ) {
+		if ( is_string( $user ) ? $user !== 'add-new-user' : ! current_user_can( 'edit_user', $user->ID ) ) {
 			return;
 		}
 
-		lighter_view('user-access', ['admin' => true, 'user' => $user]);
+		lighter_view(
+			'user-access',
+			array(
+				'admin' => true,
+				'user'  => $user,
+			)
+		);
 	}
 
-	public function save_user_access($user_id)
-	{
-		if (!current_user_can('edit_user', $user_id)) return false;
+	public function save_user_access( $user_id ) {
+		if ( ! current_user_can( 'edit_user', $user_id ) ) {
+			return false;
+		}
 
-		if (!isset($_POST['lighter_lms_access_nonce']) || !wp_verify_nonce($_POST['lighter_lms_access_nonce'], 'lighter_lms_access_update')) {
+		if ( ! isset( $_POST['lighter_lms_access_nonce'] ) || ! wp_verify_nonce( $_POST['lighter_lms_access_nonce'], 'lighter_lms_access_update' ) ) {
 			return false;
 		}
 
 		$courses = $_POST['lighter-courses'] ?? false;
 
-		if (!$courses) return false;
+		if ( ! $courses ) {
+			return false;
+		}
 
-		$ua = new User_Access($user_id);
+		$ua = new User_Access( $user_id );
 
-		foreach ($courses as $course_id => $lessons) {
-			$ua->update_course_access($course_id, $lessons);
+		foreach ( $courses as $course_id => $lessons ) {
+			$ua->update_course_access( $course_id, $lessons );
 		}
 	}
 
@@ -143,24 +150,22 @@ class Admin
 	 *
 	 * @param \WP_Screen $screen The current screen object
 	 */
-	public function current_screen($screen)
-	{
-		$screen_id = strpos($screen->id, 'edit-') !== false ? substr($screen->id, 5) : $screen->id;
-		if (str_contains($screen_id, 'lighter-lms') || in_array($screen_id, lighter_lms()->post_types)) {
-			add_action('in_admin_header', [$this, 'in_admin_header']);
+	public function current_screen( $screen ) {
+		$screen_id = strpos( $screen->id, 'edit-' ) !== false ? substr( $screen->id, 5 ) : $screen->id;
+		if ( str_contains( $screen_id, 'lighter-lms' ) || in_array( $screen_id, lighter_lms()->post_types ) ) {
+			add_action( 'in_admin_header', array( $this, 'in_admin_header' ) );
 
-			add_filter('admin_body_class', [$this, 'admin_body_class']);
+			add_filter( 'admin_body_class', array( $this, 'admin_body_class' ) );
 		}
 	}
 
 	/**
 	 * removes the screen options from the course table list
-	 * 
+	 *
 	 * @param bool $show
 	 * @param \WP_Screen $srceen
 	 */
-	public function remove_options($show, $screen)
-	{
+	public function remove_options( $show, $screen ) {
 		if (
 			$screen->id === 'edit-' . lighter_lms()->course_post_type ||
 			$screen->id === 'edit-' . lighter_lms()->lesson_post_type
@@ -170,70 +175,65 @@ class Admin
 		return $show;
 	}
 
-	public function admin_body_class($classNames)
-	{
-		if (strpos($classNames, 'lighter') === false) {
+	public function admin_body_class( $classNames ) {
+		if ( strpos( $classNames, 'lighter' ) === false ) {
 			$classNames .= ' lighter';
 		}
 
 		return $classNames;
 	}
 
-	public function in_admin_header()
-	{
+	public function in_admin_header() {
 		$screen = get_current_screen();
 
-		if (isset($screen->base) && 'post' === $screen->base && !$screen->is_block_editor) {
+		if ( isset( $screen->base ) && 'post' === $screen->base && ! $screen->is_block_editor ) {
 			$this->in_cpt_header();
 		}
 
 		if (
-			isset($screen->base)
-			&& ('edit' === $screen->base && in_array($screen->post_type, lighter_lms()->post_types))
-			|| strpos($screen->base, 'lighter-lms-settings') !== false
+			isset( $screen->base )
+			&& ( 'edit' === $screen->base && in_array( $screen->post_type, lighter_lms()->post_types ) )
+			|| strpos( $screen->base, 'lighter-lms-settings' ) !== false
 		) {
 			$this->show_header();
 		}
 	}
 
-	public function in_cpt_header()
-	{
-		lighter_view('form-top', ['admin' => true]);
+	public function in_cpt_header() {
+		lighter_view( 'form-top', array( 'admin' => true ) );
 	}
 
-	public function show_header()
-	{
-		lighter_view('post-list-header', ['admin' => true]);
+	public function show_header() {
+		lighter_view( 'post-list-header', array( 'admin' => true ) );
 	}
 
-	public function menu_order($menu)
-	{
+	public function menu_order( $menu ) {
 		global $submenu;
 
-		$lighter_order = [];
-		$temp = null;
+		$lighter_order = array();
+		$temp          = null;
 
-		$lighter_seperator = array_search('separator-lighter', $menu, true);
+		$lighter_seperator = array_search( 'separator-lighter', $menu, true );
 
-		foreach ($menu as $index => $item) {
-			if (lighter_lms()->admin_url === $item) {
+		foreach ( $menu as $index => $item ) {
+			if ( lighter_lms()->admin_url === $item ) {
 				$lighter_order[] = 'separator-lighter';
 				$lighter_order[] = $item;
-				unset($menu[$lighter_seperator]);
+				unset( $menu[ $lighter_seperator ] );
 
-				foreach ($submenu[$item] as $idx => $sub) {
-					if ('lighter-lms-settings' === $sub[2]) {
-						$temp = [$idx, $sub];
+				foreach ( $submenu[ $item ] as $idx => $sub ) {
+					if ( 'lighter-lms-settings' === $sub[2] ) {
+						$temp = array( $idx, $sub );
 						break;
 					}
 				}
 
-				if ($temp) {
-					list($idx, $tab) = $temp;
-					$submenu[$item][] = $tab;
-					unset($submenu[$item][$idx]);
+				if ( $temp ) {
+					list($idx, $tab)    = $temp;
+					$submenu[ $item ][] = $tab;
+					unset( $submenu[ $item ][ $idx ] );
 				}
-			} elseif (! in_array($item, ['separator-lighter'], true)) {
+			} elseif ( ! in_array( $item, array( 'separator-lighter' ), true ) ) {
 				$lighter_order[] = $item;
 			}
 		}
@@ -241,110 +241,111 @@ class Admin
 		return $lighter_order;
 	}
 
-	public function admin_app($hook_suffix)
-	{
-		wp_enqueue_style('lighter-dia-editor', LIGHTER_LMS_URL . 'assets/css/dialog-editor.css', [], LIGHTER_LMS_VERSION);
-		wp_enqueue_style('lighter-lms-admin', LIGHTER_LMS_URL . 'assets/css/admin.css', [], LIGHTER_LMS_VERSION, false);
+	public function admin_app( $hook_suffix ) {
+		wp_enqueue_style( 'lighter-dia-editor', LIGHTER_LMS_URL . 'assets/css/dialog-editor.css', array(), LIGHTER_LMS_VERSION );
+		wp_enqueue_style( 'lighter-lms-admin', LIGHTER_LMS_URL . 'assets/css/admin.css', array(), LIGHTER_LMS_VERSION, false );
 
 		$handle = 'lighter-lms';
 
-		$screen_map = [
-			'toplevel_page_lighter-lms' => [
+		$screen_map = array(
+			'toplevel_page_lighter-lms' => array(
 				'entry' => 'dashboard',
-				'dev' => 'src/screens/dashboard/main.js',
-			],
-			'edit-lighter_courses' => [
+				'dev'   => 'src/screens/dashboard/main.js',
+			),
+			'edit-lighter_courses'      => array(
 				'entry' => 'pages',
-				'dev' => 'src/screens/pages/main.js',
-			],
-			'edit-lighter_lessons' => [
+				'dev'   => 'src/screens/pages/main.js',
+			),
+			'edit-lighter_lessons'      => array(
 				'entry' => 'pages',
-				'dev' => 'src/screens/pages/main.js',
-			],
-			'lighter_courses' => [
+				'dev'   => 'src/screens/pages/main.js',
+			),
+			'lighter_courses'           => array(
 				'entry' => 'courses',
-				'dev' => 'src/screens/courses/main.js',
-			],
-			'lighter_lessons' => [
+				'dev'   => 'src/screens/courses/main.js',
+			),
+			'lighter_lessons'           => array(
 				'entry' => 'lessons',
-				'dev' => 'src/screens/lessons/main.js',
-			],
-			'lighter-lms-settings' => [
+				'dev'   => 'src/screens/lessons/main.js',
+			),
+			'lighter-lms-settings'      => array(
 				'entry' => 'settings',
-				'dev' => 'src/screens/settings/main.js',
-			],
-			'user' => [
+				'dev'   => 'src/screens/settings/main.js',
+			),
+			'user'                      => array(
 				'entry' => 'user',
-				'dev' => 'src/screens/user/main.js',
-			],
-			'user-edit' => [
+				'dev'   => 'src/screens/user/main.js',
+			),
+			'user-edit'                 => array(
 				'entry' => 'user',
-				'dev' => 'src/screens/user/main.js',
-			],
-			'profile' => [
+				'dev'   => 'src/screens/user/main.js',
+			),
+			'profile'                   => array(
 				'entry' => 'user',
-				'dev' => 'src/screens/user/main.js',
-			]
-		];
+				'dev'   => 'src/screens/user/main.js',
+			),
+		);
 
-		$screen_id = function_exists('get_current_screen') ? get_current_screen()->id : $hook_suffix;
-		$screen_id = str_contains($screen_id, "_page_") ? substr($screen_id, 17) : $screen_id;
+		$screen_id = function_exists( 'get_current_screen' ) ? get_current_screen()->id : $hook_suffix;
+		$screen_id = str_contains( $screen_id, '_page_' ) ? substr( $screen_id, 17 ) : $screen_id;
 
-		if (! isset($screen_map[$screen_id])) {
+		if ( ! isset( $screen_map[ $screen_id ] ) ) {
 			return;
 		}
 
 		// wp_enqueue_script('lighterlms-object', LIGHTER_LMS_URL . 'assets/js/lighterlms.js', [], LIGHTER_LMS_VERSION, true);
-		wp_enqueue_script('lighterlms-hooks', LIGHTER_LMS_URL . 'assets/dist/lighterlms-hooks.js', [], LIGHTER_LMS_VERSION, true);
-		wp_enqueue_script('wp-tinymce');
+		wp_enqueue_script( 'lighterlms-hooks', LIGHTER_LMS_URL . 'assets/dist/lighterlms-hooks.js', array(), LIGHTER_LMS_VERSION, true );
+		wp_enqueue_script( 'wp-tinymce' );
 		wp_enqueue_editor();
 		wp_enqueue_media();
 
-		$lighter_lms = [
-			'restUrl' => esc_url(rest_url('lighterlms/v1/')),
-			'nonce' => wp_create_nonce('wp_rest'),
-			'machineId' => apply_filters('lighterlms_use_machine_id', 0)
-		];
+		$lighter_lms = array(
+			'restUrl'   => esc_url_raw( rest_url() ),
+			'nonce'     => wp_create_nonce( 'wp_rest' ),
+			'machineId' => lighter_lms()->machineId,
+			'namespace' => lighter_lms_api()->namespace,
+		);
 
-		$lighter_lms = apply_filters('lighter_lms_admin_object', $lighter_lms, $screen_id);
+		$lighter_lms = apply_filters( 'lighter_lms_admin_object', $lighter_lms, $screen_id );
+		$clean_obj   = json_decode( json_encode( $lighter_lms, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ), true );
 
-		wp_localize_script('lighterlms-hooks', 'LighterLMS', $lighter_lms);
+		wp_add_inline_script( 'lighterlms-hooks', 'const d=' . wp_json_encode( $clean_obj ) . ';Object.assign(LighterLMS,d);' );
 
-		$entry_key = $screen_map[$screen_id]['entry'];
-		$entry_dev = $screen_map[$screen_id]['dev'];
+		$entry_key = $screen_map[ $screen_id ]['entry'];
+		$entry_dev = $screen_map[ $screen_id ]['dev'];
 
-		if ($screen_map[$screen_id]['entry'] === 'pages') {
-			wp_add_inline_script('lighterlms-hooks', 'var lighterCourses = ' . lighter_postlist_js_obj(lighter_lms()->course_post_type), 'before');
+		if ( $screen_map[ $screen_id ]['entry'] === 'pages' ) {
+			wp_add_inline_script( 'lighterlms-hooks', 'var lighterCourses = ' . lighter_postlist_js_obj( lighter_lms()->course_post_type ), 'before' );
 		}
 
-		if (lighter_lms()->development) {
+		if ( lighter_lms()->development ) {
 			$local_server = 'http://localhost:5173/';
-			wp_enqueue_script_module('vite-client', $local_server . '@vite/client', [], null);
-			wp_enqueue_script_module($handle . '-' . $entry_key, $local_server . $entry_dev, ['vite-client'], null);
+			wp_enqueue_script_module( 'vite-client', $local_server . '@vite/client', array(), null );
+			wp_enqueue_script_module( $handle . '-' . $entry_key, $local_server . $entry_dev, array( 'vite-client' ), null );
 		} else {
 			$manifest_path = LIGHTER_LMS_PATH . '/assets/dist/.vite/manifest.json';
-			$manifest      = json_decode(file_get_contents($manifest_path), true);
+			$manifest      = json_decode( file_get_contents( $manifest_path ), true );
 
 			// Entry is keyed by its file path used in 'input' (vite resolves to names)
 			// Vite manifest keys match the resolved filenames like 'js/[name].js'
 			// Use the name to look up the entry record:
 			$entry_js = 'js/lighter-' . $entry_key . '.js';
 
-			if (empty($manifest[$entry_js])) {
+			if ( empty( $manifest[ $entry_js ] ) ) {
 				// Fallback: try to find by name
-				foreach ($manifest as $k => $info) {
-					if (isset($info['isEntry']) && $info['isEntry'] && str_contains($k, $entry_key)) {
+				foreach ( $manifest as $k => $info ) {
+					if ( isset( $info['isEntry'] ) && $info['isEntry'] && str_contains( $k, $entry_key ) ) {
 						$entry_js = $k;
 						break;
 					}
 				}
 			}
 
-			if (empty($manifest[$entry_js])) {
+			if ( empty( $manifest[ $entry_js ] ) ) {
 				return;
 			}
 
-			$entry_info = $manifest[$entry_js];
+			$entry_info = $manifest[ $entry_js ];
 
 			// Enqueue JS
 			wp_enqueue_script_module(
@@ -355,12 +356,12 @@ class Admin
 			);
 
 			// Enqueue vendor chunk if present and not inlined
-			if (! empty($entry_info['imports'])) {
-				foreach ($entry_info['imports'] as $import_key) {
-					if (! empty($manifest[$import_key]['file'])) {
+			if ( ! empty( $entry_info['imports'] ) ) {
+				foreach ( $entry_info['imports'] as $import_key ) {
+					if ( ! empty( $manifest[ $import_key ]['file'] ) ) {
 						wp_enqueue_script_module(
-							$handle . '-' . $entry_key . '-import-' . md5($import_key),
-							LIGHTER_LMS_URL . '/assets/dist/' . $manifest[$import_key]['file'],
+							$handle . '-' . $entry_key . '-import-' . md5( $import_key ),
+							LIGHTER_LMS_URL . '/assets/dist/' . $manifest[ $import_key ]['file'],
 							array(),
 							LIGHTER_LMS_VERSION
 						);
@@ -369,8 +370,8 @@ class Admin
 			}
 
 			// Enqueue CSS for this entry
-			if (! empty($entry_info['css'])) {
-				foreach ($entry_info['css'] as $css_file) {
+			if ( ! empty( $entry_info['css'] ) ) {
+				foreach ( $entry_info['css'] as $css_file ) {
 					wp_enqueue_style(
 						$handle . '-' . $entry_key,
 						LIGHTER_LMS_URL . '/assets/dist/' . $css_file,
@@ -382,47 +383,47 @@ class Admin
 		}
 	}
 
-	public function complete_lesson()
-	{
-		$user = new User_Access();
-		$course_id = intval($_POST['course_id'] ?? 0);
-		$lesson_id = intval($_POST['lesson_id'] ?? 0);
-		if (!$user->check_course_access($course_id) || !$user->check_lesson_access($lesson_id, $course_id)) {
-			wp_die('Unauthorized access', '', ['response' => 403]);
+	public function complete_lesson() {
+		$user      = new User_Access();
+		$course_id = intval( $_POST['course_id'] ?? 0 );
+		$lesson_id = intval( $_POST['lesson_id'] ?? 0 );
+		if ( ! $user->check_course_access( $course_id ) || ! $user->check_lesson_access( $lesson_id, $course_id ) ) {
+			wp_die( 'Unauthorized access', '', array( 'response' => 403 ) );
 		}
 
-		$nonce = sanitize_text_field($_POST['lighter_lesson_nonce'] ?? '');
-		if (!wp_verify_nonce($nonce, 'complete_lesson')) {
-			wp_die('Security fail. Nonce failure', '', ['response' => 403]);
+		$nonce = sanitize_text_field( $_POST['lighter_lesson_nonce'] ?? '' );
+		if ( ! wp_verify_nonce( $nonce, 'complete_lesson' ) ) {
+			wp_die( 'Security fail. Nonce failure', '', array( 'response' => 403 ) );
 		}
 
-		if (!(get_post_type($lesson_id) === lighter_lms()->lesson_post_type || $course_id === $lesson_id)) {
-			wp_die('Invalid lesson id.', '', ['response' => 403]);
+		if ( ! ( get_post_type( $lesson_id ) === lighter_lms()->lesson_post_type || $course_id === $lesson_id ) ) {
+			wp_die( 'Invalid lesson id.', '', array( 'response' => 403 ) );
 		}
 
-
-		$lessons = new Lessons(['parent' => $course_id]);
+		$lessons = new Lessons( array( 'parent' => $course_id ) );
 		$lessons = $lessons->get_lessons();
 
-		$next_lesson = $course_id === $lesson_id ? $lessons[0] : $user->complete_lesson($course_id, $lesson_id);
-		$next = false;
+		$next_lesson = $course_id === $lesson_id ? $lessons[0] : $user->complete_lesson( $course_id, $lesson_id );
+		$next        = false;
 
-		foreach ($lessons as $lesson) {
-			if ($next) {
+		foreach ( $lessons as $lesson ) {
+			if ( $next ) {
 				$next_lesson = $lesson;
 				break;
 			}
-			if ($lesson->ID == $lesson_id) $next = true;
+			if ( $lesson->ID == $lesson_id ) {
+				$next = true;
+			}
 		}
 
-		if ($next_lesson && $user->check_lesson_access($next_lesson->ID, $course_id)) {
-			$slug = get_post($course_id)->post_name;
-			if ($slug) {
-				wp_redirect(home_url(lighter_lms()->course_slug . '/' . $slug . '?lesson=' . $next_lesson->post_name));
+		if ( $next_lesson && $user->check_lesson_access( $next_lesson->ID, $course_id ) ) {
+			$slug = get_post( $course_id )->post_name;
+			if ( $slug ) {
+				wp_redirect( home_url( lighter_lms()->course_slug . '/' . $slug . '?lesson=' . $next_lesson->post_name ) );
 				exit;
 			}
 		}
-		wp_redirect(wp_get_referer());
+		wp_redirect( wp_get_referer() );
 		exit;
 	}
 }

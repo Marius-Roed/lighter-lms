@@ -9,20 +9,21 @@ use DateTime;
  *
  * @param int|\WP_User|null [$user_id=null] The ID of the user. Defaults to current logged in user.
  */
-class User_Access
-{
-	private string $owned_courses = '_lighter_owned_courses';
+class User_Access {
+
+	private string $owned_courses   = '_lighter_owned_courses';
 	private string $course_progress = '_lighter_course_progress';
 
 	protected \WP_User $user;
-	protected array $owned = [];
+	protected array $owned = array();
 
-	public function __construct($user = null)
-	{
-		if ($user === "add-new-user" || $user === "add-exisiting-user") return;
-		$this->user = isset($user) ? (is_int($user) ? new \WP_User($user) : $user) : wp_get_current_user();
-		$owned = get_user_meta($this->user->ID, $this->owned_courses, true);
-		$this->owned = $owned ? json_decode($owned, true) : [];
+	public function __construct( $user = null ) {
+		if ( $user === 'add-new-user' || $user === 'add-exisiting-user' ) {
+			return;
+		}
+		$this->user  = isset( $user ) ? ( is_int( $user ) ? new \WP_User( $user ) : $user ) : wp_get_current_user();
+		$owned       = get_user_meta( $this->user->ID, $this->owned_courses, true );
+		$this->owned = $owned ? json_decode( $owned, true ) : array();
 	}
 
 	/**
@@ -37,46 +38,45 @@ class User_Access
 	 * @param string $drip_interval The drip interval.
 	 * @param DateTime $expires When access should expire.
 	 */
-	public function grant_course_access($course_id, $access_type = 'full', $unlock = [], $start_date = null, $drip_interval = null, $expires = null)
-	{
-		if (!$this->user->ID) {
+	public function grant_course_access( $course_id, $access_type = 'full', $unlock = array(), $start_date = null, $drip_interval = null, $expires = null ) {
+		if ( ! $this->user->ID ) {
 			return;
 		}
-		$lesson_query = new Lessons(['parent' => $course_id]);
+		$lesson_query = new Lessons( array( 'parent' => $course_id ) );
 		// TODO: Don't trust $access_type. Lessons should be source of truth.
-		$lessons = $access_type == "partial" ? $unlock : array_map(fn($post) => $post->ID, $lesson_query->get_lessons());
-		$exists = false;
-		foreach ($this->owned as &$entry) {
-			if ($entry['course_id'] == $course_id) {
-				$exists = true;
-				$entry['lessons'] = $lessons;
+		$lessons = $access_type == 'partial' ? $unlock : array_map( fn( $post ) => $post->ID, $lesson_query->get_lessons() );
+		$exists  = false;
+		foreach ( $this->owned as &$entry ) {
+			if ( $entry['course_id'] == $course_id ) {
+				$exists               = true;
+				$entry['lessons']     = $lessons;
 				$entry['access_type'] = $access_type;
-				$entry['expires'] = $expires;
+				$entry['expires']     = $expires;
 				break;
 			}
 		}
 
-		if (!$exists) {
-			$this->owned[] = [
-				'course_id' => $course_id,
-				'lessons' => $lessons,
-				'access_type' => $access_type,
-				'start_date' => $start_date ?: current_time('mysql'),
+		if ( ! $exists ) {
+			$this->owned[] = array(
+				'course_id'     => $course_id,
+				'lessons'       => $lessons,
+				'access_type'   => $access_type,
+				'start_date'    => $start_date ?: current_time( 'mysql' ),
 				'drip_interval' => $drip_interval,
-				'expires' => $expires,
-			];
+				'expires'       => $expires,
+			);
 		}
-		$this->owned = $this->unique_owned($this->owned);
-		update_user_meta($this->user->ID, $this->owned_courses, wp_json_encode($this->owned));
+		$this->owned = $this->unique_owned( $this->owned );
+		update_user_meta( $this->user->ID, $this->owned_courses, wp_json_encode( $this->owned ) );
 
-		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
-		$progress = $progress ? json_decode($progress, true) : [];
-		switch ($access_type) {
+		$progress = get_user_meta( $this->user->ID, $this->course_progress, true );
+		$progress = $progress ? json_decode( $progress, true ) : array();
+		switch ( $access_type ) {
 			case 'full':
 				$unlocked_lessons = $lessons;
 				break;
 			case 'drip':
-				$unlocked_lessons = count($lessons[0]) > 2 ? array_slice($lessons[0], 0, 2) : $lessons[0];
+				$unlocked_lessons = count( $lessons[0] ) > 2 ? array_slice( $lessons[0], 0, 2 ) : $lessons[0];
 				break;
 			case 'partial':
 				$unlocked_lessons = $unlock;
@@ -85,19 +85,19 @@ class User_Access
 				$unlocked_lessons = $lessons;
 				break;
 		}
-		if (!isset($progress[$course_id])) {
-			$progress[$course_id] = [
-				'max_unlocked_lesson' => count($unlocked_lessons),
-				'unlocked_lessons' => $unlocked_lessons,
-				'completed_lessons' => [],
-				'completion_date' => null
-			];
+		if ( ! isset( $progress[ $course_id ] ) ) {
+			$progress[ $course_id ] = array(
+				'max_unlocked_lesson' => count( $unlocked_lessons ),
+				'unlocked_lessons'    => $unlocked_lessons,
+				'completed_lessons'   => array(),
+				'completion_date'     => null,
+			);
 		} else {
-			$progress[$course_id]['unlocked_lessons'] = $unlocked_lessons;
-			$progress[$course_id]['max_unlocked_lesson'] = count($unlocked_lessons);
+			$progress[ $course_id ]['unlocked_lessons']    = $unlocked_lessons;
+			$progress[ $course_id ]['max_unlocked_lesson'] = count( $unlocked_lessons );
 		}
-		update_user_meta($this->user->ID, $this->course_progress, wp_json_encode($progress));
-		delete_transient('lighter_lms_access_check_' . $this->user->ID . '_*');
+		update_user_meta( $this->user->ID, $this->course_progress, wp_json_encode( $progress ) );
+		delete_transient( 'lighter_lms_access_check_' . $this->user->ID . '_*' );
 	}
 
 	/**
@@ -108,59 +108,58 @@ class User_Access
 	 *
 	 * @param int $course_id The id of the course to revoke
 	 */
-	public function revoke_course_access($course_id)
-	{
-		if (!$this->user->ID) {
+	public function revoke_course_access( $course_id ) {
+		if ( ! $this->user->ID ) {
 			return;
 		}
 
 		$exists = false;
-		foreach ($this->owned as &$entry) {
-			if ($entry['course_id'] == $course_id) {
-				$exists = true;
+		foreach ( $this->owned as &$entry ) {
+			if ( $entry['course_id'] == $course_id ) {
+				$exists               = true;
 				$entry['access_type'] = 'revoked';
-				$entry['expires'] = strtotime('yesterday');
+				$entry['expires']     = strtotime( 'yesterday' );
 				break;
 			}
 		}
 
-		if (!$exists) {
+		if ( ! $exists ) {
 			error_log(
 				sprintf(
 					"Lighter LMS: Tried to revoke course access for user (%d) on course they don\'t own: %d (%s)",
 					$this->user->ID,
 					$course_id,
-					get_the_title($course_id)
+					get_the_title( $course_id )
 				)
 			);
 			return;
 		}
 
-		unset($this->owned[$course_id]);
+		unset( $this->owned[ $course_id ] );
 
-		update_user_meta($this->user->ID, $this->owned_courses, wp_json_encode($this->owned));
+		update_user_meta( $this->user->ID, $this->owned_courses, wp_json_encode( $this->owned ) );
 
-		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
+		$progress = get_user_meta( $this->user->ID, $this->course_progress, true );
 
-		if (!$progress || !$progress[$course_id]) {
+		if ( ! $progress || ! $progress[ $course_id ] ) {
 			error_log(
 				sprintf(
-					"Lighter LMS: Tried to revoke course access for user (%d) on course with no progress found. Access may not be revoked correctly. Exiting silently",
+					'Lighter LMS: Tried to revoke course access for user (%d) on course with no progress found. Access may not be revoked correctly. Exiting silently',
 					$this->user->ID
 				)
 			);
-			delete_transient('lighter_lms_access_check_' . $this->user->ID . '_*');
+			delete_transient( 'lighter_lms_access_check_' . $this->user->ID . '_*' );
 			return;
 		}
 
-		$progress = json_decode($progress, true);
+		$progress = json_decode( $progress, true );
 
-		$progress[$course_id]['unlocked_lessons'] = [];
-		$progress[$course_id]['max_unlocked_lesson'] = 0;
+		$progress[ $course_id ]['unlocked_lessons']    = array();
+		$progress[ $course_id ]['max_unlocked_lesson'] = 0;
 
-		update_user_meta($this->user->ID, $this->course_progress, wp_json_encode($progress));
+		update_user_meta( $this->user->ID, $this->course_progress, wp_json_encode( $progress ) );
 
-		delete_transient('lighter_lms_access_check_' . $this->user->ID . '_*');
+		delete_transient( 'lighter_lms_access_check_' . $this->user->ID . '_*' );
 	}
 
 	/**
@@ -170,18 +169,19 @@ class User_Access
 	 *
 	 * @param int|\WP_Post $course_id The ID or WP_Post object of the course.
 	 */
-	public function update_course_access($course, $lessons = [])
-	{
-		$course = get_post($course);
+	public function update_course_access( $course, $lessons = array() ) {
+		$course = get_post( $course );
 
-		if (!$course || $course->post_type !== lighter_lms()->course_post_type) return;
+		if ( ! $course || $course->post_type !== lighter_lms()->course_post_type ) {
+			return;
+		}
 
-		$lessons = array_filter($lessons, fn($l) => $l !== 'false');
+		$lessons = array_filter( $lessons, fn( $l ) => $l !== 'false' );
 
-		if (!$lessons) {
-			return $this->revoke_course_access($course->ID);
+		if ( ! $lessons ) {
+			return $this->revoke_course_access( $course->ID );
 		} else {
-			$this->grant_course_access($course->ID, 'partial', array_keys($lessons));
+			$this->grant_course_access( $course->ID, 'partial', array_keys( $lessons ) );
 		}
 	}
 
@@ -194,22 +194,27 @@ class User_Access
 	 *
 	 * @return bool Whether the user has access to the specified course.
 	 */
-	public function check_course_access($course_id = null)
-	{
-		if (!$this->user->ID || !is_user_logged_in()) return false;
+	public function check_course_access( $course_id = null ) {
+		if ( ! $this->user->ID || ! is_user_logged_in() ) {
+			return false;
+		}
 
-		if ($this->user->has_cap('manage_options')) return true;
+		if ( $this->user->has_cap( 'manage_options' ) ) {
+			return true;
+		}
 
-		$post = get_post($course_id);
-		$cache_key = 'lighter_lms_access_check_' . $this->user->ID . '_' . $post->ID;
-		$has_access = get_transient($cache_key);
-		if (false !== $has_access) return $has_access;
+		$post       = get_post( $course_id );
+		$cache_key  = 'lighter_lms_access_check_' . $this->user->ID . '_' . $post->ID;
+		$has_access = get_transient( $cache_key );
+		if ( false !== $has_access ) {
+			return $has_access;
+		}
 
-		foreach ($this->owned as $entry) {
-			if ($entry['course_id'] == $post->ID) {
-				if ($entry['expires'] && current_time('timestamp') > strtotime($entry['expires'])) {
+		foreach ( $this->owned as $entry ) {
+			if ( $entry['course_id'] == $post->ID ) {
+				if ( $entry['expires'] && current_time( 'timestamp' ) > strtotime( $entry['expires'] ) ) {
 					return false;
-				} elseif ($entry['access_type'] == 'revoked') {
+				} elseif ( $entry['access_type'] == 'revoked' ) {
 					return false;
 				}
 				$has_access = true;
@@ -217,11 +222,11 @@ class User_Access
 			}
 		}
 
-		if (isset($has_access)) {
-			set_transient($cache_key, $has_access, HOUR_IN_SECONDS);
+		if ( isset( $has_access ) ) {
+			set_transient( $cache_key, $has_access, HOUR_IN_SECONDS );
 			return $has_access;
 		}
-		set_transient($cache_key, false, HOUR_IN_SECONDS);
+		set_transient( $cache_key, false, HOUR_IN_SECONDS );
 		return false;
 	}
 
@@ -235,20 +240,27 @@ class User_Access
 	 *
 	 * @return bool Whether the user has access
 	 */
-	public function check_lesson_access($lesson_id, $course_id)
-	{
-		if ($this->user->has_cap('manage_options')) return true;
+	public function check_lesson_access( $lesson_id, $course_id ) {
+		if ( $this->user->has_cap( 'manage_options' ) ) {
+			return true;
+		}
 
-		$has_course_access = $this->check_course_access($course_id);
+		$has_course_access = $this->check_course_access( $course_id );
 
-		if (!$has_course_access) return false;
+		if ( ! $has_course_access ) {
+			return false;
+		}
 
-		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
-		$progress = $progress ? json_decode($progress, true) : [];
+		$progress = get_user_meta( $this->user->ID, $this->course_progress, true );
+		$progress = $progress ? json_decode( $progress, true ) : array();
 
-		if (!isset($progress[$course_id])) return false;
+		if ( ! isset( $progress[ $course_id ] ) ) {
+			return false;
+		}
 
-		if (in_array($lesson_id, $progress[$course_id]['unlocked_lessons'])) return true;
+		if ( in_array( $lesson_id, $progress[ $course_id ]['unlocked_lessons'] ) ) {
+			return true;
+		}
 
 		return false;
 	}
@@ -262,29 +274,28 @@ class User_Access
 	 *
 	 * @return object|array
 	 */
-	public function get_owned($course = null)
-	{
-		if (empty($this->owned)) {
-			return [];
+	public function get_owned( $course = null ) {
+		if ( empty( $this->owned ) ) {
+			return array();
 		}
 
-		if (!$course) {
+		if ( ! $course ) {
 			return $this->owned;
 		}
 
-		$course = get_post($course);
+		$course = get_post( $course );
 
-		if (!$course || $course->post_type !== lighter_lms()->course_post_type) {
-			return [];
+		if ( ! $course || $course->post_type !== lighter_lms()->course_post_type ) {
+			return array();
 		}
 
 		$course_id = $course->ID;
-		$filtered = array_filter(
+		$filtered  = array_filter(
 			$this->owned,
-			fn($access) => $access['course_id'] == $course_id
+			fn( $access ) => $access['course_id'] == $course_id
 		);
 
-		return $filtered ? reset($filtered) : [];
+		return $filtered ? reset( $filtered ) : array();
 	}
 
 	/**
@@ -296,16 +307,15 @@ class User_Access
 	 *
 	 * @return array<object>
 	 */
-	public function get_owned_key($key)
-	{
-		if (empty($this->owned)) {
-			return [];
+	public function get_owned_key( $key ) {
+		if ( empty( $this->owned ) ) {
+			return array();
 		}
 
 		$keys = (array) $key;
 
 		return array_map(
-			fn($own) => array_intersect_key($own, array_flip($keys)),
+			fn( $own ) => array_intersect_key( $own, array_flip( $keys ) ),
 			$this->owned
 		);
 	}
@@ -319,14 +329,13 @@ class User_Access
 	 *
 	 * @return object
 	 */
-	public function get_progress($course = null)
-	{
-		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
-		$progress = $progress ? json_decode($progress, true) : [];
+	public function get_progress( $course = null ) {
+		$progress = get_user_meta( $this->user->ID, $this->course_progress, true );
+		$progress = $progress ? json_decode( $progress, true ) : array();
 
-		if ($course) {
-			$course = get_post($course);
-			$progress = isset($progress[$course->ID]) ? $progress[$course->ID] : [];
+		if ( $course ) {
+			$course   = get_post( $course );
+			$progress = isset( $progress[ $course->ID ] ) ? $progress[ $course->ID ] : array();
 		}
 
 		return $progress;
@@ -340,22 +349,21 @@ class User_Access
 	 *
 	 * @return int 1 for success 0 for failure.
 	 */
-	public function complete_lesson($course, $lesson)
-	{
-		$course = get_post($course);
-		$lesson = get_post($lesson);
+	public function complete_lesson( $course, $lesson ) {
+		$course = get_post( $course );
+		$lesson = get_post( $lesson );
 
 		// TODO: Check user owns course and lesson.
 
-		$progress = get_user_meta($this->user->ID, $this->course_progress, true);
-		$progress = $progress ? json_decode($progress, true) : [];
+		$progress = get_user_meta( $this->user->ID, $this->course_progress, true );
+		$progress = $progress ? json_decode( $progress, true ) : array();
 
-		$completed = $progress[$course->ID]['completed_lessons'] ?: [];
-		$completed[] = $lesson->ID;
-		$completed = array_unique($completed, SORT_NUMERIC);
-		$progress[$course->ID]['completed_lessons'] = $completed;
+		$completed                                    = $progress[ $course->ID ]['completed_lessons'] ?: array();
+		$completed[]                                  = $lesson->ID;
+		$completed                                    = array_unique( $completed, SORT_NUMERIC );
+		$progress[ $course->ID ]['completed_lessons'] = $completed;
 
-		if (!update_user_meta($this->user->ID, $this->course_progress, wp_json_encode($progress))) {
+		if ( ! update_user_meta( $this->user->ID, $this->course_progress, wp_json_encode( $progress ) ) ) {
 			return 0;
 		}
 
@@ -368,18 +376,19 @@ class User_Access
 	 * @param array $rows Array of owned course objects
 	 * @return mixed[]
 	 */
-	public static function unique_owned($rows)
-	{
-		$owned = [];
-		foreach ($rows as $row) {
+	public static function unique_owned( $rows ) {
+		$owned = array();
+		foreach ( $rows as $row ) {
 			$id = $row['course_id'] ?? null;
-			if ($id === null) continue;
+			if ( $id === null ) {
+				continue;
+			}
 
-			$date = $row['start_date'] ?? "1970-01-01 00:00:00";
-			if (!isset($owned[$id]) || new DateTime($date) > new DateTime($owned[$id]['start_date'])) {
-				$owned[$id] = $row;
+			$date = $row['start_date'] ?? '1970-01-01 00:00:00';
+			if ( ! isset( $owned[ $id ] ) || new DateTime( $date ) > new DateTime( $owned[ $id ]['start_date'] ) ) {
+				$owned[ $id ] = $row;
 			}
 		}
-		return array_values($owned);
+		return array_values( $owned );
 	}
 }

@@ -6,7 +6,7 @@
      */
 
     import Icon from "./Icon.svelte";
-    import lighterFetch from "$lib/lighterFetch";
+    import { lighterFetch } from "$api/lighter-fetch";
     import { editLesson, updateLesson } from "$lib/state.svelte.js";
 
     /** @type {EditLessonProps} */
@@ -171,7 +171,7 @@
         >
             <header>
                 <div class="lighter-dia-info">
-                    <h3>Edit {lesson.title}</h3>
+                    <h3>Edit: {lesson.title}</h3>
                 </div>
                 <div class="lighter-dia-actions">
                     <button

@@ -2,156 +2,169 @@
 
 namespace LighterLMS;
 
-class Course_Post extends Post_Type
-{
-	public function __construct()
-	{
-		parent::__construct(lighter_lms()->course_post_type);
+/**
+ * @extends Post_Type<mixed, mixed>
+ */
+class Course_Post extends Post_Type {
 
-		add_action('admin_post_add_topic', [$this, 'add_topic']);
-		add_action('wp_enqueue_scripts', [$this, 'scripts']);
-		add_action('template_redirect', [$this, 'course_access']);
+	public function __construct() {
+		parent::__construct( lighter_lms()->course_post_type );
 
-		add_action('plugins_loaded', function () {
-			$prio = 10;
+		add_action( 'admin_post_add_topic', array( $this, 'add_topic' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'scripts' ) );
+		add_action( 'template_redirect', array( $this, 'course_access' ) );
 
-			if (lighter_lms()->is_theme('breackdance-zero-theme-master')) {
-				$prio = 1000010;
+		add_action(
+			'plugins_loaded',
+			function () {
+				$prio = 10;
+
+				if ( lighter_lms()->is_theme( 'breackdance-zero-theme-master' ) ) {
+					$prio = 1000010;
+				}
+
+				add_filter( 'template_include', array( $this, 'course_template' ), $prio );
 			}
-
-			add_filter('template_include', [$this, 'course_template'], $prio);
-		});
+		);
 	}
 
 	/**
 	 * Register Course post type
 	 */
-	public function register()
-	{
-		$labels = [
-			'name'               => _x('Courses', 'post type plural name', 'lighterlms'),
-			'singular_name'      => _x('Course', 'post type singular name', 'lighterlms'),
-			'menu_name'          => _x('Courses', 'admin menu', 'lighterlms'),
-			'name_admin_bar'     => _x('Course', 'add new on admin bar', 'lighterlms'),
-			'add_new'            => _x('Add New', 'add lighterlms course', 'lighterlms'),
-			'add_new_item'       => __('Add New Course', 'lighterlms'),
-			'new_item'           => __('New Course', 'lighterlms'),
-			'edit_item'          => __('Edit Course', 'lighterlms'),
-			'view_item'          => __('View Course', 'lighterlms'),
-			'all_items'          => __('Courses', 'lighterlms'),
-			'search_items'       => __('Search Courses', 'lighterlms'),
-			'parent_item_colon'  => __('Parent Courses:', 'lighterlms'),
-			'not_found'          => __('No courses found.', 'lighterlms'),
-			'not_found_in_trash' => __('No courses found in Trash.', 'lighterlms'),
-		];
+	public function register() {
+		$labels = array(
+			'name'               => _x( 'Courses', 'post type plural name', 'lighterlms' ),
+			'singular_name'      => _x( 'Course', 'post type singular name', 'lighterlms' ),
+			'menu_name'          => _x( 'Courses', 'admin menu', 'lighterlms' ),
+			'name_admin_bar'     => _x( 'Course', 'add new on admin bar', 'lighterlms' ),
+			'add_new'            => _x( 'Add New', 'add lighterlms course', 'lighterlms' ),
+			'add_new_item'       => __( 'Add New Course', 'lighterlms' ),
+			'new_item'           => __( 'New Course', 'lighterlms' ),
+			'edit_item'          => __( 'Edit Course', 'lighterlms' ),
+			'view_item'          => __( 'View Course', 'lighterlms' ),
+			'all_items'          => __( 'Courses', 'lighterlms' ),
+			'search_items'       => __( 'Search Courses', 'lighterlms' ),
+			'parent_item_colon'  => __( 'Parent Courses:', 'lighterlms' ),
+			'not_found'          => __( 'No courses found.', 'lighterlms' ),
+			'not_found_in_trash' => __( 'No courses found in Trash.', 'lighterlms' ),
+		);
 
-		$args = [
-			'labels' => $labels,
-			'description' => __('Course description.', 'lighterlms'),
-			'public' => true,
-			'publicly_queryable' => true,
-			'query_var' => true,
-			'rewrite' => [
-				'slug' => 'kurser',
+		$args = array(
+			'labels'                => $labels,
+			'description'           => __( 'Course description.', 'lighterlms' ),
+			'public'                => true,
+			'publicly_queryable'    => true,
+			'query_var'             => true,
+			'rewrite'               => array(
+				'slug'       => 'kurser',
 				'with_front' => true,
-			],
-			'menu_icon' => 'dashicons-book-alt',
-			'capability_type' => 'post',
-			'has_archive' => true,
-			'hierarchical' => false,
-			'supports' => ['custom-fields'],
-			'show_in_menu' => lighter_lms()->admin_url,
-			'show_in_rest' => true,
+			),
+			'menu_icon'             => 'dashicons-book-alt',
+			'capability_type'       => 'post',
+			'has_archive'           => true,
+			'hierarchical'          => false,
+			'supports'              => array( 'custom-fields' ),
+			'show_in_menu'          => lighter_lms()->admin_url,
+			'show_in_rest'          => true,
 			'rest_controller_class' => 'WP_REST_Posts_Controller',
-			'rest_base' => 'lighter_courses',
-			'register_meta_box_cb' => [$this, 'register_meta_boxes'],
-		];
+			'rest_base'             => 'lighter_courses',
+			'register_meta_box_cb'  => array( $this, 'register_meta_boxes' ),
+		);
 
-		register_post_type($this->post_type, $args);
+		register_post_type( $this->post_type, $args );
 
-		$this->register_tags('Course');
+		$this->register_tags( 'Course' );
 	}
 
 	/**
 	 * Save post content
 	 *
-	 * @param int		$post_id	The post ID.
-	 * @param \WP_Post	$post		The post object.
+	 * @param int       $post_id    The post ID.
+	 * @param \WP_Post  $post       The post object.
 	 */
-	public function save_post($post_id, $post)
-	{
+	public function save_post( $post_id, $post ) {
 		$nonce = $_POST['lighter_nonce'] ?? '';
-		if (! $this->verify_nonce($post, $nonce, $this->post_type . '_fields')) {
+		if ( ! $this->verify_nonce( $post, $nonce, $this->post_type . '_fields' ) ) {
 			return $post_id;
 		}
 
-		if (isset($_POST['topics'])) {
+		if ( isset( $_POST['topics'] ) ) {
 			$topic_db = new Topics();
-			foreach ($_POST['topics'] as $topic) {
-				$data = [
-					'post_id' => $post_id,
-					'title' => $topic['title'],
+			foreach ( $_POST['topics'] as $topic ) {
+				$data = array(
+					'post_id'    => $post_id,
+					'title'      => $topic['title'],
 					'sort_order' => $topic['sortOrder'],
-				];
-				$topic_db->update($topic['key'], $data);
+				);
+				$topic_db->update( $topic['key'], $data );
 
-				if (isset($topic['lessons'])) {
-					foreach ($topic['lessons'] as $lesson) {
-						if ($lesson['editStatus'] != "clean") Lesson_Post::save_from_course($lesson, $post_id, $topic, $topic_db);
+				if ( isset( $topic['lessons'] ) ) {
+					foreach ( $topic['lessons'] as $lesson ) {
+						if ( $lesson['editStatus'] != 'clean' ) {
+							Lesson_Post::save_from_course( $lesson, $post_id, $topic, $topic_db );
+						}
 					}
 				}
 			}
 		}
 
-		$settings = $_POST['settings'] ?? [];
+		$settings = $_POST['settings'] ?? array();
 
-		if (!empty($settings)) {
-			$this->_save_settings($post, $settings);
+		if ( ! empty( $settings ) ) {
+			$this->_save_settings( $post, $settings );
 		}
 	}
 
 	/**
 	 * Save course settings.
 	 *
-	 * @param \WP_Post	$post The post object.
-	 * @param array		$args The settings to save.
+	 * @param \WP_Post  $post The post object.
+	 * @param array     $args The settings to save.
 	 */
-	protected function _save_settings($post, $args)
-	{
-		$tags = $args['tags'] ?? [];
-		$product = $args['product'] ?? [];
+	protected function _save_settings( $post, $args ) {
+		$tags               = $args['tags'] ?? array();
+		$product            = $args['product'] ?? array();
 		$course_description = $args['description'] ?? '';
-		$header = isset($args['displayHeader']) ? wp_validate_boolean($args['displayHeader']) : false;
-		$footer = isset($args['displayFooter']) ? wp_validate_boolean($args['displayFooter']) : false;
-		$sidebar = isset($args['displaySidebar']) ? wp_validate_boolean($args['displaySidebar']) : false;
-		$slug = $args['slug'] ? sanitize_post_field('post_name', $args['slug'], $post->ID, 'raw') : $post->post_name;
-		$sync_prod_img = isset($args['sync_prod_img']) ? wp_validate_boolean($args['sync_prod_img']) : true;
-		$thumbnail = $args['thumbnail'];
+		$header             = isset( $args['displayHeader'] ) ? wp_validate_boolean( $args['displayHeader'] ) : false;
+		$footer             = isset( $args['displayFooter'] ) ? wp_validate_boolean( $args['displayFooter'] ) : false;
+		$sidebar            = isset( $args['displaySidebar'] ) ? wp_validate_boolean( $args['displaySidebar'] ) : false;
+		$slug               = $args['slug'] ? sanitize_post_field( 'post_name', $args['slug'], $post->ID, 'raw' ) : $post->post_name;
+		$sync_prod_img      = isset( $args['sync_prod_img'] ) ? wp_validate_boolean( $args['sync_prod_img'] ) : true;
+		$thumbnail          = $args['thumbnail'];
 
-		if (!empty($tags)) {
-			wp_set_post_terms($post->ID, $tags, 'course-tags');
+		if ( ! empty( $tags ) ) {
+			wp_set_post_terms( $post->ID, $tags, 'course-tags' );
 		}
 
-		if (!empty($product)) {
+		if ( ! empty( $product ) ) {
 			$product['slug'] = $slug;
 			$product['tags'] = $tags;
-			$saved_prod = lighter_save_product($product, $post->ID);
+			$saved_prod      = lighter_save_product( $product, $post->ID );
 
 			$img_id = $product['images'][0]['id'] ?? false;
-			if ($img_id && $sync_prod_img) set_post_thumbnail($post->ID, $img_id);
+			if ( $img_id && $sync_prod_img ) {
+				set_post_thumbnail( $post->ID, $img_id );
+			}
 
-			update_post_meta($post->ID, '_lighter_is_restricted', true);
+			update_post_meta( $post->ID, '_lighter_is_restricted', true );
 		}
 
-		update_post_meta($post->ID, '_course_description', trim($course_description));
-		update_post_meta($post->ID, '_course_display_theme_header', $header);
-		update_post_meta($post->ID, '_course_display_theme_sidebar', $sidebar);
-		update_post_meta($post->ID, '_course_display_theme_footer', $footer);
-		if ($thumbnail && !$sync_prod_img) set_post_thumbnail($post->ID, $thumbnail['id']);
+		update_post_meta( $post->ID, '_course_description', trim( $course_description ) );
+		update_post_meta( $post->ID, '_course_display_theme_header', $header );
+		update_post_meta( $post->ID, '_course_display_theme_sidebar', $sidebar );
+		update_post_meta( $post->ID, '_course_display_theme_footer', $footer );
+		if ( $thumbnail && ! $sync_prod_img ) {
+			set_post_thumbnail( $post->ID, $thumbnail['id'] );
+		}
 
-		if ($post->post_name !== $slug) {
+		if ( $post->post_name !== $slug ) {
 			$this->skip_next_save = true;
-			wp_update_post(['ID' => $post->ID, 'post_name' => $slug]);
+			wp_update_post(
+				array(
+					'ID'        => $post->ID,
+					'post_name' => $slug,
+				)
+			);
 			$this->skip_next_save = false;
 		}
 	}
@@ -159,18 +172,19 @@ class Course_Post extends Post_Type
 	/**
 	 * Check user access to course.
 	 */
-	public function course_access()
-	{
-		if (!is_singular($this->post_type)) return;
+	public function course_access() {
+		if ( ! is_singular( $this->post_type ) ) {
+			return;
+		}
 
 		global $post;
-		$is_restricted = get_post_meta($post->ID, '_lighter_is_restricted', true);
-		$is_restricted = wp_validate_boolean($is_restricted);
-		if ($is_restricted) {
+		$is_restricted = get_post_meta( $post->ID, '_lighter_is_restricted', true );
+		$is_restricted = wp_validate_boolean( $is_restricted );
+		if ( $is_restricted ) {
 			$user_access = new User_Access();
-			if (!$user_access->check_course_access($post->ID)) {
+			if ( ! $user_access->check_course_access( $post->ID ) ) {
 				// TODO: Show access denied template.
-				wp_die('access denied', 'Please purchase the course or log in to view.', ['response' => 403]);
+				wp_die( 'access denied', 'Please purchase the course or log in to view.', array( 'response' => 403 ) );
 			}
 		}
 	}
@@ -181,15 +195,14 @@ class Course_Post extends Post_Type
 	 * @param string $template Current template
 	 * @return string
 	 */
-	public function course_template($template)
-	{
-		if (!is_singular($this->post_type)) {
+	public function course_template( $template ) {
+		if ( ! is_singular( $this->post_type ) ) {
 			return $template;
 		}
 
 		$new = null; // TODO: locate_template(lighter_lms()->course_template);
 
-		if (!empty($new)) {
+		if ( ! empty( $new ) ) {
 			return $new;
 		}
 
@@ -202,17 +215,16 @@ class Course_Post extends Post_Type
 	 * @param array $columns Existing columns.
 	 * @return array The newly set columns.
 	 */
-	public function columns($columns)
-	{
-		$date = isset($columns['date']) ? $columns['date'] : false;
+	public function columns( $columns ) {
+		$date = isset( $columns['date'] ) ? $columns['date'] : false;
 
-		if ($date) {
-			unset($columns['date']);
+		if ( $date ) {
+			unset( $columns['date'] );
 		}
 
-		$columns['tags'] = __('Tags');
+		$columns['tags'] = __( 'Tags' );
 
-		if ($date) {
+		if ( $date ) {
 			$columns['date'] = $date;
 		}
 
@@ -222,16 +234,15 @@ class Course_Post extends Post_Type
 	/**
 	 * Course custom columns content
 	 *
-	 * @param string	$column		The column name
-	 * @param Int		$post_id	The post ID.
+	 * @param string    $column     The column name
+	 * @param Int       $post_id    The post ID.
 	 */
-	public function custom_columns($column, $post_id)
-	{
-		switch ($column) {
+	public function custom_columns( $column, $post_id ) {
+		switch ( $column ) {
 			case 'tags':
-				$tags = get_the_term_list($post_id, 'course-tags', '', ', ');
-				if ($tags) {
-					echo wp_kses_post($tags);
+				$tags = get_the_term_list( $post_id, 'course-tags', '', ', ' );
+				if ( $tags ) {
+					echo wp_kses_post( $tags );
 				}
 				break;
 		}
@@ -240,27 +251,26 @@ class Course_Post extends Post_Type
 	/**
 	 * Course REST query modifier
 	 *
-	 * @param array				$args	The query args.
-	 * @param \WP_REST_Request	$req	The request object.
+	 * @param array             $args   The query args.
+	 * @param \WP_REST_Request  $req    The request object.
 	 *
 	 * @return array
 	 */
-	public function rest_query($args, $req)
-	{
-		$status_param = $req->get_param('filter_status');
-		$valid_stati = [];
-		if (!empty($status_param) && is_string($status_param)) {
-			$statuses = explode(',', $status_param);
-			foreach ($statuses as $status) {
-				$status = trim($status);
-				if (get_post_status_object($status)) {
+	public function rest_query( $args, $req ) {
+		$status_param = $req->get_param( 'filter_status' );
+		$valid_stati  = array();
+		if ( ! empty( $status_param ) && is_string( $status_param ) ) {
+			$statuses = explode( ',', $status_param );
+			foreach ( $statuses as $status ) {
+				$status = trim( $status );
+				if ( get_post_status_object( $status ) ) {
 					$valid_stati[] = $status;
 				}
 			}
 		}
 
-		if (empty($valid_stati)) {
-			$valid_stati = ['publish', 'draft', 'future', 'private', 'auto-draft', 'pending'];
+		if ( empty( $valid_stati ) ) {
+			$valid_stati = array( 'publish', 'draft', 'future', 'private', 'auto-draft', 'pending' );
 		}
 
 		/*
@@ -275,12 +285,11 @@ class Course_Post extends Post_Type
 	/**
 	 * Regitser course metaboxes.
 	 */
-	public function register_meta_boxes()
-	{
+	public function register_meta_boxes() {
 		add_meta_box(
 			'coursecontentdiv',
-			__('Course content', 'lighterlms'),
-			[$this, 'details'],
+			__( 'Course content', 'lighterlms' ),
+			array( $this, 'details' ),
 			$this->post_type,
 			'normal',
 			'high'
@@ -288,8 +297,8 @@ class Course_Post extends Post_Type
 
 		add_meta_box(
 			'coursesettingsdiv',
-			__('Course settings', 'lighterlms'),
-			[$this, 'settings'],
+			__( 'Course settings', 'lighterlms' ),
+			array( $this, 'settings' ),
 			$this->post_type,
 			'normal',
 			'high'
@@ -301,9 +310,14 @@ class Course_Post extends Post_Type
 	 *
 	 * @param \WP_Post $post The post object.
 	 */
-	public function details($post)
-	{
-		lighter_view('course-modules', ['admin' => true, 'post' => $post]);
+	public function details( $post ) {
+		lighter_view(
+			'course-modules',
+			array(
+				'admin' => true,
+				'post'  => $post,
+			)
+		);
 	}
 
 	/**
@@ -311,36 +325,79 @@ class Course_Post extends Post_Type
 	 *
 	 * @param \WP_Post $post The post object.
 	 */
-	public function settings($post)
-	{
-		lighter_view('course-settings', ['admin' => true, 'post' => $post]);
+	public function settings( $post ) {
+		lighter_view(
+			'course-settings',
+			array(
+				'admin' => true,
+				'post'  => $post,
+			)
+		);
 	}
 
 	/**
 	 * Add a new topic via. form submission.
 	 */
-	public function add_topic()
-	{
+	public function add_topic() {
 		$post_id = (int) $_POST['post_ID'];
-		$sort = (int) $_POST['topics_length'];
+		$sort    = (int) $_POST['topics_length'];
 
 		$topics_db = new Topics();
-		$topics_db->create($post_id, null, 'New topic', $sort + 1);
+		$topics_db->create( $post_id, null, 'New topic', $sort + 1 );
 
-		wp_redirect(wp_get_referer());
+		wp_redirect( wp_get_referer() );
 		exit;
 	}
 
 	/**
 	 * Enqueue needed scripts.
 	 */
-	public function scripts()
-	{
-		if (is_singular($this->post_type)) {
-			wp_enqueue_style('lighter_lms_frontend');
+	public function scripts() {
+		if ( is_singular( $this->post_type ) ) {
+			wp_enqueue_style( 'lighter_lms_frontend' );
 
-			wp_enqueue_script('lighter_lms_course_js');
-			wp_enqueue_script('wp-api-fetch');
+			wp_enqueue_script( 'lighter_lms_course_js' );
+			wp_enqueue_script( 'wp-api-fetch' );
 		}
+	}
+
+	protected static function _generate_object() {
+		$post = get_post();
+
+		$topics_db = new Topics();
+		$topics    = $topics_db->get_by_course( $post->ID );
+
+		if ( ! empty( $topics ) ) {
+			$topics = array_map( array( $topics_db::class, 'normalise_for_rest' ), $topics );
+		}
+
+		return array(
+			'id'           => $post->ID,
+			'slug'         => $post->post_name,
+			'status'       => $post->post_status,
+			'type'         => 'course',
+			'title'        => array(
+				'rendered' => get_the_title( $post ),
+				'raw'      => $post->post_title,
+			), // Use get_the_title to go through all filters
+			'content'      => array(
+				'rendered' => '',
+				'raw'      => '',
+			),
+			'excerpt'      => array(
+				'rendered' => '',
+				'raw'      => '',
+			),
+			'author'       => (int) $post->post_author,
+			'date'         => $post->post_date,
+			'date_gmt'     => $post->post_date_gmt,
+			'modified'     => $post->post_modified,
+			'modified_gmt' => $post->post_modified_gmt,
+			'menu_order'   => $post->menu_order,
+			'parent'       => 0,
+			'meta'         => (object) array(),
+			'course_key'   => '',
+			'topics'       => $topics,
+		);
 	}
 }

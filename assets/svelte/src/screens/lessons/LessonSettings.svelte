@@ -1,7 +1,7 @@
 <script>
     import Editable from "$components/Editable.svelte";
     import FetchSearch from "$components/FetchSearch.svelte";
-    import { lessonSettings } from "$lib/lesson-state.svelte";
+    import { lessonSettings } from "$lib/models/state/lesson-post.svelte";
 
     const formatVal = (v) => {
         if (v instanceof Date) {

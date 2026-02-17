@@ -2,6 +2,7 @@ import { hydrate } from 'svelte'
 import Course from './Course.svelte'
 import Settings from './Settings.svelte';
 import { initState } from '$lib/state.svelte.js';
+import { initCourse } from '$lib/utils';
 
 const origin = window.origin;
 const target = document.getElementById('lighter-course-mount');
@@ -23,11 +24,15 @@ for (let i = 0, len = lessonsData.length; i < len; i++) {
 
 initState({ courseNum, topicsData, lessonsData });
 
+const { course: courseData, api } = initCourse();
+
 const course = hydrate(Course, {
     target: target,
     props: {
         screen: target.dataset.screen || "dashboard",
         courseNum,
+        api,
+        course: courseData,
     }
 });
 

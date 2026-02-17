@@ -1,7 +1,7 @@
 <?php
-$builders = lighter_lms()->get_builders('all');
-$stores = lighter_lms()->get_stores('all');
-$courses = lighter_lms()->get_courses();
+$builders = lighter_lms()->get_builders( 'all' );
+$stores   = lighter_lms()->get_stores( 'all' );
+$courses  = lighter_lms()->get_courses();
 
 ?>
 
@@ -23,32 +23,34 @@ $courses = lighter_lms()->get_courses();
 			</div>
 		</span>
 		<div class="course-list bordered col">
-			<?php foreach ($courses as $course):
-				$title = $course['title']; ?>
+			<?php
+			foreach ( $courses as $course ) :
+				$title = $course['title'];
+				?>
 				<div class="course-wrap col" aria-expanded="false">
 					<div class="course">
 						<label>
-							<input type="checkbox" name="<?php echo esc_attr($course['id']) ?>" id="<?php echo esc_attr($course['id']) ?>">
-							<?php echo esc_html($title) ?>
+							<input type="checkbox" name="<?php echo esc_attr( $course['id'] ); ?>" id="<?php echo esc_attr( $course['id'] ); ?>">
+							<?php echo esc_html( $title ); ?>
 						</label>
 						<button type="button">
 							<div class="icon-wrapper" style="--icon-size: 1.5rem; --icon-color: currentColor;">
-								<?php echo lighter_icon("chevron-down") ?>
+								<?php echo lighter_icon( 'chevron-down' ); ?>
 							</div>
 						</button>
 					</div>
-					<?php foreach ($course['topics'] as $topic): ?>
+					<?php foreach ( $course['topics'] as $topic ) : ?>
 						<div class="topic col">
-							<b><?php echo esc_html($topic['title']) ?></b>
+							<b><?php echo esc_html( $topic['title'] ); ?></b>
 							<div class="grid">
-								<?php foreach ($topic['lessons'] as $idx => $lesson): ?>
+								<?php foreach ( $topic['lessons'] as $idx => $lesson ) : ?>
 									<label>
 										<input
 											type="checkbox"
-											name="<?php echo esc_attr(lighter_attrify($title)) ?>"
-											value="<?php echo esc_attr($lesson->ID) ?>"
-											id="<?php echo esc_attr(lighter_attrify("$title-$idx")) ?>" />
-										<?php echo esc_html($lesson->post_title) ?>
+											name="<?php echo esc_attr( lighter_attrify( $title ) ); ?>"
+											value="<?php echo esc_attr( $lesson->ID ); ?>"
+											id="<?php echo esc_attr( lighter_attrify( "$title-$idx" ) ); ?>" />
+										<?php echo esc_html( $lesson->post_title ); ?>
 									</label>
 								<?php endforeach; ?>
 							</div>
@@ -60,8 +62,9 @@ $courses = lighter_lms()->get_courses();
 	</div>
 	<h2>Default editor</h2>
 	<div class="editors">
-		<?php foreach ($builders as $builder) {
-			$attr = esc_html($builder['slug']);
+		<?php
+		foreach ( $builders as $builder ) {
+			$attr = esc_html( $builder['slug'] );
 			$logo = $attr == 'classic-editor' || $attr == 'gutenberg' ? 'wordpress-logo' : $attr . '-logo';
 			echo "<label for=\"{$attr}\" style=\"--bg-color:{$builder['background']}\">";
 			printf(
@@ -69,22 +72,23 @@ $courses = lighter_lms()->get_courses();
 				$attr,
 				$builder['slug'] == lighter_lms()->defaults()->editor ? ' checked' : ''
 			);
-		?>
+			?>
 			<div class="editor-card col <?php echo $attr; ?>">
-				<div class="icon-wrapper" style="--icon-size:222px;--icon-color:<?php echo $builder['foreground'] ?>;">
-					<?php esc_html(lighter_icon($logo)); ?>
+				<div class="icon-wrapper" style="--icon-size:222px;--icon-color:<?php echo $builder['foreground']; ?>;">
+					<?php esc_html( lighter_icon( $logo ) ); ?>
 				</div>
-				<span><?php echo esc_html($builder['name'][0]) ?></span>
+				<span><?php echo esc_html( $builder['name'][0] ); ?></span>
 			</div>
 			</label>
-		<?php
+			<?php
 		}
 		?>
 	</div>
 	<h2>Connected store</h2>
 	<div class="stores">
-		<?php foreach ($stores as $store):
-			$attr = esc_html($store['slug']);
+		<?php
+		foreach ( $stores as $store ) :
+			$attr = esc_html( $store['slug'] );
 			$logo = $attr . '-logo';
 			printf(
 				'<label for="%s" style="--bg-color:%s;">',
@@ -95,12 +99,13 @@ $courses = lighter_lms()->get_courses();
 				'<input type="radio" id="%1$s" name="connected-store" value="%1$s"%2$s />',
 				$attr,
 				$store['slug'] == lighter_lms()->defaults()->store ? ' checked' : ''
-			) ?>
+			)
+			?>
 			<div class="store-card col <?php echo $attr; ?>">
-				<div class="icon-wrapper" style="--icon-size:222px;--icon-color:<?php echo $builder['foreground'] ?>;">
-					<?php esc_html(lighter_icon($logo)); ?>
+				<div class="icon-wrapper" style="--icon-size:222px;--icon-color:<?php echo $builder['foreground']; ?>;">
+					<?php esc_html( lighter_icon( $logo ) ); ?>
 				</div>
-				<span><?php echo esc_html($store['name'][0]) ?></span>
+				<span><?php echo esc_html( $store['name'][0] ); ?></span>
 			</div>
 			</label>
 		<?php endforeach; ?>

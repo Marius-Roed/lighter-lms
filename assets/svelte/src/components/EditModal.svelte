@@ -8,10 +8,13 @@
         syncLesson,
     } from "$lib/state.svelte.js";
     import Icon from "./Icon.svelte";
-    import lighterFetch from "$lib/lighterFetch";
+    import { lighterFetch } from "$api/lighter-fetch";
 
-    let iframeEl = $state();
-    let iframeReady = $state(false);
+    let iframeEl = $state(),
+        iframeReady = $state(false);
+
+    let fewerLessons = $derived(getLesson(editModal.lesson?.key) <= 0),
+        moreLessons = $derived(getLesson(editModal.lesson?.key));
 
     async function getPermalink() {
         if (editModal.lesson.id) {
@@ -79,8 +82,14 @@
         $effect(() => {
             if (editModal.open) {
                 if (!el.open) el.showModal();
+                document.body.style.position = "fixed";
+                document.body.style.top = `-${window.scrollY}px`;
             } else {
                 if (el.open) el.close();
+                const scrollY = document.body.style.top;
+                document.body.style.position = "";
+                document.body.style.top = "";
+                window.scrollTo(0, parseInt(scrollY || "0") * -1);
             }
         });
 
@@ -143,6 +152,7 @@
                 title="Previous lesson"
                 style="rotate:90deg;"
                 onclick={editPrevLesson}
+                disabled={fewerLessons}
             >
                 <Icon name="chevron" />
             </button>
@@ -152,6 +162,7 @@
                 title="Next lesson"
                 style="rotate:-90deg"
                 onclick={editNextLesson}
+                disabled={moreLessons}
             >
                 <Icon name="chevron" />
             </button>

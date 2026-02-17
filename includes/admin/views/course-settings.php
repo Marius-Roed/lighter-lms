@@ -3,32 +3,38 @@
 /** @var \WP_Post */
 $post;
 
-$course_description = get_post_meta($post->ID, '_course_description', true);
+$course_description = get_post_meta( $post->ID, '_course_description', true );
 
-$tags = get_terms(['taxonomy' => 'course-tags']);
-$tags = array_map(fn($tag) => [
-	'id' => $tag->term_id,
-	'name' => $tag->name,
-	'count' => $tag->count,
-	'slug' => $tag->slug,
-	'taxonomy' => $tag->taxonomy
-], $tags);
+$tags = get_terms( array( 'taxonomy' => 'course-tags' ) );
+$tags = array_map(
+	fn( $tag ) => array(
+		'id'       => $tag->term_id,
+		'name'     => $tag->name,
+		'count'    => $tag->count,
+		'slug'     => $tag->slug,
+		'taxonomy' => $tag->taxonomy,
+	),
+	$tags
+);
 
-$selected_tags = wp_get_post_terms($post->ID, 'course-tags');
-$selected_tags = array_map(fn($tag) => [
-	'id' => $tag->term_id,
-	'name' => $tag->name,
-	'count' => $tag->count,
-	'slug' => $tag->slug,
-	'taxonomy' => $tag->taxonomy
-], $selected_tags);
+$selected_tags = wp_get_post_terms( $post->ID, 'course-tags' );
+$selected_tags = array_map(
+	fn( $tag ) => array(
+		'id'       => $tag->term_id,
+		'name'     => $tag->name,
+		'count'    => $tag->count,
+		'slug'     => $tag->slug,
+		'taxonomy' => $tag->taxonomy,
+	),
+	$selected_tags
+);
 
 ?>
 <script>
 	var lighterCourse = {
 		tags: {
-			all: <?= wp_json_encode($tags) ?>,
-			selected: <?= wp_json_encode($selected_tags) ?>
+			all: <?php echo wp_json_encode( $tags ); ?>,
+			selected: <?php echo wp_json_encode( $selected_tags ); ?>
 		}
 	};
 </script>
@@ -45,7 +51,7 @@ $selected_tags = array_map(fn($tag) => [
 				<h3>Course visibility</h3>
 				<span>
 					<b>Status:</b>
-					<select name="post_status" value="<?= esc_attr($post->post_status) ?>">
+					<select name="post_status" value="<?php echo esc_attr( $post->post_status ); ?>">
 						<option value="publish">Published</option>
 						<option value="pending">Pending review</option>
 						<option value="future">Schedule</option>
@@ -53,7 +59,7 @@ $selected_tags = array_map(fn($tag) => [
 						<option value="draft">Draft</option>
 					</select>
 				</span>
-				<span><b>Published on:</b><?= esc_html($post->post_date) ?></span>
+				<span><b>Published on:</b><?php echo esc_html( $post->post_date ); ?></span>
 			</div>
 			<div class="course-tags">
 				<h3>Tags</h3>
@@ -67,7 +73,7 @@ $selected_tags = array_map(fn($tag) => [
 			</div>
 			<div class="course-desc">
 				<h3>Description</h3>
-				<textarea id="course-description" name="course_description" cols="35" rows="8" placeholder="Enter an eye catching description..."><?= esc_textarea($course_description) ?></textarea>
+				<textarea id="course-description" name="course_description" cols="35" rows="8" placeholder="Enter an eye catching description..."><?php echo esc_textarea( $course_description ); ?></textarea>
 			</div>
 		</div>
 	</div>

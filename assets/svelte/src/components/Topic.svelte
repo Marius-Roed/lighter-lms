@@ -11,7 +11,7 @@
         moveTopic,
         confirmDeleteTopic,
     } from "$lib/state.svelte.js";
-    import { tooltip } from "$lib/tooltip.js";
+    import { tooltip } from "$lib/tooltip.ts";
     import Lesson from "./Lesson.svelte";
     import Icon from "./Icon.svelte";
     import Editable from "./Editable.svelte";

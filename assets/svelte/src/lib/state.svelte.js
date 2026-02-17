@@ -1,6 +1,5 @@
-
-import Randflake from "./randflake";
-import lighterFetch from "./lighterFetch";
+import { Randflake } from "$lib/utils";
+import { lighterFetch } from "$api/lighter-fetch";
 import settings, { initAccess } from "./settings.svelte";
 import { untrack } from "svelte";
 
@@ -170,7 +169,7 @@ function flattenOrder() {
  * @returns {string} - The generated key
  */
 function genKey() {
-    const machine = window.LighterLMS.machineId || 0;
+    const machine = LighterLMS.machineId || 0;
     const gen = new Randflake(machine);
 
     return gen.generate();
@@ -442,11 +441,20 @@ export async function syncLesson(key) {
     lessons[idx] = { ...lessons[idx], ...Object.fromEntries(Object.entries(synced)) };
 }
 
-export const editModal = $state({
-    open: false,
-    key: null,
-    lesson: null,
-});
+export const editModal = $state(
+    /** @type {{
+     * open: boolean,
+     * key?: string,
+     * lesson?: Lesson,
+     * idx: number,
+     * length: number
+     * }} */({
+        open: false,
+        key: null,
+        lesson: null,
+        idx: 0,
+        length: 0,
+    }));
 
 /**
  * Opens edit lesson modal to lesson with key
@@ -457,11 +465,16 @@ export function editLesson(key) {
     const idx = getLesson(key);
     if (idx < 0) return; // TODO: Show error; Tried to open lesson.
 
+    /** @type {Lesson} */
     const lesson = lessons[idx];
 
-    editModal.open = true;
-    editModal.key = lesson.key;
-    editModal.lesson = lesson;
+    Object.assign(editModal, {
+        open: true,
+        key: lesson.key,
+        lesson: lesson,
+        idx: idx,
+        length: 1,
+    });
 }
 
 export function editNextLesson() {
@@ -471,7 +484,7 @@ export function editNextLesson() {
     if (idx < 0 || idx + 1 > allLessons.length - 1) return;
 
     editModal.key = allLessons[idx + 1].key;
-    editModal.lesson = allLessons[idx + 1];
+    editModal.lesson = /** @type {Lesson} */ (allLessons[idx + 1]);
 }
 
 export function editPrevLesson() {

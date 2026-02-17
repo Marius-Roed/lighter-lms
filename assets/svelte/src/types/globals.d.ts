@@ -1,100 +1,163 @@
+import type { CourseData } from "./course.d.ts";
+
 export { };
 
 declare global {
-    type CourseStatus = "publish" | "pending" | "draft" | "auto-draft" | "future" | "private";
+    type PostStatus = "publish" | "pending" | "draft" | "auto-draft" | "future" | "private";
+    type EditStatus = "clean" | "dirty";
+    type AvailableStore = "woocommerce" | "fluentcart" | "memberpress";
 
     interface Window {
-        LighterLMS: {
-            machineId: number;
-            nonce: string;
-            restUrl: string;
-            course: {
-                settings: {
-                    description: string;
-                    displayFooter: boolean;
-                    displayHeader: boolean;
-                    displaySidebar: boolean;
-                    showIcons: boolean;
-                    status: CourseStatus;
-                    publishedOn: Date;
-                    userLocale: string;
-                    store: string;
-                    product?: object;
-                }
-            }
-            settings: {
-                builders: {
-                    plugins: string[];
-                    active: string;
-                }
-                stores: {
-                    plugins: string[];
-                    active: string;
-                }
-            }
-            user?: {
-                courses: Course[]
-                owns: {
-                    course_id: number,
-                    lessons: number[]
-                }[]
-            }
-            addAction: Function;
-            addFilter: Function;
-            doAction: Function;
-            applyFilter: Function;
-            course?: {
-                settings: CourseSettings;
-            }
-        }
+        LighterLMS: LighterLMS;
         lighterCourses: lighterCourses;
         lighterCourse: lighterCourse;
     }
 
-    interface Course {
-        id: number,
-        title: string,
-        image: {
-            src: string
+    interface LighterLMS<S extends AvailableStore = AvailableStore> {
+        machineId: number;
+        nonce: string;
+        restUrl: string;
+        namespace: string;
+        course: LighterCourse<S>;
+        settings: {
+            builders: {
+                plugins: string[];
+                active: string;
+            }
+            stores: {
+                plugins: string[];
+                active: string;
+            }
         }
-        topics: Topic[]
-        open?: boolean
-        hidden?: boolean
+        lesson?: {
+            settings: object;
+        }
+        user?: {
+            courses: Course[]
+            owns: {
+                course_id: number,
+                lessons: number[]
+            }[]
+        }
+        addAction: Function;
+        addFilter: Function;
+        doAction: Function;
+        applyFilter: Function;
+        course?: {
+            settings: CourseSettings;
+        }
+    }
+    const LighterLMS: LighterLMS;
+
+    type CourseAccess = {
+        [x: string]: (string | number)[];
+    };
+
+    interface LighterCourse<S extends AvailableStore> extends CourseData {
+        settings: {
+            baseUrl: string;
+            currency: string;
+            description: string;
+            displayFooter: boolean;
+            displayHeader: boolean;
+            displaySidebar: boolean;
+            editor: string;
+            product?: Product<S>;
+            publishedOn: Date;
+            showIcons: boolean;
+            showProgress: boolean;
+            slug: string;
+            status: CourseStatus;
+            store: S;
+            sync_prod_img: boolean;
+            thumbnail: {
+                alt: string;
+                id: number;
+                src: string;
+            };
+            userLocale: string;
+        }
     }
 
-    interface Topic {
-        key: string,
-        post_id: string,
-        sort_order: string,
-        title: string,
-        lessons: Lesson[]
-        group?: string[]
+    interface WooProduct {
+        access: CourseAccess[];
+        auto_comp: boolean;
+        boolean: auto_hide;
+        description: string;
+        downloads: Array;
+        id: number | string;
+        images: Array;
+        name: string;
+        regular_price: string;
+        sale_price: string;
+        short_description: string;
+        stock_quantity?: number;
+        menu_order: number;
+        sku: string;
+        catalog_visibility: "visible" | "catalog" | "search" | "hidden";
     }
 
-    interface Lesson {
-        ID: string,
-        comment_count: string,
-        comment_status: string,
-        guid: string,
-        menu_order: string,
-        ping_status: string,
-        pinged: string,
-        post_author: string,
-        post_content: string,
-        post_content_filtered: string,
-        post_date: string,
-        post_date_gmt: string,
-        post_excerpt: string,
-        post_mime_type: string,
-        post_modified: string,
-        post_modified_gmt: string,
-        post_name: string,
-        post_parent: string,
-        post_password: string,
-        post_status: string,
-        post_title: string,
-        post_type: string,
-        to_ping: string,
+    interface FluentProduct {
+        uuid: string;
+        price: number;
+    }
+
+    interface MemberProduct {
+        membershipId: string;
+        expires: Date;
+    }
+
+    type ProductMap = {
+        woocommerce: WooProduct;
+        fluentcart: FluentProduct;
+        memberpress: MemberProduct;
+    }
+
+    type Product<S extends AvailableStore> = ProductMap[S];
+
+    interface WPPost {
+        ID: string;
+        comment_count: string;
+        comment_status: string;
+        guid: string;
+        menu_order: string;
+        ping_status: string;
+        pinged: string;
+        post_author: string;
+        post_content: string;
+        post_content_filtered: string;
+        post_date: string;
+        post_date_gmt: string;
+        post_excerpt: string;
+        post_mime_type: string;
+        post_modified: string;
+        post_modified_gmt: string;
+        post_name: string;
+        post_parent: string;
+        post_password: string;
+        post_status: PostStatus;
+        post_title: string;
+        post_type: string;
+        to_ping: string;
+    }
+
+    interface WPRestPost {
+        id: number;
+        slug: string;
+        status: PostStatus;
+        type: string;
+        title: { rendered: string; raw?: string };
+        content: { rendered: string; raw?: string };
+        excerpt: { rendered: string; raw?: string };
+        author: string;
+        date: string;
+        date_gmt: string;
+        modified: string;
+        modified_gmt: string;
+        menu_order: number;
+        parent: number;
+        meta: Record<string, unknown>;
+        _links?: Record<string, unknown[]>;
     }
 
     interface CourseSettings {
@@ -112,10 +175,6 @@ declare global {
         tags: Array<T>;
         product: Product;
     }
-
-    type CourseAccess = {
-        [x: string]: (string | number)[];
-    };
 
     interface Media {
         $el: Array;
