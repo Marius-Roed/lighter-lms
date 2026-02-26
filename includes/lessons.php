@@ -2,38 +2,29 @@
 
 namespace LighterLMS;
 
+defined( 'ABSPATH' ) || exit;
+
 use LighterLMS\Core\Lighter_LMS;
 use wpdb;
 
 class Lessons {
 
-	/** @var wpdb */
-	protected $db;
+	protected \wpdb $db;
+	public string $table;
+	protected ?int $lesson_id;
+	protected ?int $parent_id;
+	protected ?int $topic_id;
+	protected array $args;
 
-	/** @var string */
-	public $table;
-
-	/** @var int The lesson ID */
-	protected $lesson;
-
-	/** @var int The parent ID */
-	protected $parent;
-
-	/** @var int The topic ID */
-	protected $topic;
-
-	/** @var array The given arguments */
-	protected $args;
-
-	public function __construct( $args = array(), $db = null ) {
+	public function __construct( array $args = array(), \wpdb|null $db = null ) {
 		global $wpdb;
 
 		$this->db    = $db ?: $wpdb;
 		$this->table = $this->db->prefix . 'lighter_lessons';
 
-		$this->lesson = isset( $args['lesson'] ) && (int) $args['lesson'] > 0 ? (int) $args['lesson'] : null;
-		$this->parent = isset( $args['parent'] ) && (int) $args['parent'] > 0 ? (int) $args['parent'] : null;
-		$this->topic  = isset( $args['topic'] ) && (int) $args['topic'] > 0 ? (int) $args['topic'] : null;
+		$this->lesson_id = isset( $args['lesson'] ) && (int) $args['lesson'] > 0 ? (int) $args['lesson'] : null;
+		$this->parent_id = isset( $args['parent'] ) && (int) $args['parent'] > 0 ? (int) $args['parent'] : null;
+		$this->topic_id  = isset( $args['topic'] ) && (int) $args['topic'] > 0 ? (int) $args['topic'] : null;
 
 		$this->args = $args;
 	}
@@ -64,7 +55,7 @@ class Lessons {
 	 * @param string $join
 	 * @param \WP_Query $query
 	 */
-	public function db_join( $join, $query ) {
+	public function db_join( string $join, \WP_Query $query ): string {
 		if ( $query->is_main_query() || ! in_array( $query->get( 'post_type' ), lighter_lms()->post_types ) ) {
 			return $join;
 		}
@@ -87,7 +78,7 @@ class Lessons {
 		return $join;
 	}
 
-	public function db_orderby( $orderby, $query ) {
+	public function db_orderby( string $orderby, \WP_Query $query ): string {
 		if ( $query->is_main_query() || ! in_array( $query->get( 'post_type' ), lighter_lms()->post_types ) ) {
 			return $orderby;
 		}
@@ -109,13 +100,13 @@ class Lessons {
 	 *
 	 * @param {Array_A} $args - Alternative args to the class properties
 	 *
-	 * @return \WP_Post|array
+	 * @return \WP_Post|\WP_Post[]
 	 */
-	public function get_lessons( $args = array() ) {
+	public function get_lessons( array $args = array() ): \WP_Post|array {
 		$defaults = array(
-			'topic'  => $this->topic ?? false,
-			'parent' => $this->parent ?? false,
-			'lesson' => $this->lesson ?? false,
+			'topic'  => $this->topic_id ?? false,
+			'parent' => $this->parent_id ?? false,
+			'lesson' => $this->lesson_id ?? false,
 			'status' => $this->args['status'] ?? null,
 		);
 
@@ -196,7 +187,7 @@ class Lessons {
 		}
 
 		if ( $args['lesson'] ) {
-			return get_post( $this->lesson );
+			return get_post( $this->lesson_id );
 			// TODO: Query by lesson ID.
 		}
 
@@ -208,26 +199,26 @@ class Lessons {
 	 *
 	 * Saves a lesson to the Lighter Lesson DB table with given information.
 	 */
-	public function save() {
-		if ( $this->db->query( $this->db->prepare( "SELECT * FROM {$this->table} WHERE parent_id = {$this->parent} AND lesson_id = {$this->lesson}" ) ) ) {
+	public function save(): int|false {
+		if ( $this->db->query( $this->db->prepare( "SELECT * FROM {$this->table} WHERE parent_id = {$this->parent_id} AND lesson_id = {$this->lesson_id}" ) ) ) {
 			return $this->db->update(
 				$this->table,
 				array(
-					'topic_id' => $this->topic,
+					'topic_id' => $this->topic_id,
 				),
 				array(
-					'parent_id' => $this->parent,
-					'lesson_id' => $this->lesson,
+					'parent_id' => $this->parent_id,
+					'lesson_id' => $this->lesson_id,
 				),
 				array( '%d' ),
 			);
 		}
-		$this->db->insert(
+		return $this->db->insert(
 			$this->table,
 			array(
-				'lesson_id' => $this->lesson,
-				'parent_id' => $this->parent,
-				'topic_id'  => $this->topic,
+				'lesson_id' => $this->lesson_id,
+				'parent_id' => $this->parent_id,
+				'topic_id'  => $this->topic_id,
 			),
 			array(
 				'%d',

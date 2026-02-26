@@ -2,21 +2,17 @@
 
 namespace LighterLMS;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * @template TVal
  * @template TKey
  */
 abstract class Post_Type {
 
-
-	/** @var string */
-	protected $post_type;
-
-	/** @var bool */
-	protected static $shared_hooks_added = false;
-
-	/** @var bool */
-	protected $skip_next_save = false;
+	protected string $post_type;
+	protected bool $skip_next_save            = false;
+	protected static bool $shared_hooks_added = false;
 
 	public function __construct( $post_type_slug ) {
 		$this->post_type = $post_type_slug;
@@ -43,9 +39,9 @@ abstract class Post_Type {
 	}
 
 	/** Registers the post type (override in child class) */
-	abstract public function register();
+	abstract public function register(): void;
 
-	protected function register_tags( $name ) {
+	protected function register_tags( string $name ): void {
 		$name = strpos( '-tags', $name ) == false ? strtolower( $name ) . '-tags' : strtolower( $name );
 
 		$labels = array(
@@ -81,16 +77,7 @@ abstract class Post_Type {
 		);
 	}
 
-	/**
-	 * Verifies the nonce of the post.
-	 *
-	 * @param \WP_Post $post The post object.
-	 * @param string $nonce The nonce value.
-	 * @param string [$action] The action which the nonce was registered with.
-	 *
-	 * @return bool
-	 */
-	public function verify_nonce( $post, $nonce, $action = -1 ) {
+	public function verify_nonce( \WP_Post $post, string $nonce, string $action = '' ): bool {
 		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return false;
 		}
@@ -112,22 +99,16 @@ abstract class Post_Type {
 
 	/**
 	 * Saves the post data (override in child class)
-	 *
-	 * @param int       $post_id    The post ID.
-	 * @param \WP_Post  $post       The post object.
 	 */
-	abstract public function save_post( $post_id, $post );
+	abstract public function save_post( int $post_id, \WP_Post $post ): void;
 
 	/**
 	 * Save the post settings (override in child class)
-	 *
-	 * @param \WP_Post $post The post object.
-	 * @param object $args The settings to save.
 	 */
-	abstract protected function _save_settings( $post, $args );
+	abstract protected function _save_settings( \WP_Post $post, array $args ): void;
 
 	/** Registers the post meta boxes (override in child class - default empty) */
-	public function register_meta_boxes() {}
+	public function register_meta_boxes(): void {}
 
 	/**
 	 * Custom columns for admin list view (override in child class - default none)
@@ -135,15 +116,15 @@ abstract class Post_Type {
 	 * @param string    $column     The column name.
 	 * @param int       $post_id    The post ID.
 	 */
-	public function custom_columns( $column, $post_id ) {}
+	public function custom_columns( string $column, int $post_id ): void {}
 
 	/**
 	 * Modifies admin list view columns (override in child class)
 	 *
 	 * @param string[] $columns The names of columns
-	 * @returns string[]
+	 * @return string[]
 	 */
-	public function columns( $columns ) {
+	public function columns( array $columns ): array {
 		return $columns;
 	}
 
@@ -154,7 +135,7 @@ abstract class Post_Type {
 	 * @param \WP_REST_Request  $req    The request object.
 	 * @return array
 	 */
-	public function rest_query( $args, $req ) {
+	public function rest_query( array $args, \WP_REST_Request $req ): array {
 		return $args;
 	}
 
@@ -164,12 +145,12 @@ abstract class Post_Type {
 	 * @param int $columns Current columns layout.
 	 * @return int
 	 */
-	public function screen_layout( $columns = 0 ) {
+	public function screen_layout( int $columns = 0 ): int {
 		return 1;
 	}
 
 	/** Remove submit and slug metaboxes */
-	public static function remove_submitdiv() {
+	public static function remove_submitdiv(): void {
 		$course_post_type = lighter_lms()->course_post_type;
 		$lesson_post_type = lighter_lms()->lesson_post_type;
 
@@ -187,7 +168,7 @@ abstract class Post_Type {
 	 * @param int $post_id The post ID.
 	 * @string[]
 	 */
-	public static function post_class( $classes, $class, $post_id ) {
+	public static function post_class( array $classes, array $class, int $post_id ): array {
 		if ( ! is_admin() ) {
 			return $classes;
 		}
@@ -208,7 +189,7 @@ abstract class Post_Type {
 	 *
 	 * @return array<TKey, TVal>
 	 */
-	protected static function _generate_object() {
+	protected static function _generate_object(): array {
 		throw new \BadMethodCallException(
 			'Child must override ' . static::class . '::_generate_object()'
 		);
@@ -219,7 +200,7 @@ abstract class Post_Type {
 	 *
 	 * @param \WP_Post $post The post object.
 	 */
-	public static function no_script( $post ) {
+	public static function no_script( \WP_Post $post ): void {
 		if ( ! in_array( $post->post_type, lighter_lms()->post_types ) ) {
 			return;
 		} ?>
@@ -239,7 +220,7 @@ abstract class Post_Type {
 	 * @param string $screen_id The current screen ID.
 	 * @return array
 	 */
-	final public static function js_objects( $obj, $screen_id ) {
+	final public static function js_objects( array $obj, string $screen_id ): array {
 		if ( 'lighter_lessons' === $screen_id ) {
 			$obj['lesson']['settings'] = lighter_get_lesson_settings();
 		}

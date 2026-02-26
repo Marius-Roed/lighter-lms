@@ -2,15 +2,14 @@
 
 namespace LighterLMS\Core;
 
+defined( 'ABSPATH' ) || exit;
+
 use LighterLMS\Lessons;
 use LighterLMS\Third_Party\Builders;
 use LighterLMS\Third_Party\Stores;
 use LighterLMS\Topics;
 use WP_Query;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
 /**
  * @property string $admin_page_path
  * @property string $admin_url
@@ -29,11 +28,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Config {
 
 
-	private static $_instance = null;
+	private static ?self $_instance = null;
 
-	private $_settings = array();
+	private array $_settings = array();
 
-	public static function get_instance() {
+	public static function get_instance(): self {
 		if ( null === self::$_instance ) {
 			self::$_instance = new self();
 		}
@@ -70,11 +69,11 @@ class Config {
 		);
 	}
 
-	public function defaults() {
+	public function defaults(): Defaults {
 		return Defaults::get_instance();
 	}
 
-	public function __get( $key ) {
+	public function __get( string $key ): mixed {
 		if ( ! array_key_exists( $key, $this->_settings ) ) {
 			error_log( "Warning: Lighter LMS config key ({$key}) does not exist!" );
 			return null;
@@ -83,7 +82,7 @@ class Config {
 		return $this->_settings[ $key ];
 	}
 
-	public function all() {
+	public function all(): array {
 		return $this->_settings;
 	}
 
@@ -93,7 +92,7 @@ class Config {
 	 * Gets all the courses in an associated list of course->topics->lessons.
 	 * @param int $limit The number of courses to get. Default is -1, all posts.
 	 */
-	public function get_courses( $limit = -1 ) {
+	public function get_courses( int $limit = -1 ): array {
 		$courses = array();
 		$args    = array(
 			'post_type'      => $this->course_post_type,
@@ -154,7 +153,7 @@ class Config {
 	 *
 	 * @return bool|string
 	 */
-	public function is_theme( $theme = '' ) {
+	public function is_theme( string $theme = '' ): bool|string {
 		$current_theme_name = '';
 		$current_theme      = wp_get_theme();
 
@@ -175,7 +174,7 @@ class Config {
 		return $theme === $current_theme_name;
 	}
 
-	private function detect_dev() {
+	private function detect_dev(): bool {
 		if ( $_SERVER['REMOTE_ADDR'] == '127.0.0.1' || strpos( $_SERVER['SERVER_NAME'], '.local' ) ) {
 			return true;
 		}
@@ -192,7 +191,7 @@ class Config {
 	 * @param string $property
 	 * @return array
 	 */
-	public function get_builders( $property = 'name' ) {
+	public function get_builders( string $property = 'name' ): array {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return array();
 		}
@@ -200,7 +199,7 @@ class Config {
 		return Builders::get_builders( $property );
 	}
 
-	public function get_stores( $property = 'name' ) {
+	public function get_stores( string $property = 'name' ): array {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return array();
 		}

@@ -2,8 +2,12 @@
 
 namespace LighterLMS;
 
+defined( 'ABSPATH' ) || exit;
+
 class Autoloader {
 
+	private static string $prefix   = 'LighterLMS\\';
+	private static string $base_dir = LIGHTER_LMS_PATH . 'includes/';
 
 	/**
 	 * Registers the autoloader with SPL.
@@ -17,18 +21,11 @@ class Autoloader {
 	 *
 	 * @param   string  $class  The fully-qualified class name.
 	 */
-	private static function _autoload( $class ) {
-		// project specific namespace prefix
-		$prefix = 'LighterLMS\\';
-
-		// base directory the autloader will look in.
-		// In this case it is 'lighter-lms/inlcudes/'
-		$base_dir = __DIR__ . '/';
-
-		// does the class use the namespace prefix?
-		$len = strlen( $prefix );
-		if ( strncmp( $prefix, $class, $len ) !== 0 ) {
-			return; //no, move to the next registered autoloader.
+	private static function _autoload( string $class ): void {
+		// check if class uses the namespace prefix?
+		$len = strlen( self::$prefix );
+		if ( strncmp( self::$prefix, $class, $len ) !== 0 ) {
+			return;
 		}
 
 		// grab relative class name.
@@ -36,7 +33,7 @@ class Autoloader {
 
 		// replace namespace prefix with the base dir. replace namespace seperators
 		// with dir seperators in the $rel_class class name, append .php
-		$file = $base_dir . strtolower( str_replace( '_', '-', str_replace( '\\', DIRECTORY_SEPARATOR, $rel_class ) ) ) . '.php';
+		$file = self::$base_dir . strtolower( str_replace( '_', '-', str_replace( '\\', DIRECTORY_SEPARATOR, $rel_class ) ) ) . '.php';
 
 		if ( file_exists( $file ) ) {
 			require $file;

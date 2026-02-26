@@ -2,6 +2,8 @@
 
 namespace LighterLMS;
 
+defined( 'ABSPATH' ) || exit;
+
 use DateTime;
 
 /**

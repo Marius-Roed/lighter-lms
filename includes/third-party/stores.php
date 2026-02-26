@@ -2,9 +2,11 @@
 
 namespace LighterLMS\Third_Party;
 
+defined( 'ABSPATH' ) || exit;
+
 class Stores {
 
-	private static $_stores = array(
+	private static array $_stores = array(
 		'woocommerce' => array(
 			'name'       => array( 'woocommerce' ),
 			'slug'       => 'woocommerce',
@@ -18,11 +20,8 @@ class Stores {
 	 *
 	 * Gets all the active store plugins on the site. Accessible properties
 	 * are "all", "name", "slug", "foreground" and "background". Defaults to "name".
-	 *
-	 * @param string $property
-	 * @return array
 	 */
-	public static function get_stores( $property = 'name' ) {
+	public static function get_stores( string $property = 'name' ): array {
 		$plugins = get_option( 'active_plugins' );
 		$stores  = array();
 

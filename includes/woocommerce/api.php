@@ -2,6 +2,8 @@
 
 namespace LighterLMS\WooCommerce;
 
+defined( 'ABSPATH' ) || exit;
+
 class API {
 
 	private $namespace = 'lighterlms/v1';

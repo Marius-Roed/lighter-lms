@@ -2,17 +2,17 @@
 
 namespace LighterLMS;
 
+defined( 'ABSPATH' ) || exit;
+
 class Randflake {
 
-	private static $sequence      = 0;
-	private static $lastTimestamp = -1;
+	private static int $sequence      = 0;
+	private static int $lastTimestamp = -1;
 
 	/**
 	 * Generate a Randflake ID encoded in base36
-	 *
-	 * @return string
 	 */
-	public static function generate() {
+	public static function generate(): string {
 		$timestamp = (int) ( microtime( true ) * 1000 );
 		$machineId = lighter_lms()->machineId;
 
@@ -42,7 +42,7 @@ class Randflake {
 	 *
 	 * @return bool If value is valid or not.
 	 */
-	public static function validate( $id, $strict = false ) {
+	public static function validate( string $id, bool $strict = false ): bool {
 		if ( ! is_string( $id ) || empty( $id ) ) {
 			return false;
 		}

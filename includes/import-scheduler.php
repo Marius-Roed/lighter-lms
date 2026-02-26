@@ -2,12 +2,14 @@
 
 namespace LighterLMS;
 
+defined( 'ABSPATH' ) || exit;
+
 class Import_Scheduler {
 
-	const HOOK  = 'lighter_process_import_batch';
-	const GROUP = 'lighter_imports';
+	const string HOOK  = 'lighter_process_import_batch';
+	const string GROUP = 'lighter_imports';
 
-	public static function schedule_batch( $job_id, $force = false ) {
+	public static function schedule_batch( string $job_id, bool $force = false ): void {
 		// Check if Action scheduler is installed:
 		if ( function_exists( 'as_schedule_single_action' ) ) {
 			if ( $force || ! \as_next_scheduled_action( self::HOOK, array( $job_id ), self::GROUP ) ) {
@@ -22,7 +24,7 @@ class Import_Scheduler {
 		}
 	}
 
-	public static function clear_schedule( $job_id ) {
+	public static function clear_schedule( string $job_id ): void {
 		if ( function_exists( 'as_unschedule_action' ) ) {
 			\as_unschedule_action( self::HOOK, array( $job_id ), self::GROUP );
 		}

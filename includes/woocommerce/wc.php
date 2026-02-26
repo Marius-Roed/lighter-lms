@@ -2,6 +2,8 @@
 
 namespace LighterLMS\WooCommerce;
 
+defined( 'ABSPATH' ) || exit;
+
 use LighterLMS\User_Access;
 
 class WC {
@@ -28,7 +30,7 @@ class WC {
 	 * @param object $args The product object to save.
 	 * @param int? $post_id The id of the post to save it to. 0 will not save it to a post.
 	 */
-	public static function save_product( $args, $post_id ) {
+	public static function save_product( object $args, ?int $post_id ): int {
 		if ( ! did_action( 'woocommerce_init' ) ) {
 			_doing_it_wrong( __FUNCTION__, 'WooCommerce was not initialised', '1.0' );
 			return 0;
@@ -114,7 +116,7 @@ class WC {
 	 * @param int $product_id
 	 * @return object
 	 */
-	public static function get_product( $product_id ) {
+	public static function get_product( int $product_id ): object {
 		if ( ! did_action( 'woocommerce_init' ) ) {
 			_doing_it_wrong( __FUNCTION__, 'WooCommerce was not initialised', '1.0' );
 		}
@@ -167,7 +169,7 @@ class WC {
 			'sku'                => $product->get_sku( 'edit' ),
 		);
 
-		return $obj;
+		return (object) $obj;
 	}
 
 	/**
@@ -175,7 +177,7 @@ class WC {
 	 *
 	 * @param int The woocommerce order ID.
 	 */
-	public function auto_complete( $order_id ) {
+	public function auto_complete( int $order_id ): void {
 		$order = \wc_get_order( $order_id );
 		if ( ! $order_id || ! $order ) {
 			return;
@@ -205,7 +207,7 @@ class WC {
 	 *
 	 * @param \WP_Query $query The query.
 	 */
-	public function hide_products( $query ) {
+	public function hide_products( \WP_Query $query ): void {
 		if ( ! $query->is_main_query() || current_user_can( 'edit_posts' ) ) {
 			return;
 		}
@@ -242,7 +244,7 @@ class WC {
 	 * @param array $actions The actions
 	 * @param \WC_Order $order
 	 */
-	public function order_actions( $actions, $order ) {
+	public function order_actions( array $actions, \WC_Order $order ): array {
 		$contains_course = false;
 		foreach ( $order->get_items() as $item ) {
 			$product_id = $item->get_product_id();
@@ -283,7 +285,7 @@ class WC {
 	 *
 	 * @param \WC_Order $order The order
 	 */
-	public function admin_give_access( $order ) {
+	public function admin_give_access( \WC_Order $order ): null {
 		$order_id = $order->get_id();
 		return $order_id ? $this->give_access( $order_id ) : null;
 	}
@@ -295,7 +297,7 @@ class WC {
 	 *
 	 * @param int $order_id The order ID.
 	 */
-	public static function give_access( $order_id ) {
+	public static function give_access( int $order_id ): void {
 		$order = \wc_get_order( $order_id );
 		if ( ! $order ) {
 			return;
@@ -354,7 +356,7 @@ class WC {
 	 * @param string $note A note to add to the order.
 	 * @param string $date The date the order was created.
 	 */
-	public static function create_legacy_orders( $user, $skus, $address, $note = '', $date = '' ) {
+	public static function create_legacy_orders( \WP_User $user, string $skus, array $address, string $note = '', string $date = '' ): void {
 		$sku_list    = explode( '|', $skus );
 		$import_hash = md5( $user->ID . $skus ); // unique hash to not double import orders
 		$existing    = \wc_get_orders(
@@ -431,7 +433,7 @@ class WC {
 	 * @param array $address An associative array containing address fields.
 	 * @param string $type The address type to get.
 	 */
-	private static function _merge_address( $user_id, $address, $type = 'billing' ) {
+	private static function _merge_address( int $user_id, array $address, string $type = 'billing' ): array {
 		$customer          = new \WC_Customer( $user_id );
 		$exisiting_address = $customer->get_address( $type );
 
@@ -450,7 +452,7 @@ class WC {
 	 * @paam string $key - The name of the field
 	 * @param any $val - The value of the field
 	 */
-	private static function _sanitize_field( $key, &$val ) {
+	private static function _sanitize_field( string $key, mixed &$val ): void {
 		switch ( $key ) {
 			case 'name':
 			case 'price':

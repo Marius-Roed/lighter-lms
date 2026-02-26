@@ -2,9 +2,11 @@
 
 namespace LighterLMS\Third_Party;
 
+defined( 'ABSPATH' ) || exit;
+
 class Builders {
 
-	private static $_builders = array(
+	private static array $_builders = array(
 		'fl-builder'                      => array(
 			'name'       => array( 'Beaver Builder', 'Beaver Builder Plugin (Lite Version)' ),
 			'slug'       => 'beaver-builder',
@@ -138,11 +140,8 @@ class Builders {
 	 *
 	 * Gets all the active page builder plugin on the site. Accessible properties
 	 * are "all", "name", "slug", "foreground" and "background". Defaults to "name".
-	 *
-	 * @param string $property
-	 * @return array
 	 */
-	public static function get_builders( $property = 'name' ) {
+	public static function get_builders( string $property = 'name' ): array {
 		$plugins  = get_option( 'active_plugins' );
 		$builders = array();
 

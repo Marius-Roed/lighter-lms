@@ -2,18 +2,19 @@
 
 namespace LighterLMS\Admin;
 
+defined( 'ABSPATH' ) || exit;
+
 use LighterLMS\User_Access;
 
 class Settings {
 
-	/** @var string|bool $tab The current tab */
-	protected static $tab;
+	protected static string|bool $tab;
 
 	public function __construct() {
 		self::$tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'general';
 	}
 
-	public static function render() {
+	public static function render(): void {
 		self::$tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'general';
 
 		lighter_view(
@@ -25,7 +26,7 @@ class Settings {
 		);
 	}
 
-	public static function save() {
+	public static function save(): void {
 		if ( ! isset( $_POST['lighter_lms'] ) || ! wp_verify_nonce( $_POST['lighter_lms'], 'lighter_lms_settings' ) ) {
 			wp_die( 'Nonce failure. Try again.' );
 		}

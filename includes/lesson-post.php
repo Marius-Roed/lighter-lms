@@ -2,6 +2,8 @@
 
 namespace LighterLMS;
 
+defined( 'ABSPATH' ) || exit;
+
 class Lesson_Post extends Post_Type {
 
 	public function __construct() {
@@ -11,7 +13,7 @@ class Lesson_Post extends Post_Type {
 	/**
 	 * Register lesson post type.
 	 */
-	public function register() {
+	public function register(): void {
 		$labels = array(
 			'name'               => _x( 'Lessons', 'post type plural name', 'lighterlms' ),
 			'singular_name'      => _x( 'Lesson', 'post type singular name', 'lighterlms' ),
@@ -57,7 +59,7 @@ class Lesson_Post extends Post_Type {
 	/**
 	 * Handle support for third party plugins.
 	 */
-	private function _handle_third_party_support() {
+	private function _handle_third_party_support(): void {
 		if ( ! did_action( 'elementor/loaded' ) ) {
 			return;
 		}
@@ -117,7 +119,7 @@ class Lesson_Post extends Post_Type {
 	 * @param int       $post_id    The post ID.
 	 * @param \WP_Post  $post       The post object.
 	 */
-	public function save_post( $post_id, $post ) {
+	public function save_post( int $post_id, \WP_Post $post ): void {
 		$nonce = $_POST['lighter_nonce'];
 		if ( ! $this->verify_nonce( $post, $nonce, $this->post_type . '_fields' ) ) {
 			return;
@@ -134,7 +136,7 @@ class Lesson_Post extends Post_Type {
 	 * @param \WP_Post $post The post object.
 	 * @param array $args The settings to save.
 	 */
-	protected function _save_settings( $post, $args ) {
+	protected function _save_settings( \WP_Post $post, array $args ): void {
 		$topic_db = new Topics();
 		$parents  = $args['parents'];
 
@@ -171,7 +173,7 @@ class Lesson_Post extends Post_Type {
 	/**
 	 * Register lesson metaboxes.
 	 */
-	public function register_meta_boxes() {
+	public function register_meta_boxes(): void {
 		add_meta_box(
 			'lessonsettingsdiv',
 			__( 'Lesson settings', 'lighterlms' ),
@@ -187,7 +189,7 @@ class Lesson_Post extends Post_Type {
 	 *
 	 * @param \WP_Post $post The post object.
 	 */
-	public function render_settings( $post ) {
+	public function render_settings( \WP_Post $post ): void {
 		lighter_view(
 			'lesson-settings',
 			array(
@@ -207,7 +209,7 @@ class Lesson_Post extends Post_Type {
 	 *
 	 * @return int The saved lesson ID.
 	 */
-	public static function save_from_course( $args, $parent_id, $topic, $topic_db ) {
+	public static function save_from_course( array $args, int $parent_id, array $topic, Topics $topic_db ): int {
 		$insert_args = array(
 			'post_title'  => $args['title'],
 			'post_status' => $args['postStatus'],
@@ -243,7 +245,7 @@ class Lesson_Post extends Post_Type {
 		return $inserted;
 	}
 
-	protected static function _generate_object() {
+	protected static function _generate_object(): array {
 		throw new \Exception( 'Not implemented' );
 	}
 }

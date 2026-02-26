@@ -2,10 +2,12 @@
 
 namespace LighterLMS;
 
+defined( 'ABSPATH' ) || exit;
+
 class Lesson_Content {
 
 
-	public static function get_builder( $post_id ) {
+	public static function get_builder( int $post_id ): string {
 		if ( get_post_meta( $post_id, '_elementor_edit_mode', true ) === 'builder' ) {
 			return 'elementor';
 		}
@@ -26,7 +28,7 @@ class Lesson_Content {
 		return 'classic-editor';
 	}
 
-	public static function handle_elementor_content( $post_id, $req_post ) {
+	public static function handle_elementor_content( int $post_id, \WP_Post $req_post ): string {
 		if ( self::is_elementor_edit_mode() ) {
 			return '';
 		}
@@ -68,9 +70,9 @@ class Lesson_Content {
 		}
 	}
 
-	private static function is_elementor_edit_mode() {
+	private static function is_elementor_edit_mode(): bool {
 		if ( function_exists( 'elementor_is_edit_mode' ) ) {
-			return elementor_is_edit_mode();
+			return \elementor_is_edit_mode();
 		}
 
 		return (
@@ -81,7 +83,7 @@ class Lesson_Content {
 		);
 	}
 
-	public static function handle_gutenberg_content( $post_id, $post ) {
+	public static function handle_gutenberg_content( int $post_id, \WP_Post $post ): string {
 		$content = get_post_field( 'post_content', $post_id );
 
 		if ( function_exists( 'parse_blocks' ) ) {
@@ -102,14 +104,14 @@ class Lesson_Content {
 	 * Gets the standard post content
 	 *
 	 * @param \WP_Post $post
-	 * @return The post content already filtered.
+	 * @return string The post content already filtered.
 	 */
-	public static function get_content( $post ) {
+	public static function get_content( \WP_Post $post ): string {
 		$content = apply_filters( 'the_content', $post->post_content );
-		return $content;
+		return (string) $content;
 	}
 
-	public static function get_styles( $post_id, $builder ) {
+	public static function get_styles( int $post_id, string $builder ): array {
 		$styles = array();
 		switch ( $builder ) {
 			case 'elementor':

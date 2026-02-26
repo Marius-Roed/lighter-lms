@@ -2,6 +2,8 @@
 
 namespace LighterLMS\Core;
 
+defined( 'ABSPATH' ) || exit;
+
 use LighterLMS\Admin\Admin;
 use LighterLMS\API\API;
 use LighterLMS\Assets;
@@ -13,49 +15,37 @@ use LighterLMS\WooCommerce\WC;
 
 class Lighter_LMS {
 
-	private static $_instance = null;
+	private static ?self $_instance = null;
 
 	/**
 	 * Course class object
-	 *
-	 * @var object
 	 */
-	private $_course;
+	private Course_Post $_course;
 
 	/**
 	 * Lesson class object
-	 *
-	 * @var object
 	 */
-	private $_lesson;
+	private Lesson_Post $_lesson;
 
 	/**
 	 * Admin class object
-	 *
-	 * @var object
 	 */
-	public $admin;
+	public Admin $admin;
 
 	/**
 	 * All registered assets
-	 *
-	 * @var object
 	 */
 	private $_assets;
 
 	/**
 	 * Api class object
-	 *
-	 * @var object
 	 */
 	private $_api;
 
 	/**
 	 * Plugin slug
-	 *
-	 * @var string;
 	 */
-	public $slug = 'lighter-lms';
+	public string $slug = 'lighter-lms';
 
 	/**
 	 * WC class instance
@@ -64,12 +54,10 @@ class Lighter_LMS {
 
 	/**
 	 * Remote repo url
-	 *
-	 * @var string;
 	 */
-	private $_remote_url = 'https://api.github.com/repos/Marius-Roed/lighter-lms';
+	private string $_remote_url = 'https://api.github.com/repos/Marius-Roed/lighter-lms';
 
-	public static function get_instance() {
+	public static function get_instance(): self {
 		if ( null == self::$_instance ) {
 			self::$_instance = new self();
 		}
@@ -111,11 +99,11 @@ class Lighter_LMS {
 	/**
 	 * Inlcude any file not loaded by the autoloader
 	 */
-	public function includes() {
+	public function includes(): void {
 		include LIGHTER_LMS_PATH . 'includes/lighter-lms-functions.php';
 	}
 
-	public function init_update_checker() {
+	public function init_update_checker(): void {
 		if ( ! is_admin() && ! defined( 'DOING_CRON' ) ) {
 			return;
 		}
@@ -124,7 +112,7 @@ class Lighter_LMS {
 		add_filter( 'plugins_api', array( $this, 'get_plugin_info' ), 10, 3 );
 	}
 
-	public function check_update( $transient ) {
+	public function check_update( object $transient ): object {
 		if ( empty( $transient->checked ) ) {
 			return $transient;
 		}
@@ -230,7 +218,7 @@ class Lighter_LMS {
 		return $transient;
 	}
 
-	public function get_plugin_info( $result, $action, $args ) {
+	public function get_plugin_info( object|bool $result, string $action, object $args ): object|bool {
 		if ( $action !== 'plugin_information' || empty( $args->slug ) || $args->slug !== 'lighter-lms' ) {
 			return $result;
 		}
@@ -311,7 +299,7 @@ class Lighter_LMS {
 		return $plugin_info;
 	}
 
-	private function _parse_changelog( $body ) {
+	private function _parse_changelog( string $body ): array {
 		$sections = array(
 			'description'  => 'Lighter LMS is a lightweight LMS plugin for WordPress.',
 			'changelog'    => $body,

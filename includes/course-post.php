@@ -2,6 +2,8 @@
 
 namespace LighterLMS;
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * @extends Post_Type<mixed, mixed>
  */
@@ -31,7 +33,7 @@ class Course_Post extends Post_Type {
 	/**
 	 * Register Course post type
 	 */
-	public function register() {
+	public function register(): void {
 		$labels = array(
 			'name'               => _x( 'Courses', 'post type plural name', 'lighterlms' ),
 			'singular_name'      => _x( 'Course', 'post type singular name', 'lighterlms' ),
@@ -82,10 +84,10 @@ class Course_Post extends Post_Type {
 	 * @param int       $post_id    The post ID.
 	 * @param \WP_Post  $post       The post object.
 	 */
-	public function save_post( $post_id, $post ) {
+	public function save_post( int $post_id, \WP_Post $post ): void {
 		$nonce = $_POST['lighter_nonce'] ?? '';
 		if ( ! $this->verify_nonce( $post, $nonce, $this->post_type . '_fields' ) ) {
-			return $post_id;
+			return;
 		}
 
 		if ( isset( $_POST['topics'] ) ) {
@@ -121,7 +123,7 @@ class Course_Post extends Post_Type {
 	 * @param \WP_Post  $post The post object.
 	 * @param array     $args The settings to save.
 	 */
-	protected function _save_settings( $post, $args ) {
+	protected function _save_settings( \WP_Post $post, array $args ): void {
 		$tags               = $args['tags'] ?? array();
 		$product            = $args['product'] ?? array();
 		$course_description = $args['description'] ?? '';
@@ -172,7 +174,7 @@ class Course_Post extends Post_Type {
 	/**
 	 * Check user access to course.
 	 */
-	public function course_access() {
+	public function course_access(): void {
 		if ( ! is_singular( $this->post_type ) ) {
 			return;
 		}
@@ -195,7 +197,7 @@ class Course_Post extends Post_Type {
 	 * @param string $template Current template
 	 * @return string
 	 */
-	public function course_template( $template ) {
+	public function course_template( string $template ): string {
 		if ( ! is_singular( $this->post_type ) ) {
 			return $template;
 		}
@@ -212,10 +214,10 @@ class Course_Post extends Post_Type {
 	/**
 	 * Course admin list view columns
 	 *
-	 * @param array $columns Existing columns.
-	 * @return array The newly set columns.
+	 * @param string[] $columns Existing columns.
+	 * @return string[] The newly set columns.
 	 */
-	public function columns( $columns ) {
+	public function columns( array $columns ): array {
 		$date = isset( $columns['date'] ) ? $columns['date'] : false;
 
 		if ( $date ) {
@@ -235,9 +237,9 @@ class Course_Post extends Post_Type {
 	 * Course custom columns content
 	 *
 	 * @param string    $column     The column name
-	 * @param Int       $post_id    The post ID.
+	 * @param int       $post_id    The post ID.
 	 */
-	public function custom_columns( $column, $post_id ) {
+	public function custom_columns( string $column, int $post_id ): void {
 		switch ( $column ) {
 			case 'tags':
 				$tags = get_the_term_list( $post_id, 'course-tags', '', ', ' );
@@ -256,7 +258,7 @@ class Course_Post extends Post_Type {
 	 *
 	 * @return array
 	 */
-	public function rest_query( $args, $req ) {
+	public function rest_query( array $args, \WP_REST_Request $req ): array {
 		$status_param = $req->get_param( 'filter_status' );
 		$valid_stati  = array();
 		if ( ! empty( $status_param ) && is_string( $status_param ) ) {
@@ -285,7 +287,7 @@ class Course_Post extends Post_Type {
 	/**
 	 * Regitser course metaboxes.
 	 */
-	public function register_meta_boxes() {
+	public function register_meta_boxes(): void {
 		add_meta_box(
 			'coursecontentdiv',
 			__( 'Course content', 'lighterlms' ),
@@ -310,7 +312,7 @@ class Course_Post extends Post_Type {
 	 *
 	 * @param \WP_Post $post The post object.
 	 */
-	public function details( $post ) {
+	public function details( \WP_Post $post ): void {
 		lighter_view(
 			'course-modules',
 			array(
@@ -325,7 +327,7 @@ class Course_Post extends Post_Type {
 	 *
 	 * @param \WP_Post $post The post object.
 	 */
-	public function settings( $post ) {
+	public function settings( \WP_Post $post ): void {
 		lighter_view(
 			'course-settings',
 			array(
@@ -338,7 +340,7 @@ class Course_Post extends Post_Type {
 	/**
 	 * Add a new topic via. form submission.
 	 */
-	public function add_topic() {
+	public function add_topic(): void {
 		$post_id = (int) $_POST['post_ID'];
 		$sort    = (int) $_POST['topics_length'];
 
@@ -361,7 +363,7 @@ class Course_Post extends Post_Type {
 		}
 	}
 
-	protected static function _generate_object() {
+	protected static function _generate_object(): array {
 		$post = get_post();
 
 		$topics_db = new Topics();

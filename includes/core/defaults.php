@@ -2,9 +2,7 @@
 
 namespace LighterLMS\Core;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+defined( 'ABSPATH' ) || exit;
 
 /**
  * @property string $currency
@@ -21,12 +19,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class Defaults {
 
-	private static $_instance = null;
+	private static ?self $_instance = null;
 
-	private $_settings = array();
-	private $_isDirty  = false;
+	private array $_settings = array();
+	private bool $_isDirty   = false;
 
-	public static function get_instance() {
+	public static function get_instance(): self {
 		if ( self::$_instance === null ) {
 			self::$_instance = new self();
 		}
@@ -51,7 +49,7 @@ class Defaults {
 		);
 	}
 
-	public function __get( $key ) {
+	public function __get( string $key ): mixed {
 		if ( array_key_exists( $key, $this->_settings ) ) {
 			return $this->_settings[ $key ];
 		}
@@ -67,15 +65,15 @@ class Defaults {
 		return null;
 	}
 
-	public function all() {
+	public function all(): array {
 		return $this->_settings;
 	}
 
-	public function isDirty() {
+	public function isDirty(): bool {
 		return $this->_isDirty;
 	}
 
-	public function persist() {
+	public function persist(): void {
 		if ( $this->_isDirty ) {
 			update_option( 'lighter_lms_defaults', $this->_settings );
 			$this->_isDirty = false;

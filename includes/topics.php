@@ -2,24 +2,23 @@
 
 namespace LighterLMS;
 
+defined( 'ABSPATH' ) || exit;
+
 use Exception;
 use wpdb;
 
 class Topics {
 
-	/** @var wpdb */
-	protected $db;
+	protected \wpdb $db;
+	public string $table;
 
-	/** @var string */
-	public $table;
-
-	public function __construct( $db = null ) {
+	public function __construct( \wpdb|null $db = null ) {
 		global $wpdb;
 		$this->db    = $db ?: $wpdb;
 		$this->table = $this->db->prefix . 'lighter_topics';
 	}
 
-	public function install() {
+	public function install(): void {
 		$charset_collate = $this->db->get_charset_collate();
 
 		$sql = "CREATE TABLE {$this->table} (
@@ -41,7 +40,7 @@ class Topics {
 		dbDelta( $sql );
 	}
 
-	public function exists( $key ) {
+	public function exists( string $key ): bool {
 		$sql = $this->db->prepare( "SELECT COUNT(*) FROM {$this->table} WHERE topic_key = %s", $key );
 
 		$count = (int) $this->db->get_var( $sql );
@@ -49,7 +48,7 @@ class Topics {
 		return $count > 0;
 	}
 
-	private function _parse_args( $args ) {
+	private function _parse_args( array $args ): array {
 		$allowed = array( 'ID', 'post_id', 'topic_key', 'title', 'sort_order', 'created_at', 'updated_at' );
 		$args    = wp_parse_args(
 			$args,
@@ -79,7 +78,7 @@ class Topics {
 	 *
 	 * @return int|bool The ID of the new created row. False on failure.
 	 */
-	public function create( $course_id, $key = '', $title = 'New topic', $sort_order = 0 ) {
+	public function create( int $course_id, string $key = '', string $title = 'New topic', int $sort_order = 0 ): int|bool {
 		$key = $this->_sanitize_key( $key );
 
 		$title = sanitize_text_field( $title );
@@ -102,7 +101,7 @@ class Topics {
 		return false;
 	}
 
-	public function get_by_course( $course_id ) {
+	public function get_by_course( \WP_Post|int $course_id ): array {
 
 		$post = get_post( $course_id );
 
@@ -119,7 +118,7 @@ class Topics {
 		);
 	}
 
-	public function get( $key, $args = array() ) {
+	public function get( string $key, array $args = array() ): array|false {
 		$args = $this->_parse_args( $args );
 
 		if ( is_null( $key ) ) {
@@ -168,7 +167,7 @@ class Topics {
 	 * @param array $data
 	 * @return bool|int Whether the update was successful. Int of the row, if a new row was inserted.
 	 */
-	public function update( $key, $data ) {
+	public function update( string $key, array $data ): bool|int {
 		if ( ! $this->exists( $key ) ) {
 			return $this->create( $data['post_id'], $key, $data['title'], $data['sort_order'] );
 		}
@@ -182,7 +181,7 @@ class Topics {
 		return $updated !== false;
 	}
 
-	public function delete( $key ) {
+	public function delete( string $key ): bool {
 		$field  = is_int( $key ) ? 'ID' : 'topic_key';
 		$format = is_int( $key ) ? '%d' : '%s';
 
@@ -195,7 +194,7 @@ class Topics {
 		return $deleted !== false;
 	}
 
-	public function search( $search_term, $args = array() ) {
+	public function search( string $search_term, array $args = array() ): array|false {
 		$args = $this->_parse_args( $args );
 
 		$allowed_status = array( 'publish' );
@@ -268,7 +267,7 @@ class Topics {
 		return $max !== null ? (int) $max + 1 : 1;
 	}
 
-	private function _sanitize_key( $key ) {
+	private function _sanitize_key( string $key ): string {
 		if ( ! $key ) {
 			return Randflake::generate();
 		}
@@ -292,7 +291,7 @@ class Topics {
 		return strtolower( $key );
 	}
 
-	public static function normalise_for_rest( $topic ) {
+	public static function normalise_for_rest( object $topic ): array {
 		return array(
 			'id'        => (int) $topic->ID,
 			'key'       => $topic->topic_key,

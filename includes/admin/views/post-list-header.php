@@ -4,11 +4,25 @@ $screen = get_current_screen();
 
 $post_type_obj = get_post_type_object( $screen->post_type ?: lighter_lms()->course_post_type );
 
+$screen_id = strpos( $screen->id, '_page_' ) !== false ? substr( $screen->id, strpos( $screen->id, '_page_' ) + 6 ) : $post_type_obj->name;
+
+switch ( $screen_id ) {
+	case lighter_lms()->course_post_type:
+	case lighter_lms()->lesson_post_type:
+		$title = $post_type_obj->label;
+		break;
+	case 'lighter-lms-settings':
+		$title = 'Settings';
+		break;
+	default:
+		$title = 'LighterLMS';
+}
+
 ?>
 <div class="lighter-header">
 	<div class="inner">
 		<div class="title">
-			<h1><?php echo strpos( $screen->base, 'settings' ) ? 'Settings' : esc_html( $post_type_obj->label ); ?></h1>
+			<h1><?php echo esc_html( $title ); ?></h1>
 		</div>
 		<div class="actions">
 			<div id="lighter-notifs">
