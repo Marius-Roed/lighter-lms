@@ -370,7 +370,7 @@ class Course_Post extends Post_Type {
 		$topics    = $topics_db->get_by_course( $post->ID );
 
 		if ( ! empty( $topics ) ) {
-			$topics = array_map( array( $topics_db::class, 'normalise_for_rest' ), $topics );
+			$topics = array_map( fn( $t ) => $topics_db->normalise_for_rest( $t, true ), $topics );
 		}
 
 		return array(

@@ -52,6 +52,7 @@ class Lesson_Post extends Post_Type {
 		);
 
 		register_post_type( $this->post_type, $args );
+		$this->register_rest_fields();
 
 		$this->_handle_third_party_support();
 	}
@@ -106,6 +107,38 @@ class Lesson_Post extends Post_Type {
 					'show_in_rest' => true,
 					'schema'       => array(
 						'type'    => 'object',
+						'context' => array( 'view', 'edit' ),
+					),
+				)
+			);
+		}
+	}
+
+	public function register_rest_fields(): void {
+		$fields = array(
+			'lesson_key'  => array(
+				'type'     => 'string',
+				'sanitize' => 'sanitize_text_field',
+			),
+			'lesson_type' => array(
+				'type'     => 'string',
+				'sanitize' => 'sanitize_text_field',
+			),
+		);
+
+		foreach ( $fields as $name => $config ) {
+			register_rest_field(
+				$this->post_type,
+				'lighter_' . $name,
+				array(
+					'get_callback'    => fn( $post ) => get_post_meta( $post['id'], '_lighter_' . $name, true ),
+					'update_callback' => fn( $value, $post ) => update_post_meta(
+						$post->ID,
+						'_lighter_' . $name,
+						( $config['sanitize'] )( $value ),
+					),
+					'schema'          => array(
+						'type'    => $config['type'],
 						'context' => array( 'view', 'edit' ),
 					),
 				)

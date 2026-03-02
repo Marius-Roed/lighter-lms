@@ -291,7 +291,17 @@ class Topics {
 		return strtolower( $key );
 	}
 
-	public static function normalise_for_rest( object $topic ): array {
+	public static function normalise_for_rest( object $topic, bool $withLesson = false ): array {
+		$lessons   = array();
+		$lesson_db = new Lessons( array( 'topic' => $topic->topic_key ) );
+
+		if ( $withLesson ) {
+			$lessons = $lesson_db->get_lessons( array( 'topic' => $topic->topic_key ) );
+			if ( ! empty( $lessons ) ) {
+				$lessons = $lesson_db->normalise_for_rest( $lessons );
+			}
+		}
+
 		return array(
 			'id'        => (int) $topic->ID,
 			'key'       => $topic->topic_key,
@@ -300,6 +310,7 @@ class Topics {
 			'sortOrder' => (int) $topic->sort_order,
 			'updated'   => $topic->updated_at,
 			'created'   => $topic->created_at,
+			'lessons'   => $lessons,
 		);
 	}
 }

@@ -129,7 +129,7 @@ class Lessons {
 				);
 			} else {
 
-				$lessons_ids = $this->db->get_col(
+				$lesson_ids = $this->db->get_col(
 					$this->db->prepare(
 						'SELECT l.lesson_id FROM %1$s l INNER JOIN %2$s t ON t.ID = l.topic_id WHERE t.topic_key = "%3$s" ORDER BY l.lesson_id ASC',
 						$this->table,
@@ -138,16 +138,18 @@ class Lessons {
 					)
 				);
 
-				if ( empty( $lessons_ids ) ) {
+				if ( empty( $lesson_ids ) ) {
 					return array();
 				}
+
+				file_put_contents( LIGHTER_LMS_PATH . '/log.log', var_export( $lesson_ids, true ) );
 
 				$lessons = get_posts(
 					array(
 						'post_type'      => lighter_lms()->lesson_post_type,
 						'post_status'    => $args['status'] ?? 'any',
 						'posts_per_page' => -1,
-						'post__in'       => array_map( 'absint', $lessons_ids ),
+						'post__in'       => array_map( 'absint', $lesson_ids ),
 						'orderby'        => 'menu_order',
 						'order'          => 'ASC',
 					)
@@ -226,5 +228,26 @@ class Lessons {
 				'%d',
 			),
 		);
+	}
+
+	/**
+	* @param \WP_Post|\WP_Post[] $lessons
+	*/
+	public static function normalise_for_rest( array|\WP_Post $lessons, $context = 'edit' ): array {
+			$lessons = is_array( $lessons ) ? $lessons : array( $lessons );
+			$lessons = array_map(
+				function ( $post ) use ( $context ) {
+					$post       = get_post( $post );
+					$controller = new \WP_REST_Posts_Controller( lighter_lms()->lesson_post_type );
+					$request    = new \WP_REST_Request( 'GET', "/wp/v2/lighter_lessons/$post->ID" );
+					$request->set_param( 'context', $context );
+
+					$response = $controller->prepare_item_for_response( $post, $request );
+					return $controller->prepare_response_for_collection( $response );
+				},
+				$lessons
+			);
+
+		return $lessons;
 	}
 }
