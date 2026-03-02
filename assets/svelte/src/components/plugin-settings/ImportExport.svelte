@@ -1,9 +1,9 @@
 <script>
     import Switch from "$components/Switch.svelte";
     import importManager from "$lib/import.svelte";
-    import lighterFetch from "$lib/lighterFetch";
+    import { lighterFetch } from "$lib/api/lighter-fetch.ts";
     import settings from "$lib/settings.svelte";
-    import { tooltip } from "$lib/tooltip";
+    import { tooltip } from "$lib/tooltip.ts";
 
     let importing = false;
     /** @type {FileList | undefined} */

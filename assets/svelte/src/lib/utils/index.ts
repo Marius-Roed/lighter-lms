@@ -1,19 +1,8 @@
-import { Course } from '$lib/models/state/course-post.svelte.js';
-import { CourseAPI } from '$lib/api/course-api.ts';
+import { createContext } from 'svelte';
+import type { CourseService } from '$lib/models/service/course-service.svelte.ts';
+import { Randflake } from './randflake.ts';
 
-export { Randflake } from './randflake.ts';
-
-export const initCourse = (): { course: Course, api: CourseAPI } => {
-    if (!LighterLMS.course) {
-        console.error('LighterLMS: Cannot initialize course. No course object found.');
-        return;
-    }
-
-    const course = new Course(LighterLMS.course);
-    const api = new CourseAPI(course.id);
-
-    return { course, api };
-};
+export const [getCourseService, setCourseService] = createContext<CourseService>();
 
 export const addQueryArgs = (path: string, args: Record<string, string | number | boolean>): string => {
     const params = new URLSearchParams();
@@ -25,3 +14,10 @@ export const addQueryArgs = (path: string, args: Record<string, string | number 
     const separator = path.includes("?") ? "&" : "?";
     return path + separator + params.toString();
 }
+
+export function randflake() {
+    return new Randflake();
+}
+
+export const POSTSTATUS = ["publish", "pending", "draft", "auto-draft", "future", "private"] as const;
+export type PostStatus = (typeof POSTSTATUS)[number];

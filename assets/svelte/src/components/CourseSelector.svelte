@@ -1,21 +1,27 @@
-<script>
+<script lang="ts">
+    import type { Lesson } from "$lib/models/state/course-lesson.svelte.ts";
+    import type { Course } from "$lib/models/state/course-post.svelte.ts";
     import Icon from "./Icon.svelte";
 
-    let { course, selected = $bindable() } = $props();
-    let group = $state([]),
+    interface Props {
+        course: Course;
+        selected: Lesson[];
+    }
+
+    let { course, selected = $bindable() }: Props = $props();
+    let group = $state<Lesson[]>([]),
         isOpen = $state(false);
-    const les = course.topics.flatMap((t) => t.lessons.map((l) => l.ID));
 
     let parent = $derived.by(() => {
-        if (les < 1) return false;
-        return group.length === les.length;
+        if (course.allLessons.length < 1) return false;
+        return group.length === course.allLessons.length;
     });
     let indeterminate = $derived.by(() => {
         if (group.length < 1) return false;
-        return group.length < les.length;
+        return group.length < course.allLessons.length;
     });
 
-    const checkAll = () => (group = les),
+    const checkAll = () => (group = course.allLessons),
         uncheckAll = () => (group = []);
 
     $effect(() => {
@@ -30,9 +36,12 @@
                 type="checkbox"
                 bind:checked={parent}
                 bind:indeterminate
-                onclick={(e) => (e.target.checked ? checkAll() : uncheckAll())}
+                onclick={(e) =>
+                    (e.target as HTMLInputElement).checked
+                        ? checkAll()
+                        : uncheckAll()}
                 name={course.title}
-                id={course.id}
+                id={String(course.id)}
             />
             {course.title}
         </label>
@@ -51,10 +60,10 @@
                                 type="checkbox"
                                 bind:group
                                 name={course.title}
-                                value={lesson.ID}
+                                value={lesson.id}
                                 id={`${course.title}-${idx}`}
                             />
-                            {lesson.post_title}
+                            {lesson.title}
                         </label>
                     {:else}
                         <span class="col center">This topic has no lessons</span

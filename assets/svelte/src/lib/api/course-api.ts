@@ -90,11 +90,11 @@ export class CourseAPI {
         });
     }
 
-    moveTopic(fromIndex: number, toIndex: number) {
+    moveTopic(fromTopicKey: string, toTopicKey: string) {
         return lighterFetch<TopicData[]>({
             path: `course/${this.#courseId}/topic-move`,
             method: "PUT",
-            data: { fromIndex, toIndex }
+            data: { from: fromTopicKey, to: toTopicKey }
         });
     }
 

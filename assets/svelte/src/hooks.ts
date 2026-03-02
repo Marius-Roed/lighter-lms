@@ -8,7 +8,7 @@ const filters = [];
  * @param {Function} callback - Callback function which will run.
  * @param {number} [priority=10] - When to run the function. Higher number runs later.
  */
-export function addAction(hook, callback, priority = 10) {
+export function addAction(hook: string, callback: Function, priority: number = 10): void {
   actions[hook] = actions[hook] || [];
   actions[hook].push({ callback, priority });
   actions.sort((a, b) => a.priority - b.priority);
@@ -20,7 +20,7 @@ export function addAction(hook, callback, priority = 10) {
  * @param {string} hook - The action to run
  * @param {...*} args 
  */
-export function doAction(hook, ...args) {
+export function doAction(hook: string, ...args: any): void {
   (actions[hook] || []).forEach(({ callback }) => {
     try {
       callback(...args);
@@ -37,7 +37,7 @@ export function doAction(hook, ...args) {
  * @param {Function} callback - Callback function to run
  * @param {number} [priority=10] - When to apply the filter. Higher number runs later.
  */
-export function addFilter(hook, callback, priority = 10) {
+export function addFilter(hook: string, callback: Function, priority: number = 10): void {
   filters[hook] = filters[hook] || [];
   filters[hook].push({ callback, priority });
   filters.sort((a, b) => a.priority - b.priority);
@@ -50,8 +50,8 @@ export function addFilter(hook, callback, priority = 10) {
  * @param {any} value - The starting value
  * @param {...*} args - Args for the callback
  */
-export function applyFilter(hook, value, ...args) {
-  return (filters[hook] || []).reduce((v, { callback }) => {
+export function applyFilter<T>(hook: string, value: T, ...args: any): T {
+  return (filters[hook] || []).reduce((v: T, { callback }) => {
     try {
       return callback(v, ...args);
     } catch (e) {
@@ -60,6 +60,7 @@ export function applyFilter(hook, value, ...args) {
   }, value);
 }
 
+// @ts-ignore
 window.LighterLMS = window.LighterLMS || {};
 window.LighterLMS.addAction = addAction;
 window.LighterLMS.doAction = doAction;

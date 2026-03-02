@@ -1,116 +1,70 @@
-<script>
-    /**
-     * @typedef {Object} TopicProps
-     * @property {import('$lib/state.svelte').Topic} topic
-     * @property {number} i
-     */
-
-    import {
-        lessons,
-        addLesson,
-        moveTopic,
-        confirmDeleteTopic,
-    } from "$lib/state.svelte.js";
+<script lang="ts">
     import { tooltip } from "$lib/tooltip.ts";
     import Lesson from "./Lesson.svelte";
     import Icon from "./Icon.svelte";
     import Editable from "./Editable.svelte";
+    import type { Topic } from "$lib/models/state/course-topic.svelte.ts";
+    import { getCourseService } from "$lib/utils/index.ts";
 
-    /** @type TopicProps */
-    let { topic = $bindable(), i } = $props();
+    interface Props {
+        topic: Topic;
+    }
+    let { topic }: Props = $props();
+    const id = $props.id();
 
-    // INFO: Component state
-    let isExpanded = $state(false);
-    const topicLessons = $derived(
-        lessons
-            .filter((l) => l.parentTopicKey === topic.key)
-            .sort((a, b) => a.sortOrder - b.sortOrder),
-    );
+    const service = getCourseService();
 
-    $effect(() => {
-        const expanded = JSON.parse(
-            localStorage.getItem("expandedTopics") || "[]",
-        );
-        isExpanded = expanded.includes(topic.key);
-    });
+    let canDrag = $state(false);
 
-    function toggleExpand() {
-        isExpanded = !isExpanded;
+    function handleHeadClick(e: MouseEvent) {
+        if (
+            (e.target as HTMLElement).closest(
+                ".drag-handle, button, input, .editable-text",
+            )
+        )
+            return;
 
-        const expanded = JSON.parse(
-            localStorage.getItem("expandedTopics") || "[]",
-        );
-        if (isExpanded) {
-            if (!expanded.includes(topic.key)) expanded.push(topic.key);
-        } else {
-            const idx = expanded.indexOf(topic.key);
-            if (idx > -1) expanded.splice(idx, 1);
-        }
-        localStorage.setItem("expandedTopics", JSON.stringify(expanded));
+        topic.toggleIsExpanded();
     }
 
-    let allowDrag = false;
-
     function handleMouseDown() {
-        allowDrag = true;
+        canDrag = true;
     }
 
     function handleMouseUp() {
-        allowDrag = false;
+        canDrag = false;
     }
 
-    /**
-     * @param {DragEvent} e
-     */
-    function handleDragStart(e) {
-        if (!allowDrag) {
-            e.preventDefault();
-            return;
+    function handleDragStart(e: DragEvent) {
+        if (!canDrag) {
+            return e.preventDefault();
         }
 
-        e.dataTransfer.setData(
-            "text/plain",
-            JSON.stringify({ sourceIndex: i }),
+        e.dataTransfer!.effectAllowed = "copyMove";
+        e.dataTransfer!.items.add(
+            service.serializeTopic(topic),
+            "application/x-lighterlms-topic",
         );
-        e.dataTransfer.effectAllowed = "move";
+
+        requestAnimationFrame(
+            () => ((e.target as HTMLElement).style.opacity = "0.5"),
+        );
     }
 
-    /**
-     *
-     * @param {DragEvent} e
-     */
-    function handleDragOver(e) {
-        e.preventDefault();
-    }
-
-    /**
-     * @param {DragEvent} e
-     */
-    function handleDrop(e) {
-        e.preventDefault();
-        const dragDataStr = e.dataTransfer.getData("text/plain");
-        if (!dragDataStr) return;
-        const { sourceIndex } = JSON.parse(dragDataStr);
-        const target = i;
-        if (sourceIndex === target) return;
-        moveTopic(sourceIndex, target);
-    }
-
-    function addNewLesson() {
-        addLesson(topic.key, "New lesson");
-        isExpanded = true;
+    function handleDragEnd(e: DragEvent) {
+        canDrag = false;
+        (e.target as HTMLElement).style.opacity = "";
     }
 </script>
 
 <li
     class="lighter-course-module"
-    id={(i + 1).toString()}
-    draggable="true"
+    {id}
+    draggable={canDrag}
     ondragstart={handleDragStart}
-    ondragover={handleDragOver}
-    ondrop={handleDrop}
+    ondragend={handleDragEnd}
 >
-    <div class="module-wrap" aria-expanded={isExpanded}>
+    <div class="module-wrap" aria-expanded={topic.isExpanded}>
         <div class="module-data hidden">
             <input
                 type="hidden"
@@ -128,7 +82,18 @@
                 value={topic.sortOrder}
             />
         </div>
-        <div class="head">
+        <div
+            class="head"
+            onclick={handleHeadClick}
+            onkeypress={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    topic.toggleIsExpanded();
+                }
+            }}
+            tabindex="0"
+            role="button"
+        >
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div
                 class="drag-handle"
@@ -147,14 +112,18 @@
                 />
             </div>
             <div class="lessons-amount">
-                <p>Lessons ({topicLessons.length})</p>
+                <p>Lessons ({topic.lessons?.length ?? 0})</p>
             </div>
             <div class="actions">
                 <div class="add">
                     <button
                         type="button"
                         class="add-lesson"
-                        onclick={addNewLesson}
+                        onclick={() =>
+                            service.createLesson(topic.key, {
+                                title: "New Lesson",
+                                lesson_type: "text",
+                            })}
                         {@attach tooltip("Add a lesson")}
                     >
                         <Icon name="plus" />
@@ -164,8 +133,10 @@
                     <button
                         type="button"
                         class="expand-module"
-                        onclick={toggleExpand}
-                        {@attach tooltip(isExpanded ? "Collapse" : "Expand")}
+                        onclick={topic.toggleIsExpanded}
+                        {@attach tooltip(
+                            topic.isExpanded ? "Collapse" : "Expand",
+                        )}
                     >
                         <Icon name="chevron" />
                     </button>
@@ -183,9 +154,9 @@
                 fill={true}
             /></button
         >
-        <div class={["lighter-lesson-wrap", isExpanded && "expanded"]}>
-            {#each topicLessons as lesson (lesson.key)}
-                <Lesson key={lesson.key} len={topicLessons.length} />
+        <div class={["lighter-lesson-wrap", topic.isExpanded && "expanded"]}>
+            {#each topic.sortedLessons as lesson (lesson.id)}
+                <Lesson {lesson} />
             {/each}
         </div>
     </div>

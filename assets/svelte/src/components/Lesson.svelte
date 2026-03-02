@@ -1,29 +1,22 @@
-<script>
+<script lang="ts">
+    import type { Lesson } from "$lib/models/state/course-lesson.svelte.ts";
     import settings from "$lib/settings.svelte";
-    /**
-     * @typedef {Object} LessonProps
-     * @property {string} key
-     * @property {number} len
-     */
-
-    import {
-        confirmDeleteLesson,
-        getLesson,
-        lessons,
-        postStatus,
-        moveLesson,
-    } from "$lib/state.svelte";
+    import { getCourseService, POSTSTATUS } from "$lib/utils/index.ts";
     import ActionMenu from "./ActionMenu.svelte";
     import Editable from "./Editable.svelte";
     import EditLesson from "./EditLesson.svelte";
     import Icon from "./Icon.svelte";
     import Submenu from "./Submenu.svelte";
 
-    /** @type LessonProps */
-    let { key, len } = $props();
-    /** @type {import("$lib/state.svelte.js").Lesson} */
-    const lesson = $derived(lessons[getLesson(key)]);
-    const warn = $derived(lesson.postStatus == "publish" ? "" : "warn");
+    interface Props {
+        lesson: Lesson;
+    }
+
+    let { lesson }: Props = $props();
+
+    const service = getCourseService();
+
+    const warn = $derived(lesson.status == "publish" ? "" : "warn");
 
     let actionMenu;
 
@@ -31,65 +24,51 @@
         const editContainer = this.closest(".actions");
         editContainer.querySelector(".edit-container button").click();
     }
-
-    const moveUp = () => {
-        actionMenu.close();
-        if (lesson.sortOrder < 1) return;
-
-        moveLesson(lesson, 1);
-    };
-
-    const moveDown = () => {
-        actionMenu.close();
-        if (lesson.sortOrder >= len) return;
-
-        moveLesson(lesson, 0);
-    };
 </script>
 
 <div class="lighter-lesson">
     <div class="lesson-data hidden">
         <input
             type="hidden"
-            name={`topics[${lesson.parentTopicKey}][lessons][${lesson.sortOrder}][title]`}
+            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][title]`}
             value={lesson.title}
         />
         <input
             type="hidden"
-            name={`topics[${lesson.parentTopicKey}][lessons][${lesson.sortOrder}][sortOrder]`}
+            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][sortOrder]`}
             value={lesson.sortOrder}
         />
         <input
             type="hidden"
-            name={`topics[${lesson.parentTopicKey}][lessons][${lesson.sortOrder}][id]`}
+            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][id]`}
             value={lesson.id}
         />
         <input
             type="hidden"
-            name={`topics[${lesson.parentTopicKey}][lessons][${lesson.sortOrder}][key]`}
+            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][key]`}
             value={lesson.key}
         />
         <input
             type="hidden"
-            name={`topics[${lesson.parentTopicKey}][lessons][${lesson.sortOrder}][postStatus]`}
-            value={lesson.postStatus}
+            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][postStatus]`}
+            value={lesson.status}
         />
         <input
             type="hidden"
-            name={`topics[${lesson.parentTopicKey}][lessons][${lesson.sortOrder}][editStatus]`}
-            value={lesson.editStatus}
+            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][editStatus]`}
+            value={lesson.status}
         />
         {#if !lesson.id}
             <input
                 type="hidden"
-                name={`topics[${lesson.parentTopicKey}][lessons][${lesson.sortOrder}][new]`}
+                name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][new]`}
                 value="true"
             />
         {/if}
     </div>
     <div class="lesson-title">
         {#if settings.showIcons}
-            <Icon name={lesson.icon} className="lesson-icon" />
+            <Icon name={lesson.lessonType} className="lesson-icon" />
         {/if}
         <Editable bind:value={lesson.title} tag="h4" />
     </div>
@@ -113,18 +92,18 @@
                         <button type="button" class="submenu-trig"
                             >Status: <span
                                 class={[
-                                    lesson.postStatus != "publish" &&
-                                        "text-warn",
-                                ]}>{postStatus[lesson.postStatus]}</span
+                                    lesson.status != "publish" && "text-warn",
+                                ]}>{lesson.status}</span
                             ></button
                         >
                     {/snippet}
-                    {#each Object.entries(postStatus) as [key, label]}
+                    {#each POSTSTATUS as key}
                         <button
                             type="button"
-                            class={{ active: lesson.postStatus === key }}
-                            onclick={() => (lesson.postStatus = key)}
-                            >{label}</button
+                            class={{ active: lesson.status === key }}
+                            onclick={() =>
+                                service.setLessonStatus(lesson.key, key)}
+                            >{key}</button
                         >
                     {/each}
                 </Submenu>

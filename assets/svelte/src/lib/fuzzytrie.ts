@@ -1,21 +1,24 @@
 /**
  * Normalises a string to use for a trie
- *
- * @param {string} str 
  */
-function normalise(str) {
+function normalise(str: string): string {
     return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036F]/g, '');
 }
 
 class TrieNode {
+    readonly children: Map<string, TrieNode>;
+    endOfWord: boolean;
+    data?: object = null;
+
     constructor() {
         this.children = new Map();
         this.endOfWord = false;
-        this.data = null;
     }
 }
 
 export class FuzzyTrie {
+    root: TrieNode = new TrieNode();
+
     constructor() {
         this.root = new TrieNode();
     }
@@ -26,7 +29,7 @@ export class FuzzyTrie {
      * @param {string} word 
      * @param {Object} data 
      */
-    insert(word, data) {
+    insert(word: string, data: object): void {
         const norm = normalise(word)
 
         let node = this.root;
@@ -49,10 +52,10 @@ export class FuzzyTrie {
      * @param {number} limit Amount of results to show
      * @param {array} [filtered] An array of options to filter out
      */
-    fuzzySearch(prefix, tolerance, limit, filtered = []) {
+    fuzzySearch(prefix: string, tolerance: number, limit: number, filtered: Array<any> = []): TrieNode[] {
         const norm = normalise(prefix);
         const results = [];
-        const uniqueIds = new Set();
+        const uniqueIds: Set<number> = new Set();
         this._fuzzyFindHelper(this.root, '', norm, 0, tolerance, results, uniqueIds);
 
         results.sort((a, b) => a.distance - b.distance || a.data.count - b.data.count);
@@ -73,7 +76,7 @@ export class FuzzyTrie {
      * @param {number} tolerance 
      * @param {Array} results 
      */
-    _fuzzyFindHelper(node, current, prefix, index, tolerance, results, uniqueIds) {
+    _fuzzyFindHelper(node: TrieNode, current: string, prefix: string, index: number, tolerance: number, results: TrieNode[], uniqueIds: Set<number>) {
         if (results.length >= 50) return;
 
         if (index === prefix.length) {
@@ -100,7 +103,7 @@ export class FuzzyTrie {
         }
     }
 
-    _collectSubtree(node, results, distance, uniqueIds) {
+    _collectSubtree(node: TrieNode, results: TrieNode[], distance: number, uniqueIds: Set<number>) {
         if (node.endOfWord && node.data && !uniqueIds.has(node.data.id)) {
             uniqueIds.add(node.data.id);
             results.push({ data: node.data, distance });

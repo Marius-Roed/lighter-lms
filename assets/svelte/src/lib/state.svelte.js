@@ -1,5 +1,5 @@
-import { Randflake } from "$lib/utils";
-import { lighterFetch } from "$api/lighter-fetch";
+import { Randflake } from "$lib/utils/randflake.ts";
+import { lighterFetch } from "$lib/api/lighter-fetch.ts";
 import settings, { initAccess } from "./settings.svelte";
 import { untrack } from "svelte";
 

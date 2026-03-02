@@ -1,5 +1,5 @@
 <script>
-    import lighterFetch from "$lib/lighterFetch";
+    import { lighterFetch } from "$lib/api/lighter-fetch.ts";
 
     let {
         url,

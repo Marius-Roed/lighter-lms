@@ -1,5 +1,5 @@
 <script>
-    import { FuzzyTrie } from "$lib/fuzzytrie";
+    import { FuzzyTrie } from "$lib/fuzzytrie.ts";
 
     /**
      * @typedef {Object} FitlerSearchProps

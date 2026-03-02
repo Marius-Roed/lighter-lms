@@ -1,4 +1,4 @@
-import { lighterFetch } from "$api/lighter-fetch";
+import { lighterFetch } from "$lib/api/lighter-fetch.ts";
 import { SvelteMap } from "svelte/reactivity";
 
 const STORAGE_KEY = 'lighter-jobs';
@@ -21,9 +21,6 @@ class Job {
     /** @type {AbortController} */
     #abortController = null;
 
-    /**
-    *
-    */
     constructor(data) {
         this.id = data.id;
         this.filename = data.filename;

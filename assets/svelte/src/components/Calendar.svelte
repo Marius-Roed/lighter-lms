@@ -1,17 +1,16 @@
-<script>
-    /**
-     * @typedef {Object} CalendarProps
-     * @property {Date} date
-     * @property {Date} rendered
-     * @property {Date} [endDate]
-     * @property {boolean} [range=false]
-     * @property {boolean} [startMonday=true]
-     * @property {string} [locale]
-     * @property {string} [class]
-     * @property {Object} [restProps]
-     */
-
+<script lang="ts">
+    import type { HTMLAttributes } from "svelte/elements";
     import { SvelteDate } from "svelte/reactivity";
+
+    interface Props extends HTMLAttributes<HTMLSpanElement> {
+        date: Date;
+        rendered: Date;
+        endDate?: Date;
+        range?: boolean;
+        startMonday?: boolean;
+        locale?: string;
+        class?: string;
+    }
 
     /** @type {CalendarProps} */
     let {
@@ -23,7 +22,7 @@
         locale = "",
         class: classNames = "",
         ...restProps
-    } = $props();
+    }: Props = $props();
 
     if (!(selected instanceof SvelteDate)) {
         selected = new SvelteDate(selected ?? Date.now());
@@ -94,7 +93,10 @@
         return cells;
     });
 
-    function generateCellInfo(day, monthAdjust = 0) {
+    function generateCellInfo(
+        day: number,
+        monthAdjust: number = 0,
+    ): { datetime: Date; selectedPart: boolean } {
         const datetime = new Date(
             rendered.getFullYear(),
             rendered.getMonth() + monthAdjust,
@@ -111,11 +113,7 @@
         return { datetime, selectedPart };
     }
 
-    /**
-     * @param {Date} a
-     * @param {Date} b
-     */
-    function isSameDay(a, b) {
+    function isSameDay(a: Date, b: Date): boolean {
         if (!a || !b) return false;
         return (
             a.getFullYear() === b.getFullYear() &&
@@ -139,6 +137,7 @@
                     isSameDay(selected, datetime) && "selected",
                     isSameDay(endSelected, datetime) && range && "selected",
                     selectedPart && range && "selected-part",
+                    // @ts-ignore
                     restProps.class,
                 ]}
                 class:outside

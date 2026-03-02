@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     let { children, trigger } = $props();
 
     const id = $props.id();

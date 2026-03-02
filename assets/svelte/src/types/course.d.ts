@@ -8,7 +8,7 @@ interface CourseData extends WPRestPost {
 interface TopicData {
     key: string;
     title: string;
-    sort_order: number;
+    sortOrder: number;
     course: number;
     lessons?: Lesson[];
 }

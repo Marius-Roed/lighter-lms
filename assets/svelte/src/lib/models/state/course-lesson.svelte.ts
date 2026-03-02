@@ -1,3 +1,5 @@
+import { randflake } from "$lib/utils/index.ts";
+import { Randflake } from "$lib/utils/randflake.ts";
 import type { LessonData } from "$types/course.d.ts";
 
 export class Lesson {
@@ -26,7 +28,7 @@ export class Lesson {
     constructor(data: LessonData) {
         this.#original = data;
         this.id = data.id;
-        this.key = data.lesson_key;
+        this.key = data.lesson_key ?? randflake().generate();
         this.slug = data.slug;
         this.date = data.date;
         this.author = data.author;
@@ -38,14 +40,39 @@ export class Lesson {
         this.modified = data.modified;
     }
 
-    toRestData(): Partial<LessonData> {
+    setStatus(v: LessonData['status']) {
+        this.status = v;
+    }
+
+    toRestData(): LessonData {
         return {
             id: this.id,
             title: { rendered: this.title },
             status: this.status,
+            author: this.author,
+            date: this.date,
+            modified: this.modified,
+            lesson_key: this.key,
             lesson_type: this.lessonType,
             sort_order: this.sortOrder,
             parent_key: this.parentKey,
+            type: this.type,
+            slug: this.slug,
+            date_gmt: null,
+            modified_gmt: null,
+            menu_order: null,
+            excerpt: { rendered: null },
+            content: { rendered: null },
+            meta: null,
+            parent: null,
         };
+    }
+
+    serialize(): string {
+        return JSON.stringify(this.toRestData());
+    }
+
+    static deserialize(data: string): Lesson {
+        return new Lesson(JSON.parse(data));
     }
 }

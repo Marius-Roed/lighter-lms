@@ -1,9 +1,9 @@
+import type { PostStatus } from "$lib/utils/index.ts";
 import type { CourseData } from "./course.d.ts";
 
 export { };
 
 declare global {
-    type PostStatus = "publish" | "pending" | "draft" | "auto-draft" | "future" | "private";
     type EditStatus = "clean" | "dirty";
     type AvailableStore = "woocommerce" | "fluentcart" | "memberpress";
 

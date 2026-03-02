@@ -1,6 +1,6 @@
 <script>
+    import { lighterFetch } from "$lib/api/lighter-fetch.ts";
     import settings, { setProduct } from "$lib/settings.svelte";
-    import apiFetch from "@wordpress/api-fetch";
     import { SvelteMap } from "svelte/reactivity";
 
     let { ...restProps } = $props();
@@ -62,7 +62,7 @@
             return Promise.resolve(products);
         }
 
-        const resp = await apiFetch({
+        const resp = await lighterFetch({
             url: `/wp-json/wc/v3/products?per_page=8&status=any&search=${encodeURIComponent(q)}`,
         });
 

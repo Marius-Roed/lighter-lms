@@ -1,9 +1,12 @@
-<script>
+<script lang="ts">
     import settings, { initAccess, isEmpty } from "$lib/settings.svelte";
     import { getTopic, getTopicLessons } from "$lib/state.svelte.js";
+    import type { HTMLAttributes } from "svelte/elements";
     import MultiCheckbox from "./MultiCheckbox.svelte";
 
-    let { ...props } = $props();
+    interface Props extends HTMLAttributes<HTMLDivElement> {}
+
+    let { ...props }: Props = $props();
 
     if (isEmpty(settings.product.access)) {
         settings.product.access = initAccess();

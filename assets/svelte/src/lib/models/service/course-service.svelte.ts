@@ -1,11 +1,9 @@
 import { CourseAPI } from "$lib/api/course-api.ts";
 import { Randflake } from "$lib/utils/randflake.ts";
-import type { CourseData, TopicData } from "$types/course.js";
+import type { CourseData, LessonData, TopicData } from "$types/course.js";
 import { Lesson } from "../state/course-lesson.svelte.ts";
 import { Course } from "../state/course-post.svelte.ts";
 import { Topic } from "../state/course-topic.svelte.ts";
-
-
 
 export class CourseService {
     readonly #api: CourseAPI;
@@ -71,7 +69,16 @@ export class CourseService {
         });
     }
 
-    createLesson(topicKey: string, data: { title: string, lesson_type: string }) {
+    setLessonStatus(lessonKey: string | number, value: LessonData['status']): void {
+        const lesson = typeof lessonKey === "string"
+            ? this.course.getLessonByKey(lessonKey)
+            : this.course.allLessons.find((l) => l.id === lessonKey);
+        if (!lesson) return;
+
+        lesson.setStatus(value);
+    }
+
+    createLesson(topicKey: string, data: { title: string, lesson_type: string }): void {
         const topic = this.course.topics.find((t) => t.key === topicKey);
         if (!topic) return;
 
@@ -124,12 +131,34 @@ export class CourseService {
         });
     }
 
-    createTopic(title: string) {
+    insertTopic(title: string, nodeKey: string, position: "before" | "after" = "after", lessons: LessonData[] = []): void {
+        const existingTopic = this.course.topics.find(t => t.key === nodeKey);
+        if (!existingTopic) throw new Error(`Cannot find node to insert adjacent topic on`);
+
+        const placeholder: TopicData = {
+            key: new Randflake().generate(),
+            title,
+            course: this.course.id,
+            sortOrder: position === "before" ? existingTopic.sortOrder : existingTopic.sortOrder + 1,
+            lessons
+        }
+
+        this.course.topics.forEach(t => {
+            t.sortOrder = t.sortOrder > existingTopic.sortOrder ? t.sortOrder + 1 : t.sortOrder;
+
+            if (position === "before") t.sortOrder++;
+        });
+
+        this.course.addTopic(placeholder);
+    }
+
+    createTopic(title: string, lessons: LessonData[] = []): void {
         const placeholder: TopicData = {
             key: new Randflake().generate(),
             title,
             course: this.course.id,
             sort_order: this.course.topics.length,
+            lessons
         }
 
         this.course.addTopic(placeholder);
@@ -137,7 +166,8 @@ export class CourseService {
         this.#api.createTopic(new Topic(placeholder)).then((real) => {
             this.course.removeTopic(placeholder.key);
             this.course.addTopic(real);
-        }).catch(() => {
+        }).catch((e) => {
+            console.error(e);
             this.course.removeTopic(placeholder.key);
             // TODO: Toast failure.
         });
@@ -156,18 +186,29 @@ export class CourseService {
         })
     }
 
-    moveTopic(fromIndex: number, toIndex: number) {
-        const fromTopic = this.course.topics[fromIndex];
-        const toTopic = this.course.topics[toIndex];
+    serializeTopic(topic: Topic): string {
+        return topic.serialize() ?? "";
+    }
 
-        if (!fromTopic || !toTopic) return;
+    moveTopic(fromKey: string, toKey: string, position: "before" | "after" = "after") {
+        const fromTopic = this.course.topics.find(t => t.key === fromKey);
+        const toTopic = this.course.topics.find(t => t.key === toKey);
+        const positionAdjust = position === "after" ? 1 : 0;
 
-        const snapshot = [...this.course.topics];
+        if (!(fromTopic instanceof Topic) || !(toTopic instanceof Topic)) return;
 
-        this.course.moveTopic(fromIndex, toIndex);
+        const snapshot = Array.from(this.course.topics.map(t => {
+            return { key: t.key, sort: t.sortOrder };
+        }));
 
-        this.#api.moveTopic(fromIndex, toIndex).catch(() => {
-            this.course.topics = snapshot;
+        this.course.moveTopic(fromTopic.sortOrder, toTopic.sortOrder + positionAdjust);
+
+        this.#api.moveTopic(fromTopic.key, toTopic.key).catch((e) => {
+            console.error(e);
+            snapshot.forEach(({ key, sort }) => {
+                const topic = this.course.topics.find(t => t.key === key)
+                if (topic) topic.sortOrder = sort;
+            });
             // TODO: Toast failure.
         });
     }
@@ -184,5 +225,13 @@ export class CourseService {
             this.course.topics = snapshot;
             // TODO: Toast failure.
         });
+    }
+
+    shuffleTopics() {
+        this.course.topics?.map(t => {
+            t.sortOrder = Math.floor(Math.random() * 9);
+            return t;
+        });
+        console.log(this.course.topics);
     }
 }

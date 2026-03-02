@@ -22,7 +22,7 @@ export class Course {
     );
 
     readonly allLessons: Lesson[] = $derived(
-        this.sortedTopics.flatMap((t) => t.sortedLesson)
+        this.sortedTopics.flatMap((t) => t.sortedLessons)
     );
 
     constructor(data: CourseData) {
@@ -53,6 +53,9 @@ export class Course {
     moveTopic(fromIndex: number, toIndex: number) {
         const reordered = [...this.sortedTopics];
         const [moved] = reordered.splice(fromIndex, 1);
+        if (toIndex > fromIndex) {
+            toIndex -= 1;
+        }
         reordered.splice(toIndex, 0, moved);
         reordered.forEach((t, i) => t.sortOrder = i);
         this.topics = reordered;
@@ -63,7 +66,7 @@ export class Course {
         const toTopic = this.topics.find((t) => t.key === toTopicKey);
         if (!fromTopic || !toTopic) return;
 
-        const fromLessons: Lesson[] = [...fromTopic.sortedLesson];
+        const fromLessons: Lesson[] = [...fromTopic.sortedLessons];
         const [moved] = fromLessons.splice(fromIndex, 1);
 
         if (fromTopicKey === toTopicKey) {
@@ -74,7 +77,7 @@ export class Course {
             fromLessons.forEach((l, i) => l.sortOrder = i);
             fromTopic.lessons = fromLessons;
 
-            const toLessons: Lesson[] = [...toTopic.sortedLesson];
+            const toLessons: Lesson[] = [...toTopic.sortedLessons];
             toLessons.splice(toIndex, 0, moved);
             toLessons.forEach((l, i) => l.sortOrder = i);
             toTopic.lessons = toLessons;

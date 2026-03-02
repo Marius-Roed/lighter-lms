@@ -1,21 +1,18 @@
-<script>
+<script lang="ts">
     import Calendar from "./Calendar.svelte";
     import Icon from "./Icon.svelte";
 
-    /**
-     * @typedef {Object} DatePickerProps
-     * @property {Date} [value = new Date()]
-     * @property {string} [locale = ""]
-     * @property {boolean} [startMonday = true]
-     * @property {boolean} [inline = false]
-     */
+    interface Props {
+        value?: Date;
+        locale?: string;
+        startMonday?: boolean;
+    }
 
-    /** @type {DatePickerProps} */
     let {
         value = $bindable(new Date()),
         locale = "",
         startMonday = true,
-    } = $props();
+    }: Props = $props();
 
     if (!(value instanceof Date)) {
         value = new Date(value);
@@ -36,12 +33,7 @@
         return d.toLocaleDateString(locale || undefined, { month: "short" });
     });
 
-    /**
-     * changes the current date rendered
-     *
-     * @param {Date} date
-     */
-    function changeDay(date) {
+    function changeDay(date: Date) {
         rendered = new Date(
             date.getFullYear(),
             date.getMonth(),
@@ -51,12 +43,7 @@
         );
     }
 
-    /**
-     * Changes the current month
-     *
-     * @param {number} month
-     */
-    function changeMonth(month) {
+    function changeMonth(month: number) {
         rendered = new Date(
             currentYear,
             month,
@@ -66,12 +53,7 @@
         );
     }
 
-    /**
-     * Changes the current year
-     *
-     * @param {number} year
-     */
-    function changeYear(year) {
+    function changeYear(year: number) {
         rendered = new Date(
             year,
             currentMonth,
@@ -81,22 +63,14 @@
         );
     }
 
-    /**
-     * Change the current time
-     *
-     * @param {number} h - The hours
-     * @param {number} m - The minutes
-     */
-    function changeTime(h, m) {
+    function changeTime(h: number, m: number) {
         rendered = new Date(currentYear, currentMonth, selectedDay, h, m);
     }
 
     /**
      * Rejects any keyboard input that contains "-+eE,." characters.
-     *
-     * @param {KeyboardEvent} e
      */
-    function blockInvalid(e) {
+    function blockInvalid(e: KeyboardEvent) {
         if (["-", "+", "e", "E", ",", "."].includes(e.key)) {
             e.preventDefault();
         }
@@ -122,7 +96,7 @@
         <select
             id="date-picker-year"
             bind:value={currentYear}
-            onchange={(e) => changeYear(+e.target.value)}
+            onchange={(e) => changeYear(+(e.target as HTMLSelectElement).value)}
         >
             {#each years as year}
                 <option value={year}>{year}</option>
@@ -133,7 +107,8 @@
             name="month"
             id="date-picker-month"
             bind:value={currentMonth}
-            onchange={(e) => changeMonth(+e.target.value)}
+            onchange={(e) =>
+                changeMonth(+(e.target as HTMLSelectElement).value)}
         >
             {#each months as month, i}
                 <option value={i}>{month}</option>
@@ -164,9 +139,14 @@
             value={hours}
             onkeydown={blockInvalid}
             oninput={(e) => {
-                const hour = e.target.value % 24;
+                const hour = +(e.target as HTMLInputElement).value % 24;
                 if (hour >= 10) {
-                    queueMicrotask(() => e.target.nextElementSibling.focus());
+                    queueMicrotask(() =>
+                        (
+                            (e.target as HTMLInputElement)
+                                .nextElementSibling as HTMLElement
+                        ).focus(),
+                    );
                 }
                 changeTime(+hour, +minutes);
             }}
@@ -180,11 +160,13 @@
             value={minutes}
             onkeydown={blockInvalid}
             oninput={(e) => {
-                if (e.target.value < 60) {
-                    changeTime(+hours, +e.target.value);
+                if (+(e.target as HTMLInputElement).value < 60) {
+                    changeTime(+hours, +(e.target as HTMLInputElement).value);
                 } else {
-                    e.target.value = e.target.value.slice(0, 2);
-                    e.target.blur();
+                    (e.target as HTMLInputElement).value = (
+                        e.target as HTMLInputElement
+                    ).value.slice(0, 2);
+                    (e.target as HTMLInputElement).blur();
                 }
             }}
         />

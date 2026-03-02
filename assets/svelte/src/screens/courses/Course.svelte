@@ -1,63 +1,150 @@
 <script lang="ts">
-    import { setContext } from "svelte";
-    import TopicComponent from "$components/Topic.svelte";
+    import Topic from "$components/Topic.svelte";
     import DeleteModal from "$components/DeleteModal.svelte";
     import Icon from "$components/Icon.svelte";
     import EditModal from "$components/EditModal.svelte";
-    import type { Course } from "$lib/models/state/course-post.svelte.ts";
-    import type { CourseAPI } from "$lib/api/course-api.ts";
-    import { Randflake } from "$lib/utils/randflake.ts";
+    import { CourseService } from "$lib/models/service/course-service.svelte.ts";
+    import { setCourseService } from "$lib/utils/index.ts";
+    import { flip } from "svelte/animate";
     import type { TopicData } from "$types/course.js";
-    import { Topic } from "$lib/models/state/course-topic.svelte.ts";
 
-    let {
-        course,
-        api,
-    }: {
-        course: Course;
-        api: CourseAPI;
-    } = $props();
+    const service = new CourseService(LighterLMS.course);
+    setCourseService(service);
 
-    setContext("course", () => api);
+    let empty = $derived(!service.course.sortedTopics.length);
+    let list: HTMLOListElement;
 
-    let empty = $derived(!course.sortedTopics.length);
+    function makeDummyDragged(event: DragEvent) {
+        const el = document.createElement("div");
+        el.classList.add("placeholder");
+        el.innerHTML =
+            '<li draggable="true" class="lighter-course-module"><div class="module-wrap"><div class="head"><div></div><div class="title"><h3 class="module-title">New topic</h3></div></div></div></li>';
+        return el;
+    }
 
-    const addTopic = async () => {
-        const newTopic: TopicData = {
-            key: new Randflake().generate(),
-            title: "New topic",
-            sort_order: course.sortedTopics.length,
-            course: course.id,
-        };
-
-        const topic = course.addTopic(newTopic);
-
-        try {
-            const created = await api.createTopic(topic);
-            const optimistic = course.topics.findIndex(
-                (t) => t.key === created.key,
-            );
-
-            if (optimistic !== -1) {
-                course.topics[optimistic] = new Topic(created);
-            }
-        } catch {
-            course.removeTopic(topic.key);
-            // TODO: Toast failure.
+    function handleDragOver(e: DragEvent) {
+        if (!e.dataTransfer!.types.includes("application/x-lighterlms-topic")) {
+            return;
         }
-    };
+        e.preventDefault();
+
+        const dragged =
+            (list.querySelector(
+                'div:has(>[draggable="true"])',
+            ) as HTMLLIElement) ?? makeDummyDragged(e);
+
+        for (const topic of list.children) {
+            if (topic === dragged) continue;
+            const rect = topic.getBoundingClientRect();
+            const mid = rect.top + rect.height / 2;
+            if (mid >= e.clientY) {
+                if (topic === dragged) return;
+
+                if (
+                    topic === dragged ||
+                    topic.previousElementSibling === dragged
+                ) {
+                    return;
+                }
+
+                topic.insertAdjacentElement("beforebegin", dragged);
+                return;
+            }
+        }
+
+        dragged?.remove();
+        if (list.lastElementChild === dragged) return;
+
+        list.insertAdjacentElement("beforeend", dragged);
+    }
+
+    function handleDragLeave(e: DragEvent) {
+        if ((e.relatedTarget as HTMLElement)?.closest(".topics-wrap") ?? false)
+            return;
+        for (const topic of e.dataTransfer!.items) {
+            if (topic.type !== "application/x-lighterlms-topic") continue;
+            topic.getAsString((raw) => {
+                const data = JSON.parse(raw) as TopicData;
+                if (!data) return;
+
+                if (data.course !== service.course.id) {
+                    list.querySelector(
+                        '[data-lighter-key="' + data.key + '"]',
+                    )?.remove();
+                }
+            });
+        }
+        list.querySelector(".placeholder")?.remove();
+    }
+
+    function handleOnDrop(e: DragEvent) {
+        e.preventDefault();
+
+        const dropped = list.querySelector(
+            'div:has(>[draggable="true"]',
+        ) as HTMLElement;
+        let position: "before" | "after" = "after";
+        let sibling = dropped.previousElementSibling as HTMLElement;
+
+        if (!sibling) {
+            position = "before";
+            sibling = dropped.nextElementSibling as HTMLElement;
+        }
+
+        list.querySelector(".placeholder")?.remove();
+
+        for (const topic of e.dataTransfer!.items) {
+            if (topic.type !== "application/x-lighterlms-topic") continue;
+
+            topic.getAsString((raw) => {
+                const data = JSON.parse(raw) as TopicData;
+                if (!data) return;
+
+                if (
+                    e.dataTransfer!.effectAllowed === "copy" ||
+                    data.course !== service.course.id
+                ) {
+                    e.dataTransfer!.effectAllowed = "copy";
+                    service.insertTopic(
+                        data.title + " (copy)",
+                        sibling.dataset.lighterKey,
+                        position,
+                        data.lessons,
+                    );
+                } else {
+                    service.moveTopic(
+                        data.key,
+                        sibling.dataset.lighterKey,
+                        position,
+                    );
+                }
+            });
+        }
+    }
 </script>
 
 <div class={["lighter-topics-wrap", empty && "empty"]}>
     <div class="lighter-no-topics">
         <h3>This course has no topics yet.</h3>
-        <button type="button" class="lighter-btn" onclick={addTopic}>
+        <button
+            type="button"
+            class="lighter-btn"
+            onclick={() => service.createTopic("New Topic")}
+        >
             Add the first topic
         </button>
     </div>
-    <ol class="topics-wrap">
-        {#each course.topics as topic (topic.key)}
-            <TopicComponent {topic} i={1} />
+    <ol
+        bind:this={list}
+        class="topics-wrap"
+        ondragover={handleDragOver}
+        ondragleave={handleDragLeave}
+        ondrop={handleOnDrop}
+    >
+        {#each service.course.sortedTopics as topic (topic.key)}
+            <div data-lighter-key={topic.key} animate:flip>
+                <Topic {topic} />
+            </div>
         {/each}
     </ol>
 
@@ -65,11 +152,14 @@
         <button
             type="button"
             class="lighter-btn transparent"
-            onclick={addTopic}
+            onclick={() => service.createTopic("New Topic")}
         >
             <Icon name="plus" />
             Add topic
         </button>
+        <button type="button" onclick={() => service.shuffleTopics()}
+            >Shuffle</button
+        >
     </div>
     <DeleteModal />
     <EditModal />
