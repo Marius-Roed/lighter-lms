@@ -144,6 +144,14 @@ class Lesson_Post extends Post_Type {
 				)
 			);
 		}
+
+		register_rest_field(
+			$this->post_type,
+			'_lighter_meta',
+			array(
+				'get_callback' => fn( $post ) => $this->get_lesson_meta( (int) $post['id'] ),
+			)
+		);
 	}
 
 	/**
@@ -230,6 +238,12 @@ class Lesson_Post extends Post_Type {
 				'post'  => $post,
 			)
 		);
+	}
+
+	public function get_lesson_meta( \WP_Post|int $post ): object {
+		$post = get_post( $post );
+
+		return (object) array();
 	}
 
 	/**

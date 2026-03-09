@@ -18,6 +18,8 @@ use WP_Query;
  * @property string $connected_store
  * @property string $course_slug
  * @property string $lesson_post_type
+ * @property string $topics_table
+ * @property string $topic_lessons_table
  * @property int $machineId
  * @property string $path
  * @property string $url
@@ -41,31 +43,25 @@ class Config {
 	}
 
 	public function __construct() {
-
 		$admin_url        = 'lighter-lms';
-		$course_post_type = apply_filters( 'lighter_lms_course_post_type', 'lighter_courses' );
-		$lesson_post_type = apply_filters( 'lighter_lms_lesson_post_type', 'lighter_lessons' );
-
-		if ( ! str_starts_with( $course_post_type, 'lighter_' ) ) {
-			$course_post_type = 'lighter_' . $course_post_type;
-		}
-		if ( ! str_starts_with( $lesson_post_type, 'lighter_' ) ) {
-			$lesson_post_type = 'lighter_' . $lesson_post_type;
-		}
+		$course_post_type = 'lighter_courses';
+		$lesson_post_type = 'lighter_lessons';
 
 		$this->_settings = array(
-			'path'              => LIGHTER_LMS_PATH,
-			'url'               => LIGHTER_LMS_URL,
-			'version'           => LIGHTER_LMS_VERSION,
-			'course_post_type'  => $course_post_type,
-			'lesson_post_type'  => $lesson_post_type,
-			'machineId'         => apply_filters( 'lighterlms_use_machine_id', 0 ),
-			'post_types'        => array( $course_post_type, $lesson_post_type ),
-			'course_slug'       => 'kurser', // TODO: Make editable
-			'standard_template' => LIGHTER_LMS_PATH . '/includes/templates/courses/standard.php',
-			'admin_page_path'   => 'admin.php?page=' . $admin_url,
-			'admin_url'         => $admin_url,
-			'development'       => $this->detect_dev(),
+			'path'                => LIGHTER_LMS_PATH,
+			'url'                 => LIGHTER_LMS_URL,
+			'version'             => LIGHTER_LMS_VERSION,
+			'course_post_type'    => $course_post_type,
+			'lesson_post_type'    => $lesson_post_type,
+			'topics_table'        => 'lighter_lms_topics',
+			'topic_lessons_table' => 'lighter_lms_topic_lessons',
+			'machineId'           => apply_filters( 'lighterlms_use_machine_id', 0 ),
+			'post_types'          => array( $course_post_type, $lesson_post_type ),
+			'course_slug'         => 'kurser', // TODO: Make editable
+			'standard_template'   => LIGHTER_LMS_PATH . '/includes/templates/courses/standard.php',
+			'admin_page_path'     => 'admin.php?page=' . $admin_url,
+			'admin_url'           => $admin_url,
+			'development'         => $this->detect_dev(),
 		);
 	}
 

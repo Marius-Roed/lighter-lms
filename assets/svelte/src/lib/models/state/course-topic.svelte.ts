@@ -35,6 +35,15 @@ export class Topic {
         this.isExpanded = !this.isExpanded;
     }
 
+    getHiddenData(): object {
+        return {
+            key: this.key,
+            title: this.title,
+            sort_order: this.sortOrder,
+            course: this.course,
+        };
+    }
+
     toRestData(): TopicData {
         return {
             key: this.key,

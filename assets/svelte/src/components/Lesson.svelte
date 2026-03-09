@@ -1,12 +1,14 @@
 <script lang="ts">
     import type { Lesson } from "$lib/models/state/course-lesson.svelte.ts";
     import settings from "$lib/settings.svelte";
+    import { hiddenInput } from "$lib/snippets.svelte";
     import { getCourseService, POSTSTATUS } from "$lib/utils/index.ts";
-    import ActionMenu from "./ActionMenu.svelte";
+    import type { SvelteComponent } from "svelte";
+    import ActionMenu from "./action-menu/ActionMenu.svelte";
     import Editable from "./Editable.svelte";
     import EditLesson from "./EditLesson.svelte";
     import Icon from "./Icon.svelte";
-    import Submenu from "./Submenu.svelte";
+    import Submenu from "./action-menu/Submenu.svelte";
 
     interface Props {
         lesson: Lesson;
@@ -18,7 +20,7 @@
 
     const warn = $derived(lesson.status == "publish" ? "" : "warn");
 
-    let actionMenu;
+    let actionMenu: SvelteComponent;
 
     function editLesson() {
         const editContainer = this.closest(".actions");
@@ -28,43 +30,10 @@
 
 <div class="lighter-lesson">
     <div class="lesson-data hidden">
-        <input
-            type="hidden"
-            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][title]`}
-            value={lesson.title}
-        />
-        <input
-            type="hidden"
-            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][sortOrder]`}
-            value={lesson.sortOrder}
-        />
-        <input
-            type="hidden"
-            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][id]`}
-            value={lesson.id}
-        />
-        <input
-            type="hidden"
-            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][key]`}
-            value={lesson.key}
-        />
-        <input
-            type="hidden"
-            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][postStatus]`}
-            value={lesson.status}
-        />
-        <input
-            type="hidden"
-            name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][editStatus]`}
-            value={lesson.status}
-        />
-        {#if !lesson.id}
-            <input
-                type="hidden"
-                name={`topics[${lesson.parentKey}][lessons][${lesson.sortOrder}][new]`}
-                value="true"
-            />
-        {/if}
+        {@render hiddenInput(
+            `topics[${lesson.parentKey}][lessons][${lesson.sortOrder}]`,
+            lesson.getHiddenData(),
+        )}
     </div>
     <div class="lesson-title">
         {#if settings.showIcons}
@@ -80,8 +49,16 @@
                     <Icon name="threeDots" className={warn} />
                 {/snippet}
                 <button type="button" onclick={editLesson}>Edit</button>
-                <button type="button" onclick={moveUp}>Move up</button>
-                <button type="button" onclick={moveDown}>Move down</button>
+                <button
+                    type="button"
+                    onclick={() => service.moveLessonDirection(lesson, "up")}
+                    >Move up</button
+                >
+                <button
+                    type="button"
+                    onclick={() => service.moveLessonDirection(lesson, "down")}
+                    >Move down</button
+                >
                 <button
                     type="button"
                     onclick={() => confirmDeleteLesson(lesson)}>Delete</button
@@ -100,7 +77,10 @@
                     {#each POSTSTATUS as key}
                         <button
                             type="button"
-                            class={{ active: lesson.status === key }}
+                            class={{
+                                active: lesson.status === key,
+                                hidden: key === "auto-draft",
+                            }}
                             onclick={() =>
                                 service.setLessonStatus(lesson.key, key)}
                             >{key}</button

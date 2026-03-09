@@ -4,8 +4,7 @@ namespace LighterLMS\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-use LighterLMS\Topics;
-use LighterLMS\Lessons;
+use LighterLMS\DB\Lighter_LMS_Schema;
 
 class Activation {
 
@@ -17,13 +16,9 @@ class Activation {
 	}
 
 	public static function on_activation(): void {
-		$topics  = new Topics();
-		$lessons = new Lessons();
-
-		$topics->install();
-		$lessons->install();
-
-		flush_rewrite_rules();
+		global $wpdb;
+		$schema = new Lighter_LMS_Schema( $wpdb );
+		$schema->maybe_upgrade();
 	}
 
 	public static function on_deactivation(): void {

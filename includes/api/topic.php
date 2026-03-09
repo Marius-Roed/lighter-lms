@@ -6,6 +6,7 @@ defined( 'ABSPATH' ) || exit;
 
 use LighterLMS\Lessons;
 use LighterLMS\Topics;
+use LighterLMS\Randflake;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
@@ -50,10 +51,55 @@ class Topic extends Base_Controller {
 						'id'  => array(
 							'validate_callback' => fn( $v ) => is_numeric( $v ),
 							'sanitize_callback' => 'absint',
+							'required'          => true,
 						),
 						'key' => array(
 							'type'              => 'string',
 							'sanitize_callback' => 'sanitize_text_field',
+							'required'          => true,
+							'type'              => 'string',
+						),
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/course/(?P<id>\d+)/topic-move',
+			array(
+				array(
+					'methods'             => 'PUT',
+					'permission_callback' => array( $this, 'can_edit' ),
+					'args'                => array(
+						'id'       => array(
+							'validate_callback' => fn( $v ) => is_numeric( $v ),
+							'sanitize_callback' => 'absint',
+							'required'          => true,
+							'description'       => 'The ID of the course post',
+							'type'              => 'integer',
+						),
+						'to'       => array(
+							'validate_callback' => fn( $v ) => Randflake::validate( $v ),
+							'sanitize_callback' => array( Randflake::class, 'sanitize' ),
+							'required'          => true,
+							'description'       => 'The key of the topic to move to.',
+							'type'              => 'string',
+						),
+						'from'     => array(
+							'validate_callback' => fn( $v ) => Randflake::validate( $v ),
+							'sanitize_callback' => array( Randflake::class, 'sanitize' ),
+							'required'          => true,
+							'description'       => 'The key of the topic to move.',
+							'type'              => 'string',
+						),
+						'position' => array(
+							'validate_callback' => fn( $v ) => $v === 'after' ?: $v === 'before',
+							'sanitize_callback' => 'sanitize_text_field',
+							'required'          => true,
+							'description'       => 'The relative position of the moved topic.',
+							'type'              => 'string',
+							'enum'              => array( 'after', 'before' ),
 						),
 					),
 				),

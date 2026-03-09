@@ -1,3 +1,7 @@
+:root {
+    interpolate-size: allow-keywords;
+}
+
 @layer lighter-reset {
     :where(#lighter-lms-mount, .lighter .wrap) {
         padding: 0 20px;
@@ -233,6 +237,13 @@
         border: 1px solid #D2C8E1;
     }
 
+    .not-found-wrapper {
+        display: grid;
+        align-items: center;
+        justify-content: center;
+        min-height: 10rem;
+    }
+
     .lighter.dia-editor {
         --admin-bar: 0px;
     }
@@ -370,6 +381,7 @@
 
     [popover]:popover-open {
         display: inline-flex;
+        position-anchor: var(--anchor);
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -1970,12 +1982,6 @@ table.form-table.lighter-user-courses {
     background: #f0f0f1;
     border: 8px solid #fff;
     border-radius: 1em;
-
-    .lighter-btn.transparent {
-        background:
-            linear-gradient(#f0f0f1, #f0f0f1) padding-box,
-            linear-gradient(135deg, #9d50bb 0%, rebeccapurple 55%, #9d50bb 100%) border-box;
-    }
 }
 
 #coursecontentdiv .lighter-topics-wrap {
@@ -2010,86 +2016,145 @@ table.form-table.lighter-user-courses {
     .lighter-course-module {
         margin: 0;
         position: relative;
-
-        .module-wrap {
-            width: 98%;
-        }
-
-        .head {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 1em;
-            background: #fff;
-            width: 100%;
-            min-height: 75px;
-            padding: 1.5em;
-            border-radius: 4px 4px 0 0;
-            z-index: 5;
-            transition: width 250ms ease-out;
-
-            .title {
-                flex-grow: 1;
-            }
-
-            .editable-text .icon-wrapper {
-                opacity: 0;
-
-                &:focus {
-                    opacity: 1;
-                }
-            }
-
-            &:hover .editable-text .icon-wrapper {
-                opacity: 1;
-            }
-
-            .actions {
-                display: flex;
-                gap: 0.875em;
-            }
-        }
-
-        .editable-text {
-            margin: 0;
-            display: inline-flex;
-            max-width: 100%;
-            min-width: 120px;
-            gap: 2em;
-        }
-
-        .expand-module {
-            transition: 0.2s ease;
-            transform-origin: center;
-        }
-
-        .lighter-lesson-wrap {
-            border-radius: 0 0 4px 4px;
-            overflow: hidden;
-            width: 100%;
-            transition: width 250ms ease-out;
-        }
+        user-select: none;
 
         .delete-topic {
             position: absolute;
-            right: -1.3em;
+            right: -0.75rem;
             top: 2.4em;
             z-index: 1;
             background: transparent;
             border: none;
-            color: #333;
+            cursor: pointer;
+            color: oklch(0.6808 0.2525 29.65);
+            anchor-name: var(--anchor);
 
-            &:hover {
-                cursor: pointer;
-                color: oklch(0.6808 0.2525 29.65);
+            svg {
+                overflow: visible;
             }
+
+            .trash-lid {
+                transform-origin: 75% 40%;
+                rotate: 0deg;
+                transition: rotate .25s ease-out;
+            }
+
+            &.pressed .trash-lid {
+                rotate: 90deg;
+            }
+
+        }
+    }
+}
+
+.delete-modal {
+    inset: unset;
+    bottom: calc(anchor(top));
+    right: calc(anchor(right) + 0.85rem);
+    height: 200px;
+    width: 350px;
+    max-width: 350px;
+
+    position-try: normal flip-block;
+
+    transition-property: height, width, inset;
+    transition-duration: .2s;
+    transition-timing-function: ease-out;
+}
+
+@starting-style {
+    .delete-modal {
+        border-radius: 50%;
+        width: .5rem;
+        height: .5rem;
+        right: anchor(right);
+        bottom: anchor(bottom);
+    }
+}
+
+#coursecontentdiv .module-wrap,
+#dummy-topic {
+    width: calc(100% - 1.5rem);
+    transition: width 180ms 70ms ease-in-out;
+
+    .head {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 1em;
+        background: #fff;
+        width: 100%;
+        min-height: 75px;
+        padding: 1.5em;
+        border-radius: 4px 4px 0 0;
+        z-index: 5;
+        transition: width 250ms ease-out;
+
+        .drag-handle {
+            cursor: grab;
+        }
+
+        .title {
+            flex-grow: 1;
+        }
+
+        .editable-text .icon-wrapper {
+            opacity: 0;
+            transition: opacity 120ms ease-out;
+
+            &:focus {
+                opacity: 1;
+            }
+        }
+
+        &:hover .editable-text .icon-wrapper {
+            opacity: 1;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.875em;
         }
     }
 
+    .editable-text {
+        margin: 0;
+        display: inline-flex;
+        max-width: 100%;
+        min-width: 120px;
+        gap: 2em;
+    }
 
-    .module-wrap:not(:has(.lighter-lesson-wrap.expanded)) .head {
+    .expand-module {
+        transition: 0.2s ease;
+        transform-origin: center;
+    }
+
+    .lighter-lesson-wrap {
+        overflow: hidden;
+        width: 100%;
+        height: 0;
+        visibility: hidden;
+        background-color: #FFFFFF;
+        border-radius: 0 0 4px 4px;
+        transition: width 250ms ease-out, height 180ms ease-out, visibility 180ms ease-out;
+
+        &.expanded {
+            height: calc-size(auto, size);
+            visibility: visible;
+        }
+    }
+
+    &:not(:has(.lighter-lesson-wrap.expanded)) .head {
         border-radius: 4px;
     }
+}
+
+#dummy-topic {
+    width: 100%;
+    cursor: grabbing;
+    position: absolute;
+    transform: translateX(-9999px)
 }
 
 #coursecontentdiv .lighter-lesson {

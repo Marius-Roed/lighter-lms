@@ -33,15 +33,30 @@ export class Lesson {
         this.date = data.date;
         this.author = data.author;
         this.parentKey = data.parent_key;
-        this.title = data.title.rendered;
+        this.title = data.title.raw ?? data.title.rendered;
         this.sortOrder = data.sort_order;
         this.status = data.status;
         this.lessonType = data.lesson_type;
         this.modified = data.modified;
     }
 
-    setStatus(v: LessonData['status']) {
+    setStatus(v: LessonData['status']): void {
         this.status = v;
+    }
+
+    getHiddenData(): object {
+        return {
+            id: this.id,
+            title: this.title,
+            author: this.author,
+            date: this.date,
+            key: this.key,
+            slug: this.slug,
+            lesson_type: this.lessonType,
+            lighter_meta: {
+                [this.parentKey]: this.sortOrder,
+            },
+        };
     }
 
     toRestData(): LessonData {

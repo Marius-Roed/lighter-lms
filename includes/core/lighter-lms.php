@@ -5,32 +5,33 @@ namespace LighterLMS\Core;
 defined( 'ABSPATH' ) || exit;
 
 use LighterLMS\Admin\Admin;
-use LighterLMS\API\API;
 use LighterLMS\Assets;
 use LighterLMS\Admin\Settings;
+use LighterLMS\API\REST_API;
 use LighterLMS\Course_Post;
+use LighterLMS\DB;
 use LighterLMS\Lesson_Post;
 use LighterLMS\Lessons;
 use LighterLMS\WooCommerce\WC;
 
-class Lighter_LMS {
+final class Lighter_LMS {
 
 	private static ?self $_instance = null;
 
 	/**
 	 * Course class object
 	 */
-	private Course_Post $_course;
+	public readonly Course_Post $course;
 
 	/**
 	 * Lesson class object
 	 */
-	private Lesson_Post $_lesson;
+	public readonly Lesson_Post $lesson;
 
 	/**
 	 * Admin class object
 	 */
-	public Admin $admin;
+	public readonly Admin $admin;
 
 	/**
 	 * All registered assets
@@ -40,7 +41,12 @@ class Lighter_LMS {
 	/**
 	 * Api class object
 	 */
-	private $_api;
+	public readonly REST_API $api;
+
+	/**
+	 * The database instance
+	 */
+	public readonly DB\Base_Controller $db;
 
 	/**
 	 * Plugin slug
@@ -73,13 +79,13 @@ class Lighter_LMS {
 		add_action( 'init', array( $this, 'init_update_checker' ), 5 );
 		add_action( 'admin_post_save_lighter_lms_settings', array( Settings::class, 'save' ) );
 
-		$this->_course = new Course_Post();
-		$this->_lesson = new Lesson_Post();
+		$this->course = new Course_Post();
+		$this->lesson = new Lesson_Post();
 		if ( is_admin() ) {
 			$this->admin = new Admin();
 		}
 		$this->_assets = new Assets();
-		$this->_api    = new API();
+		$this->api     = new REST_API();
 
 		\LighterLMS\API\REST_API::init();
 

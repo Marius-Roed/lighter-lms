@@ -29,6 +29,22 @@ export class CourseService {
         });
     }
 
+    moveLessonDirection(lesson: Lesson | string, direction: "up" | "down"): void {
+        if (!this.course) return;
+
+        if (typeof lesson === "string") {
+            lesson = this.course.getLessonByKey(lesson);
+
+            if (!lesson) return;
+        }
+
+        const move = direction === "up" ? 1 : -1;
+        const idx = lesson.sortOrder;
+        const newIdx = idx + move;
+
+        this.moveLesson(lesson.parentKey, lesson.parentKey, idx, newIdx);
+    }
+
     moveLesson(fromTopicKey: string, toTopicKey: string, fromIndex: number, toIndex: number) {
         if (!this.course) return;
 
@@ -78,7 +94,7 @@ export class CourseService {
         lesson.setStatus(value);
     }
 
-    createLesson(topicKey: string, data: { title: string, lesson_type: string }): void {
+    createLesson(topicKey: string, data: { title: string, lesson_type?: string }): void {
         const topic = this.course.topics.find((t) => t.key === topicKey);
         if (!topic) return;
 
@@ -100,7 +116,7 @@ export class CourseService {
             sort_order: topic.lessons.length,
             status: "auto-draft" as const,
             type: "lesson" as "lesson",
-            lesson_type: data.lesson_type as "text",
+            lesson_type: data.lesson_type ?? "text",
             meta: {},
         };
 

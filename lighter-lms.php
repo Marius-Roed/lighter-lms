@@ -30,4 +30,8 @@ require_once LIGHTER_LMS_PATH . 'includes/autoloader.php';
 
 \LighterLMS\Core\Activation::register_hooks();
 
-\LighterLMS\Core\Lighter_LMS::get_instance();
+if ( class_exists( 'Lighter' ) ) {
+	lighter()->register( 'lms', \LighterLMS\Core\Lighter_LMS::get_instance() );
+} else {
+	\LighterLMS\Core\Lighter_LMS::get_instance();
+}

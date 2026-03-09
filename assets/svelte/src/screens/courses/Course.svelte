@@ -157,10 +157,31 @@
             <Icon name="plus" />
             Add topic
         </button>
-        <button type="button" onclick={() => service.shuffleTopics()}
-            >Shuffle</button
-        >
     </div>
     <DeleteModal />
     <EditModal />
+
+    <div id="dummy-topic">
+        <div class="head" tabindex="0" role="button">
+            <div class="drag-handle">
+                <Icon name="sixDots" />
+            </div>
+            <div class="title">
+                <h3 id="dummy-title" class="editable-text module-title">
+                    This is the last one
+                </h3>
+            </div>
+            <div class="lessons-amount">
+                <p id="dummy-lessons">Lessons (0)</p>
+            </div>
+            <div class="actions">
+                <div class="add">
+                    <Icon name="plus" />
+                </div>
+                <div class="expand">
+                    <Icon name="chevron" />
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

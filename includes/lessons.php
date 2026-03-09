@@ -4,7 +4,8 @@ namespace LighterLMS;
 
 defined( 'ABSPATH' ) || exit;
 
-use LighterLMS\Core\Lighter_LMS;
+define( 'LIGHTER_LESSONS_DB_VERSION', '2' );
+
 use wpdb;
 
 class Lessons {
@@ -49,6 +50,22 @@ class Lessons {
 
 		require_once ABSPATH . '/wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
+	}
+
+	public function maybe_update_table() {
+		$installed_ver = get_option( 'lighter_lessons_db_version', 0 );
+
+		if ( version_compare( $installed_ver, LIGHTER_LESSONS_DB_VERSION, '>=' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		if ( version_compare( $installed_ver, '2', '<' ) ) {
+			$wpdb->query( "ALTER TABLE {$this->table} ADD COLUMN sort_order bigint(20) unsigned NOT NULL DEFAULT 0" );
+		}
+
+		update_option( 'lighter_lessons_db_version', LIGHTER_LESSONS_DB_VERSION, false );
 	}
 
 	/**

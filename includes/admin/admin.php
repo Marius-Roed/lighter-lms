@@ -8,7 +8,7 @@ use LighterLMS\Lessons;
 use LighterLMS\User_Access;
 use WP_User;
 
-class Admin {
+final class Admin {
 
 	public function __construct() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_app' ) );

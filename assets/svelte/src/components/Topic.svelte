@@ -5,6 +5,8 @@
     import Editable from "./Editable.svelte";
     import type { Topic } from "$lib/models/state/course-topic.svelte.ts";
     import { getCourseService } from "$lib/utils/index.ts";
+    import { hiddenInput } from "$lib/snippets.svelte";
+    import ProgressBtn from "./ui/ProgressBtn.svelte";
 
     interface Props {
         topic: Topic;
@@ -16,10 +18,12 @@
 
     let canDrag = $state(false);
 
+    let isPopoverOpen = $state(false);
+
     function handleHeadClick(e: MouseEvent) {
         if (
             (e.target as HTMLElement).closest(
-                ".drag-handle, button, input, .editable-text",
+                ".drag-handle, button:not(.expand-module), input, .editable-text",
             )
         )
             return;
@@ -38,6 +42,31 @@
     function handleDragStart(e: DragEvent) {
         if (!canDrag) {
             return e.preventDefault();
+        }
+
+        const dragging = (e.target as HTMLElement).closest(
+            ".lighter-course-module",
+        );
+        const dummy = document.getElementById("dummy-topic");
+
+        if (dragging) {
+            const rect = dragging.getBoundingClientRect();
+            const xOffset = e.clientX - rect.left;
+            const yOffset = e.clientY - rect.top;
+
+            const title = dummy.querySelector("#dummy-title");
+            if (title)
+                title.textContent =
+                    (dragging.querySelector(".editable-text") as HTMLElement)
+                        ?.innerText ?? "Topic";
+
+            const lessons = dummy.querySelector("#dummy-lessons");
+            if (lessons)
+                lessons.textContent =
+                    (dragging.querySelector(".lessons-amount p") as HTMLElement)
+                        ?.innerText ?? "Lessons (0)";
+
+            e.dataTransfer!.setDragImage(dummy, xOffset, yOffset);
         }
 
         e.dataTransfer!.effectAllowed = "copyMove";
@@ -60,27 +89,14 @@
 <li
     class="lighter-course-module"
     {id}
+    style:--anchor={`--${topic.key}`}
     draggable={canDrag}
     ondragstart={handleDragStart}
     ondragend={handleDragEnd}
 >
     <div class="module-wrap" aria-expanded={topic.isExpanded}>
         <div class="module-data hidden">
-            <input
-                type="hidden"
-                name={`topics[${topic.key}][key]`}
-                value={topic.key}
-            />
-            <input
-                type="hidden"
-                name={`topics[${topic.key}][title]`}
-                value={topic.title}
-            />
-            <input
-                type="hidden"
-                name={`topics[${topic.key}][sortOrder]`}
-                value={topic.sortOrder}
-            />
+            {@render hiddenInput(`topics[${topic.key}]`, topic.getHiddenData())}
         </div>
         <div
             class="head"
@@ -143,43 +159,56 @@
                 </div>
             </div>
         </div>
-        <button
-            type="button"
-            class="delete-topic"
-            onclick={() => confirmDeleteTopic(topic)}
-            ><Icon
-                name="trash"
-                className="delete"
-                size="1.5em"
-                fill={true}
-            /></button
-        >
         <div class={["lighter-lesson-wrap", topic.isExpanded && "expanded"]}>
             {#each topic.sortedLessons as lesson (lesson.id)}
                 <Lesson {lesson} />
+            {:else}
+                <div class="not-found-wrapper lesson">
+                    <div class="not-found">
+                        <p>No lessons found</p>
+                        <button
+                            type="button"
+                            class="lighter-btn"
+                            onclick={() =>
+                                service.createLesson(topic.key, {
+                                    title: "New Lesson",
+                                })}>Create the first lesson</button
+                        >
+                    </div>
+                </div>
             {/each}
+        </div>
+    </div>
+    <button
+        type="button"
+        class="delete-topic"
+        class:pressed={isPopoverOpen}
+        popovertarget={`delete-${topic.key}`}
+        popovertargetaction="show"
+    >
+        <Icon name="trash" size="1.5em" fill={true} />
+    </button>
+    <div
+        id={`delete-${topic.key}`}
+        class="delete-modal"
+        ontoggle={(e) => {
+            isPopoverOpen = e.newState === "open";
+        }}
+        popover
+    >
+        <p>Are you sure you want to delete <b>{topic.title}</b>?</p>
+        <p><strong>This action cannot be undone</strong></p>
+        <div class="flex row">
+            <button type="button" class="lighter-btn transparent">Cancel</button
+            >
+            <ProgressBtn onhold={() => service.deleteTopic(topic.key)}
+                >Confirm</ProgressBtn
+            >
         </div>
     </div>
 </li>
 
 <style>
-    .drag-handle {
-        display: flex;
-        align-items: center;
-
-        &:hover {
-            cursor: grab;
-        }
-    }
-
-    .lighter-lesson-wrap {
-        display: none;
-
-        &.expanded {
-            display: block;
-        }
-    }
-
     .module-wrap:has(.expanded) .actions .expand-module {
         transform: rotate(180deg);
     }
