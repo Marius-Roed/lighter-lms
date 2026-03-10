@@ -12,9 +12,10 @@ final class Admin {
 
 	public function __construct() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_app' ) );
+		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_action( 'admin_menu', array( $this, 'admin_menu' ), 9 );
 		add_action( 'current_screen', array( $this, 'current_screen' ) );
-		add_action( 'admin_init', array( $this, 'admin_init' ) );
+		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
 		add_action( 'admin_post_lighter_complete_lesson', array( $this, 'complete_lesson' ) );
 		add_action( 'admin_post_nopriv_lighter_complete_lesson', array( $this, 'complete_lesson' ) );
 		add_action( 'edit_user_profile', array( $this, 'user_access' ), 5 );
@@ -99,6 +100,71 @@ final class Admin {
 			10,
 			2
 		);
+	}
+
+	public function admin_notices() {
+		if ( ! current_user_can( 'manage_option' ) ) {
+			return;
+		}
+
+		$status = lighter()->lms->db->schema->get_status();
+
+		if ( ! empty( $status ) && ( $status['status'] ?? '' ) === 'failed' ) {
+			$this->render_migration_error_notice( $status );
+			return;
+		}
+
+		$notice = lighter()->lms->db->schema->get_notice();
+
+		if ( ! empty( $notice ) ) {
+			$this->render_migration_notice( $notice );
+			lighter()->lms->db->schema->delete_notice();
+		}
+	}
+
+	public function render_migration_notice( mixed $obj ): void {
+		?>
+		<div class="notice lighter-notice notice-success is-dimissible">
+			<p><?php echo esc_html( $obj['message'] ); ?></p>
+		</div>
+		<?php
+	}
+
+	public function render_migration_error_notice( mixed $obj ): void {
+		$retry_url = wp_nonce_url(
+			admin_url( 'admin-post.php?action=lighter_lms_retry_schema_v2_mirgation' ),
+			'lighter_lms_retry_schema_v2_migration'
+		);
+
+		echo '<div class="notice lighter-notice notice-error">';
+
+		echo '<p><strong>' .
+			esc_html__( 'Lighter LMS database update failure', 'lighterlms' ) .
+		'</strong></p>';
+
+		if ( ! empty( $obj['message'] ) ) {
+			echo '<p>' . esc_html( $obj['message'] ) . '</p>';
+		}
+
+		if ( ! empty( $obj['failed_step'] ) ) {
+			echo '<p>' . esc_html(
+				sprintf(
+				/** translaters: %s: migration step name */
+					__( 'Failed step: %s', 'lighterlms' ),
+					$obj['failed_step']
+				)
+			) . '</p>';
+		}
+
+		if ( ! empty( $obj['last_attempt'] ) ) {
+			echo '<p>' . esc_html(
+				sprintf(
+				/** translators: %s: datetime */
+					__( 'Last attempt: $%s', 'lighterlms' ),
+					$obj['last_attempt']
+				)
+			) . '</p>';
+		}
 	}
 
 	public function app(): void {

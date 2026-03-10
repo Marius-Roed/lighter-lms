@@ -10,6 +10,7 @@ use LighterLMS\Admin\Settings;
 use LighterLMS\API\REST_API;
 use LighterLMS\Course_Post;
 use LighterLMS\DB;
+use LighterLMS\DB\Lighter_LMS_Schema;
 use LighterLMS\Lesson_Post;
 use LighterLMS\Lessons;
 use LighterLMS\WooCommerce\WC;
@@ -74,6 +75,8 @@ final class Lighter_LMS {
 	private function __construct() {
 		$this->includes();
 
+		add_action( 'upgrade_process_complete', array( $this, 'maybe_update_schema' ), 10, 2 );
+
 		do_action( 'lighter_lms_before_load' );
 
 		add_action( 'init', array( $this, 'init_update_checker' ), 5 );
@@ -85,9 +88,7 @@ final class Lighter_LMS {
 			$this->admin = new Admin();
 		}
 		$this->_assets = new Assets();
-		$this->api     = new REST_API();
-
-		\LighterLMS\API\REST_API::init();
+		$this->api     = REST_API::init();
 
 		add_action(
 			'woocommerce_init',
@@ -107,6 +108,26 @@ final class Lighter_LMS {
 	 */
 	public function includes(): void {
 		include LIGHTER_LMS_PATH . 'includes/lighter-lms-functions.php';
+	}
+
+	public function maybe_update_schema( $upgrader, $hook_extra ): void {
+		global $wpdb;
+
+		if ( empty( $hook_extra['action'] ) || $hook_extra['action'] !== 'update' ) {
+			return;
+		}
+		if ( empty( $hook_extra['type'] ) || $hook_extra['type'] !== 'plugin' ) {
+			return;
+		}
+		if ( empty( $hook_extra['plugins'] ) || ! is_array( $hook_extra['plugins'] ) ) {
+			return;
+		}
+		if ( ! in_array( plugin_basename( LIGHTER_LMS__FILE__ ), $hook_extra['plugins'], true ) ) {
+			return;
+		}
+
+		$schema = new Lighter_LMS_Schema( $wpdb );
+		$schema->maybe_upgrade();
 	}
 
 	public function init_update_checker(): void {
