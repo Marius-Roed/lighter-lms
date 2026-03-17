@@ -4,6 +4,8 @@ namespace LighterLMS;
 
 defined( 'ABSPATH' ) || exit;
 
+use LighterLMS\DB\Topics_Controller;
+
 /**
  * @extends Post_Type<mixed, mixed>
  */
@@ -12,7 +14,7 @@ class Course_Post extends Post_Type {
 	public function __construct() {
 		parent::__construct( lighter_lms()->course_post_type );
 
-		add_action( 'admin_post_add_topic', array( $this, 'add_topic' ) );
+		add_action( 'admin_post_lighter_lms_add_topic', array( $this, 'add_topic' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'scripts' ) );
 		add_action( 'template_redirect', array( $this, 'course_access' ) );
 
@@ -91,19 +93,18 @@ class Course_Post extends Post_Type {
 		}
 
 		if ( isset( $_POST['topics'] ) ) {
-			$topic_db = new Topics();
 			foreach ( $_POST['topics'] as $topic ) {
 				$data = array(
 					'post_id'    => $post_id,
 					'title'      => $topic['title'],
 					'sort_order' => $topic['sortOrder'],
 				);
-				$topic_db->update( $topic['key'], $data );
+				lighter()->lms->db->topics->update( $topic['key'], $data );
 
 				if ( isset( $topic['lessons'] ) ) {
 					foreach ( $topic['lessons'] as $lesson ) {
 						if ( $lesson['editStatus'] != 'clean' ) {
-							Lesson_Post::save_from_course( $lesson, $post_id, $topic, $topic_db );
+							Lesson_Post::save_from_course( $lesson, $post_id, $topic );
 						}
 					}
 				}
@@ -341,11 +342,9 @@ class Course_Post extends Post_Type {
 	 * Add a new topic via. form submission.
 	 */
 	public function add_topic(): void {
-		$post_id = (int) $_POST['post_ID'];
-		$sort    = (int) $_POST['topics_length'];
+		$course_id = (int) $_POST['post_ID'];
 
-		$topics_db = new Topics();
-		$topics_db->create( $post_id, null, 'New topic', $sort + 1 );
+		lighter()->lms->topic->create( $course_id, 'New topic' );
 
 		wp_redirect( wp_get_referer() );
 		exit;
@@ -366,11 +365,22 @@ class Course_Post extends Post_Type {
 	protected static function _generate_object(): array {
 		$post = get_post();
 
-		$topics_db = new Topics();
-		$topics    = $topics_db->get_by_course( $post->ID );
+		$topics = lighter()->lms->course->get_topics( $post->ID );
 
 		if ( ! empty( $topics ) ) {
-			$topics = array_map( fn( $t ) => $topics_db->normalise_for_rest( $t, true ), $topics );
+			$topics = array_map(
+				fn( $t ) => array(
+					'key'       => $t->topic_key,
+					'title'     => $t->title,
+					'course'    => $t->course_id,
+					'sortOrder' => (int) $t->sort_order,
+					'lessons'   => array_map(
+						fn( $l ) => lighter()->lms->lesson->normalise_for_rest( $l ),
+						lighter()->lms->topic->get_lessons( $t->ID )
+					),
+				),
+				$topics
+			);
 		}
 
 		return array(

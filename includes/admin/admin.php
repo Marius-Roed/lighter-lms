@@ -103,7 +103,7 @@ final class Admin {
 	}
 
 	public function admin_notices() {
-		if ( ! current_user_can( 'manage_option' ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
 		}
 
@@ -160,11 +160,20 @@ final class Admin {
 			echo '<p>' . esc_html(
 				sprintf(
 				/** translators: %s: datetime */
-					__( 'Last attempt: $%s', 'lighterlms' ),
+					__( 'Last attempt: %s', 'lighterlms' ),
 					$obj['last_attempt']
 				)
 			) . '</p>';
 		}
+
+		?>
+		<p>
+			<a href="<?php esc_url( $retry_url ); ?>" class="button button-primary">
+				<?php echo esc_html__( 'Retry migration', 'lighterlms' ); ?>
+			</a>
+		</p>
+		<?php
+		echo '</div>';
 	}
 
 	public function app(): void {

@@ -4,10 +4,8 @@ namespace LighterLMS\Core;
 
 defined( 'ABSPATH' ) || exit;
 
-use LighterLMS\Lessons;
 use LighterLMS\Third_Party\Builders;
 use LighterLMS\Third_Party\Stores;
-use LighterLMS\Topics;
 use WP_Query;
 
 /**
@@ -103,20 +101,17 @@ class Config {
 			return $courses;
 		}
 
-		$topics_db = new Topics();
-
 		while ( $query->have_posts() ) {
 			$query->the_post();
 			global $post;
 
-			$topics = $topics_db->get_by_course( $post->ID );
+			$topics = lighter()->lms->topic->get_by_course( $post->ID );
 			$topics = array_map(
 				function ( $t ) {
-					$lessons_db = new Lessons();
-					$lessons    = $lessons_db->get_lessons( array( 'topic' => $t->ID ) );
+					$lessons = lighter()->lms->topic->get_lessons( $t->ID );
 					return array(
 						'key'        => $t->topic_key,
-						'post_id'    => $t->post_id,
+						'post_id'    => $t->course_id,
 						'title'      => $t->title,
 						'sort_order' => $t->sort_order,
 						'lessons'    => $lessons,

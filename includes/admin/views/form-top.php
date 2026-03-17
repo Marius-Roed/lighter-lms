@@ -17,19 +17,7 @@ if ( 'publish' !== $post_status ) {
 }
 
 if ( $post_type == lighter_lms()->lesson_post_type ) {
-
-	$lessons_db = new Lessons();
-
-	// add_filter('posts_join', [$lessons_db, 'db_join'], 10, 2);
-
-	$parent = get_posts(
-		array(
-			'post_type'        => lighter_lms()->course_post_type,
-			'numberposts'      => 1,
-			'lesson_parent'    => $post->ID,
-			'suppress_filters' => false,
-		)
-	) ?: 0;
+	$parent = lighter()->lms->lesson->get_course( $post->ID );
 
 	$post_link = $parent ? esc_url( get_permalink( $parent[0]->ID ) . '?lesson=' . $post->post_name ) : false;
 }

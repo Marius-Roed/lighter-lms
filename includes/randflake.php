@@ -37,12 +37,12 @@ class Randflake {
 	/**
 	 * Validate a given ID.
 	 *
-	 * @param string $id The value to validate.
+	 * @param mixed $id The value to validate.
 	 * @param bool $strict Whether to decode and check internal structure.
 	 *
 	 * @return bool If value is valid or not.
 	 */
-	public static function validate( string $id, bool $strict = false ): bool {
+	public static function validate( mixed $id, bool $strict = false ): bool {
 		if ( ! is_string( $id ) || empty( $id ) ) {
 			return false;
 		}

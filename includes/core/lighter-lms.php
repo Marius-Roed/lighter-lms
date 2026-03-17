@@ -8,11 +8,13 @@ use LighterLMS\Admin\Admin;
 use LighterLMS\Assets;
 use LighterLMS\Admin\Settings;
 use LighterLMS\API\REST_API;
-use LighterLMS\Course_Post;
+use LighterLMS\Course_Service;
 use LighterLMS\DB;
+use LighterLMS\DB\Base_Controller;
 use LighterLMS\DB\Lighter_LMS_Schema;
 use LighterLMS\Lesson_Post;
-use LighterLMS\Lessons;
+use LighterLMS\Lesson_Service;
+use LighterLMS\Topic_Service;
 use LighterLMS\WooCommerce\WC;
 
 final class Lighter_LMS {
@@ -22,12 +24,17 @@ final class Lighter_LMS {
 	/**
 	 * Course class object
 	 */
-	public readonly Course_Post $course;
+	public readonly Course_Service $course;
+
+	/**
+	 *
+	 */
+	public readonly Topic_Service $topic;
 
 	/**
 	 * Lesson class object
 	 */
-	public readonly Lesson_Post $lesson;
+	public readonly Lesson_Service $lesson;
 
 	/**
 	 * Admin class object
@@ -73,6 +80,8 @@ final class Lighter_LMS {
 	}
 
 	private function __construct() {
+		global $wpdb;
+
 		$this->includes();
 
 		add_action( 'upgrade_process_complete', array( $this, 'maybe_update_schema' ), 10, 2 );
@@ -82,8 +91,11 @@ final class Lighter_LMS {
 		add_action( 'init', array( $this, 'init_update_checker' ), 5 );
 		add_action( 'admin_post_save_lighter_lms_settings', array( Settings::class, 'save' ) );
 
-		$this->course = new Course_Post();
-		$this->lesson = new Lesson_Post();
+		$this->db = new Base_Controller( $wpdb );
+
+		$this->course = new Course_Service();
+		$this->topic  = new Topic_Service();
+		$this->lesson = new Lesson_Service();
 		if ( is_admin() ) {
 			$this->admin = new Admin();
 		}
@@ -96,11 +108,6 @@ final class Lighter_LMS {
 				$this->wc = new WC();
 			}
 		);
-
-		$lessons = new Lessons();
-
-		add_filter( 'posts_join', array( $lessons, 'db_join' ), 10, 2 );
-		add_filter( 'posts_orderby', array( $lessons, 'db_orderby' ), 10, 2 );
 	}
 
 	/**

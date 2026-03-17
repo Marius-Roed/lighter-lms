@@ -480,17 +480,9 @@ if ( ! function_exists( 'lighter_postlist_js_obj' ) ) {
 
 if ( ! function_exists( 'lighter_get_lesson_settings' ) ) {
 	function lighter_get_lesson_settings( $post = 0 ) {
-		$topic_db = new Topics();
-		$post     = get_post( $post );
+		$post = get_post( $post );
 
-		$post_id = $post->ID ?? 0;
-
-		$parent = get_post_meta( $post_id, '_lighter_parent_topic', true );
-		if ( $parent ) {
-			$topic = $topic_db->get( $parent );
-
-			$parents[] = array( $topic->topic_key => $topic->title );
-		}
+		$parents = lighter()->lms->lesson->get_parent_topics( $post->ID );
 
 		return array(
 			'parents' => $parents ?? array(),

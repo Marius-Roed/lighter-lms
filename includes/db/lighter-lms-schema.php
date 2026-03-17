@@ -96,7 +96,7 @@ final class Lighter_LMS_Schema {
 		$this->set_notice(
 			array(
 				'type'    => 'success',
-				'message' => __( 'Lighter LMS database updated successfully!.', 'lighterlms' ),
+				'message' => __( 'Lighter LMS database updated successfully!', 'lighterlms' ),
 			)
 		);
 
@@ -128,18 +128,18 @@ final class Lighter_LMS_Schema {
 	private function _install_current_schema(): bool|\WP_Error {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		$charset = $this->wpdb->get_charset_collate();
+		$charset = $this->db->get_charset_collate();
 
 		$sql_topics = "CREATE TABLE {$this->topics_table} (
 			ID bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-			key char(16) NOT NULL,
+			topic_key char(16) NOT NULL,
 			course_id bigint(20) unsigned NOT NULL,
 			title varchar(255) NOT NULL,
 			sort_order int(10) unsigned NOT NULL DEFAULT 0,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (ID),
-			UNIQUE KEY uq_topic_key (key),
+			UNIQUE KEY uq_topic_key (topic_key),
 			KEY idx_course_sort (course_id, sort_order)
 		) {$charset};";
 
@@ -230,7 +230,7 @@ final class Lighter_LMS_Schema {
 			$result = $this->db->query(
 				"
 				INSERT IGNORE INTO {$this->topics_table}
-					(ID, key, course_id, title, sort_order, created_at, updated_at)
+					(ID, topic_key, course_id, title, sort_order, created_at, updated_at)
 				SELECT
 					ID,
 					topic_key,
@@ -293,7 +293,7 @@ final class Lighter_LMS_Schema {
 			return true;
 		}
 
-		$null_topics = (int) $this->wpdb->get_var(
+		$null_topics = (int) $this->db->get_var(
 			"SELECT COUNT(*)
 			FROM {$this->legacy_lessons_table}
 			WHERE topic_id IS NULL"
@@ -331,7 +331,7 @@ final class Lighter_LMS_Schema {
 			}
 		}
 
-		$duplicate_pairs = (int) $this->wpdb->get_var(
+		$duplicate_pairs = (int) $this->db->get_var(
 			"SELECT COUNT(*)
 			FROM (
 				SELECT lesson_id, topic_id
@@ -356,8 +356,8 @@ final class Lighter_LMS_Schema {
 	}
 
 	private function _table_exists( string $table ): bool {
-		$found = $this->wpdb->get_var(
-			$this->wpdb->prepare( 'SHOW TABLES LIKE %s', $table )
+		$found = $this->db->get_var(
+			$this->db->prepare( 'SHOW TABLES LIKE %s', $table )
 		);
 
 		return $found === $table;
@@ -369,8 +369,8 @@ final class Lighter_LMS_Schema {
 			esc_sql( $table )
 		);
 
-		$found = $this->wpdb->get_var(
-			$this->wpdb->prepare( $sql, $column )
+		$found = $this->db->get_var(
+			$this->db->prepare( $sql, $column )
 		);
 
 		return $found === $column;

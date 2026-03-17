@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
  */
 abstract class Post_Type {
 
-	protected string $post_type;
+	public string $post_type;
 	protected bool $skip_next_save            = false;
 	protected static bool $shared_hooks_added = false;
 
