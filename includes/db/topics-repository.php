@@ -79,15 +79,17 @@ class Topics_Repository {
 			throw new \Exception( 'Failed to insert topic: ' . $this->db->last_error );
 		}
 
-		return $inserted;
+		return $this->db->get_var( $this->db->prepare( "SELECT ID FROM {$this->table} WHERE topic_key = %s", $topic_key ) );
 	}
 
 	public function update( int|string $id, array $data ): void {
-		$course_id  = (int) $data['course_id'];
-		$title      = sanitize_text_field( $data['title'] );
-		$sort_order = (int) $data['sort_order'];
-
-		$new_data = compact( 'course_id', 'title', 'sort_order' );
+		$field_map = array(
+			'course_id'  => fn( $v ) => (int) $v,
+			'title'      => fn( $v ) => sanitize_text_field( $v ),
+			'sort_order' => fn( $v ) => (int) $v,
+		);
+		$new_data  = array_intersect_key( $data, $field_map );
+		array_walk( $new_data, fn( &$v, $key ) => $v = $field_map[ $key ]( $v ) );
 
 		if ( Randflake::validate( $id ) ) {
 			if ( ! $this->find( $id ) ) {
@@ -164,16 +166,20 @@ class Topics_Repository {
 	}
 
 	/**
-	 * @param array<int, int> $sort_orders [ topic_id => sort_order, ... ]
+	 * @param array<int|string, int> $sort_orders [ topic_id => sort_order, ... ]
 	 */
 	public function bulk_update_sort_order( array $sort_orders ): void {
 		foreach ( $sort_orders as $id => $sort_order ) {
+			if ( is_numeric( $id ) ) {
+				$where = 'ID';
+			} else {
+				$where = 'topic_key';
+			}
+
 			$updated = $this->db->update(
 				$this->table,
 				array( 'sort_order' => $sort_order ),
-				array( 'ID' => $id ),
-				array( '%d' ),
-				array( '%d' )
+				array( $where => $id ),
 			);
 
 			if ( $updated === false ) {

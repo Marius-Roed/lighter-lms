@@ -4,12 +4,13 @@ import { Lesson } from "./course-lesson.svelte.ts"
 
 export class Topic {
     readonly key: string;
-    readonly course: number;
+    readonly courseId: number;
 
     title = $state("");
     sortOrder = $state(0);
     lessons = $state<Lesson[]>([]);
     isExpanded = $state(false);
+    updatedAt = $state("");
 
     readonly sortedLessons = $derived(
         [...this.lessons ?? []].sort((a, b) => a.sortOrder - b.sortOrder)
@@ -17,7 +18,7 @@ export class Topic {
 
     constructor(data: TopicData) {
         this.key = data.key ?? randflake().generate();
-        this.course = data.course;
+        this.courseId = data.courseId;
         this.title = data.title;
         this.sortOrder = data.sortOrder;
         this.lessons = data.lessons?.map((l) => new Lesson(l));
@@ -31,6 +32,12 @@ export class Topic {
         this.lessons = this.lessons.filter((l) => l.key !== key);
     }
 
+    removeLessons(): void {
+        this.lessons.forEach((l) => {
+            this.removeLesson(l.key);
+        });
+    }
+
     toggleIsExpanded(): void {
         this.isExpanded = !this.isExpanded;
     }
@@ -40,7 +47,7 @@ export class Topic {
             key: this.key,
             title: this.title,
             sort_order: this.sortOrder,
-            course: this.course,
+            course_id: this.courseId,
         };
     }
 
@@ -49,7 +56,7 @@ export class Topic {
             key: this.key,
             title: this.title,
             sortOrder: this.sortOrder,
-            course: this.course,
+            courseId: this.courseId,
             lessons: this.lessons?.map((l) => l.toRestData()) ?? [],
         }
     }

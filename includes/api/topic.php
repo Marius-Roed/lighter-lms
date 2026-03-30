@@ -4,8 +4,6 @@ namespace LighterLMS\API;
 
 defined( 'ABSPATH' ) || exit;
 
-use LighterLMS\Lessons;
-use LighterLMS\Topics;
 use LighterLMS\Randflake;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -44,6 +42,12 @@ class Topic extends Base_Controller {
 					'args'                => $this->_get_single_args(),
 				),
 				array(
+					'methods'             => 'PATCH',
+					'callback'            => array( $this, 'update_topic' ),
+					'permission_callback' => array( $this, 'can_edit' ),
+					'args'                => $this->_get_update_args(),
+				),
+				array(
 					'methods'             => 'DELETE',
 					'callback'            => array( $this, 'delete_topic' ),
 					'permission_callback' => array( $this, 'can_edit' ),
@@ -70,36 +74,27 @@ class Topic extends Base_Controller {
 			array(
 				array(
 					'methods'             => 'PUT',
+					'callback'            => array( $this, 'move_topic' ),
 					'permission_callback' => array( $this, 'can_edit' ),
 					'args'                => array(
-						'id'       => array(
+						'id'        => array(
 							'validate_callback' => fn( $v ) => is_numeric( $v ),
 							'sanitize_callback' => 'absint',
 							'required'          => true,
 							'description'       => 'The ID of the course post',
 							'type'              => 'integer',
 						),
-						'to'       => array(
+						'topic_key' => array(
 							'validate_callback' => fn( $v ) => Randflake::validate( $v ),
 							'sanitize_callback' => array( Randflake::class, 'sanitize' ),
 							'required'          => true,
-							'description'       => 'The key of the topic to move to.',
+							'description'       => 'The key of the topic to move',
 							'type'              => 'string',
 						),
-						'from'     => array(
-							'validate_callback' => fn( $v ) => Randflake::validate( $v ),
-							'sanitize_callback' => array( Randflake::class, 'sanitize' ),
-							'required'          => true,
-							'description'       => 'The key of the topic to move.',
-							'type'              => 'string',
-						),
-						'position' => array(
-							'validate_callback' => fn( $v ) => $v === 'after' ?: $v === 'before',
-							'sanitize_callback' => 'sanitize_text_field',
-							'required'          => true,
-							'description'       => 'The relative position of the moved topic.',
-							'type'              => 'string',
-							'enum'              => array( 'after', 'before' ),
+						'reordered' => array(
+							'required'    => true,
+							'description' => 'An array of the reordered topics. In form of { `index`: `topic_key` }',
+							'type'        => 'array',
 						),
 					),
 				),
@@ -129,8 +124,7 @@ class Topic extends Base_Controller {
 			return $course;
 		}
 
-		$topics_db = new Topics();
-		$topics    = $topics_db->get_by_course( $course );
+		$topics = lighter()->lms->course->get_topics( $course->ID );
 
 		$include = $this->_parse_include( $request );
 
@@ -144,13 +138,6 @@ class Topic extends Base_Controller {
 		return $this->success( $topics );
 	}
 
-	/**
-	* Creates a new topic
-	*
-	* @param WP_REST_Request $request The current request
-	*
-	* @return WP_REST_Response|WP_Error The Created topic object. WP_Error on error.
-	*/
 	public function create_topic( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$course_id = (int) $request->get_param( 'id' );
 		$course    = $this->get_post_or_error( $course_id, lighter_lms()->course_post_type );
@@ -159,36 +146,18 @@ class Topic extends Base_Controller {
 			return $course;
 		}
 
-		$args     = $request->get_json_params();
-		$topic_db = new Topics();
+		$args  = $request->get_json_params();
+		$title = sanitize_text_field( $args['title'] ?? '' );
 
-		$new = array(
-			'course_id'  => $course_id,
-			'key'        => $args['key'],
-			'title'      => sanitize_text_field( $args['title'] ?? '' ),
-			'sort_order' => $topic_db->get_next_sort_order( $course_id ),
-		);
+		$topic = lighter()->lms->topic->create( $course_id, $title );
 
-		$topic_id = $topic_db->create( ...$new );
-		if ( ! $topic_id ) {
-			return $this->error( 'Could not create new course', 'course_creation_failed', 500 );
+		if ( is_wp_error( $topic ) ) {
+			return $topic;
 		}
 
-		$topic = $topic_db->get( $topic_id );
-		if ( ! $topic ) {
-			return $this->error( 'Topic created but could not be retrieved', 'topic_retrieval_failed', 500 );
-		}
-
-		return $this->success( $topic_db::normalise_for_rest( $topic ), 201 );
+		return $this->success( lighter()->lms->topic::normalise_for_rest( $topic ), 201 );
 	}
 
-	/**
-	* Gets a specific topic
-	*
-	* @param WP_REST_Request $request The current request.
-	*
-	* @return WP_REST_Response|WP_Error The topic object. WP_Error on failure.
-	*/
 	public function get_topic( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$course = $this->get_post_or_error( $request->get_param( 'id' ), lighter_lms()->course_post_type );
 
@@ -199,39 +168,77 @@ class Topic extends Base_Controller {
 		$key     = $request->get_param( 'key' );
 		$include = $this->_parse_include( $request );
 
-		$topic_db = new Topics();
-		$topic    = $topic_db->get( $key );
+		$topic = lighter()->lms->topic->get( $key );
 
 		$response = $this->_prepare_topic_for_rest( $topic, $include['lessons'] ?? false );
 		return $this->success( $response );
 	}
 
-	public function delete_topic( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		throw new \Exception( 'Not implemented yet!' );
-	}
+	public function update_topic( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$course = $this->get_post_or_error( $request->get_param( 'id' ), lighter_lms()->course_post_type );
 
-	private function _prepare_topic_for_rest( mixed $topic, bool $lessons = false ): array {
-		$topic = Topics::normalise_for_rest( $topic );
-
-		if ( $lessons ) {
-			$controller     = new \WP_REST_Posts_Controller( lighter_lms()->lesson_post_type );
-			$post_type_slug = lighter_lms()->lesson_post_type;
-
-			$lesson_db = new Lessons();
-			$lessons   = $lesson_db->get_lessons( array( 'topic' => $topic['key'] ) );
-
-			$topic['lessons'] = array_map(
-				function ( $l ) use ( $controller, $post_type_slug ) {
-					$dummy_req = new \WP_REST_Request( 'GET', "wp/v2/$post_type_slug/{$l->ID}" );
-					$dummy_req->set_param( 'context', 'edit' );
-					$response = $controller->prepare_item_for_response( $l, $dummy_req );
-					return $controller->prepare_response_for_collection( $response );
-				},
-				$lessons
-			);
+		if ( is_wp_error( $course ) ) {
+			return $course;
 		}
 
-		return $topic;
+		$key   = $request->get_param( 'key' );
+		$topic = lighter()->lms->topic->get( $key );
+		$title = $request->get_param( 'title' );
+
+		if ( empty( $topic ) ) {
+			return $this->error( "Failed to find topic of key $key", 'could_not_find_topic' );
+		}
+
+		lighter()->lms->topic->rename( $topic->ID, $title );
+
+		$topic = lighter()->lms->topic->get( $key );
+
+		$response = $this->_prepare_topic_for_rest( $topic );
+		return $this->success( $response );
+	}
+
+	public function move_topic( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$course = $this->get_post_or_error( $request->get_param( 'id' ), lighter_lms()->course_post_type );
+
+		if ( is_wp_error( $course ) ) {
+			return $course;
+		}
+
+		$topic_key = $request->get_param( 'topic_key' );
+		$reordered = $request->get_param( 'reordered' );
+
+		lighter()->lms->topic->move( $topic_key, $course->ID, $reordered );
+
+		$new_order = lighter()->lms->course->get_topics( $course->ID );
+		$new_order = array_map( array( $this, '_prepare_topic_for_rest' ), $new_order );
+
+		return $this->success( $new_order );
+	}
+
+	public function delete_topic( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$course = $this->get_post_or_error( $request->get_param( 'id' ), lighter_lms()->course_post_type );
+
+		if ( is_wp_error( $course ) ) {
+			return $course;
+		}
+
+		$key = $request->get_param( 'key' );
+
+		$topic = lighter()->lms->topic->get( $key );
+
+		if ( empty( $topic ) ) {
+			return $this->error( "Failed to find topic of key \"$key\"", 'failed_topic_deletion', 500 );
+		}
+
+		lighter()->lms->topic->delete( $topic->ID );
+
+		$topics = lighter()->lms->course->get_topics( $course->ID );
+
+		return $this->success( $topics );
+	}
+
+	private function _prepare_topic_for_rest( mixed $topic, bool $lessons = false ): object {
+		return lighter()->lms->topic::normalise_for_rest( (object) $topic, $lessons );
 	}
 
 	private function _parse_include( WP_REST_Request $request ): array {
@@ -278,5 +285,9 @@ class Topic extends Base_Controller {
 				'default'     => '',
 			),
 		);
+	}
+
+	private function _get_update_args(): array {
+		return array();
 	}
 }

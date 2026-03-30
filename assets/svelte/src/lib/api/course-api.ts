@@ -90,11 +90,11 @@ export class CourseAPI {
         });
     }
 
-    moveTopic(fromTopicKey: string, toTopicKey: string) {
+    moveTopic(topicKey: string, reordered: Record<number, string>) {
         return lighterFetch<TopicData[]>({
             path: `course/${this.#courseId}/topic-move`,
             method: "PUT",
-            data: { from: fromTopicKey, to: toTopicKey }
+            data: { topic_key: topicKey, reordered }
         });
     }
 

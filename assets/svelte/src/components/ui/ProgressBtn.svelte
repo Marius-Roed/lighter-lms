@@ -10,9 +10,15 @@
     let progress = $state(0);
     let timer: ReturnType<typeof setInterval> | null = null;
 
-    function start() {
+    function start(e: MouseEvent) {
         confirmed = false;
         progress = 0;
+
+        if (e.metaKey) {
+            confirm();
+            stop();
+            return;
+        }
 
         const startTime = Date.now();
 
@@ -46,7 +52,7 @@
     onmousedown={start}
     ontouchstart={(e) => {
         e.preventDefault();
-        start();
+        start(e);
     }}
     onmouseup={stop}
     onmouseleave={stop}
@@ -66,6 +72,7 @@
 
 <style>
     .lighter-progress-btn {
+        position: relative;
         display: grid;
         place-items: center;
 
@@ -82,9 +89,12 @@
     }
 
     .fill {
+        position: absolute;
         background: oklch(0.6808 0.2525 29.65);
-        width: 100%;
-        height: 100%;
+        top: -0.5rem;
+        left: -1.25rem;
+        right: 0;
+        bottom: 0;
         transform-origin: left;
         transform: scaleX(0);
     }
@@ -92,6 +102,7 @@
     .text {
         font-weight: 600;
         pointer-events: none;
+        text-transform: uppercase;
     }
 
     .base {
@@ -99,13 +110,21 @@
     }
 
     .masked {
+        position: absolute;
+        text-transform: uppercase;
         color: canvas;
+        padding: 0.725rem 1.25rem;
+        top: -0.5rem;
+        left: -1.25rem;
+        bottom: 0;
+        right: 0;
     }
 
     .check {
         width: 20px;
         height: 20px;
         opacity: 0;
+        z-index: 15;
     }
 
     .check path {
@@ -121,6 +140,14 @@
 
     .check.show {
         opacity: 1;
+
+        &:before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-color: oklch(0.6808 0.2525 29.65);
+            z-index: inherit;
+        }
     }
 
     .check.show path {

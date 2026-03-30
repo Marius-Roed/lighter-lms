@@ -9,13 +9,17 @@ class Topic_Service {
 		$siblings   = lighter()->lms->db->topics->find_by_course( $course_id );
 		$sort_order = count( $siblings ) * 10;
 
-		$id = lighter()->lms->db->topics->insert(
-			compact(
-				'course_id',
-				'title',
-				'sort_order',
-			)
-		);
+		try {
+			$id = lighter()->lms->db->topics->insert(
+				compact(
+					'course_id',
+					'title',
+					'sort_order',
+				)
+			);
+		} catch ( \Throwable $e ) {
+			return new \WP_Error( 'failed_topic_creation', 'LighterLMS: ' . $e );
+		}
 
 		return lighter()->lms->db->topics->find( $id );
 	}
@@ -76,7 +80,7 @@ class Topic_Service {
 	/**
 	* Move a topic to a new position. Reorders all sibling topics.
 	*
-	* @param int[] $ordered_topic_ids All topic ids in the desired new order, including the $id.
+	* @param string[]|int[] $ordered_topic_ids All topic ids/keys in the desired new order, including the $id.
 	*/
 	public function move( int|string $id, int $course_id, array $ordered_topic_ids ): void {
 		lighter()->lms->db->start_transaction();
@@ -191,5 +195,25 @@ class Topic_Service {
 		} catch ( \Throwable $e ) {
 			lighter()->lms->db->rollback();
 		}
+	}
+
+	public static function normalise_for_rest( object $topic, bool $with_lessons = false ): object {
+		$rest_item = (object) array(
+			'key'       => $topic->topic_key,
+			'title'     => $topic->title,
+			'courseId'  => (int) $topic->course_id,
+			'sortOrder' => (int) $topic->sort_order,
+			'updatedAt' => $topic->updated_at,
+		);
+
+		if ( $with_lessons ) {
+			$lessons            = lighter()->lms->topic->get_lessons( $topic->ID );
+			$rest_item->lessons = array_map(
+				array( lighter()->lms->lesson::class, 'normalise_for_rest' ),
+				$lessons
+			);
+		}
+
+		return $rest_item;
 	}
 }

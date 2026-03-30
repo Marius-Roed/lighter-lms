@@ -102,6 +102,8 @@
             class="head"
             onclick={handleHeadClick}
             onkeypress={(e) => {
+                if ((e.target as HTMLElement).tagName == "INPUT") return;
+
                 if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
                     topic.toggleIsExpanded();
@@ -125,6 +127,8 @@
                     bind:value={topic.title}
                     className="module-title"
                     tag="h3"
+                    save={(val) =>
+                        new Promise(() => service.renameTopic(topic.key, val))}
                 />
             </div>
             <div class="lessons-amount">

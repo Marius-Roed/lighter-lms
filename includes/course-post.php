@@ -369,16 +369,7 @@ class Course_Post extends Post_Type {
 
 		if ( ! empty( $topics ) ) {
 			$topics = array_map(
-				fn( $t ) => array(
-					'key'       => $t->topic_key,
-					'title'     => $t->title,
-					'course'    => $t->course_id,
-					'sortOrder' => (int) $t->sort_order,
-					'lessons'   => array_map(
-						fn( $l ) => lighter()->lms->lesson->normalise_for_rest( $l ),
-						lighter()->lms->topic->get_lessons( $t->ID )
-					),
-				),
+				fn($t) => lighter()->lms->topic::normalise_for_rest($t, true),
 				$topics
 			);
 		}

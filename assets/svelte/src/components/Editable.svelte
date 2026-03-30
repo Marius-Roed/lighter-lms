@@ -7,32 +7,33 @@
     ```
 - Notes: You can sanitize the value with the "sanitize" attribute, which requires a callback.
 -->
-<script>
+<script lang="ts" generics="S extends keyof HTMLElementTagNameMap">
     import { tooltip } from "$lib/tooltip.ts";
     import Icon from "./Icon.svelte";
 
-    /**
-     * @typedef {Object} EditableProps
-     * @property {string} value - The current value
-     * @property {string} [className] - Classes to add to the element
-     * @property {string} [placeholder] - The placeholder to show
-     * @property {string} [tag] - The default tag to render
-     * @property {function} [sanitize] - A callback to sanitize the value with after editing.
-     */
+    interface Props {
+        value: string;
+        className?: string;
+        placeholder?: string;
+        tag?: S;
+        sanitize?: (val: string, oldVal: string) => string;
+        save?: (val: string) => Promise<void>;
+    }
 
-    /** @type {EditableProps} */
     let {
         value = $bindable(""),
         className = "",
         placeholder = "Untitled",
-        tag = "span",
+        tag = "span" as S,
         sanitize = (val) => val,
+        save,
         ...restProps
-    } = $props();
+    }: Props = $props();
 
     let isEditing = $state(false);
-    let oldValue = $state(value);
-    let el = $state();
+    let isSaving = $state(false);
+    let oldValue: string = $state(value);
+    let el: HTMLElement = $state();
 
     function startEdit() {
         oldValue = value;
@@ -40,9 +41,20 @@
         setTimeout(() => el?.focus(), 0);
     }
 
-    function finishEdit() {
+    async function finishEdit() {
         isEditing = false;
-        value = sanitize(value);
+        value = sanitize(value, oldValue);
+
+        if (!save || value === oldValue) return;
+
+        isSaving = true;
+        try {
+            await save(value);
+        } catch {
+            value = oldValue;
+        } finally {
+            isSaving = false;
+        }
     }
 
     function cancelEdit() {
@@ -50,10 +62,7 @@
         isEditing = false;
     }
 
-    /**
-     * @param {KeyboardEvent} e
-     */
-    function handleKeydown(e) {
+    function handleKeydown(e: KeyboardEvent) {
         if (e.key === "Enter") {
             e.preventDefault();
             el.blur();
@@ -74,7 +83,7 @@
     />
 {:else if tag === "a"}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <a class={["editable-text", className]} href={restProps.href ?? "#"}
+    <a class={["editable-text", className]} href={restProps?.href ?? "#"}
         >{value || placeholder}
     </a>
     <Icon
@@ -87,7 +96,7 @@
 {:else}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <svelte:element
-        this={tag}
+        this={tag as string}
         class={["editable-text", className]}
         onclick={() => {
             startEdit();

@@ -77,8 +77,10 @@ export default defineConfig({
           }
           return `assets/${base}-[hash]`;
         },
-        manualChunks: {
-          vendor: ['svelte'],
+        manualChunks: (id) => {
+          if (id.includes('node_modules/svelte')) {
+            return 'vendor';
+          }
         }
       }
     }

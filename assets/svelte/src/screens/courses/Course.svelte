@@ -83,13 +83,7 @@
         const dropped = list.querySelector(
             'div:has(>[draggable="true"]',
         ) as HTMLElement;
-        let position: "before" | "after" = "after";
         let sibling = dropped.previousElementSibling as HTMLElement;
-
-        if (!sibling) {
-            position = "before";
-            sibling = dropped.nextElementSibling as HTMLElement;
-        }
 
         list.querySelector(".placeholder")?.remove();
 
@@ -102,20 +96,18 @@
 
                 if (
                     e.dataTransfer!.effectAllowed === "copy" ||
-                    data.course !== service.course.id
+                    data.courseId !== service.course.id
                 ) {
                     e.dataTransfer!.effectAllowed = "copy";
                     service.insertTopic(
                         data.title + " (copy)",
                         sibling.dataset.lighterKey,
-                        position,
                         data.lessons,
                     );
                 } else {
                     service.moveTopic(
-                        data.key,
-                        sibling.dataset.lighterKey,
-                        position,
+                        parseInt(dropped.dataset.index),
+                        parseInt(sibling?.dataset?.index ?? "0"),
                     );
                 }
             });
@@ -141,8 +133,8 @@
         ondragleave={handleDragLeave}
         ondrop={handleOnDrop}
     >
-        {#each service.course.sortedTopics as topic (topic.key)}
-            <div data-lighter-key={topic.key} animate:flip>
+        {#each service.course.sortedTopics as topic, i (topic.key)}
+            <div data-index={i} animate:flip>
                 <Topic {topic} />
             </div>
         {/each}

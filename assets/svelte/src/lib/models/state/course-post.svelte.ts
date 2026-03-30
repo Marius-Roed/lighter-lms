@@ -46,19 +46,41 @@ export class Course {
         return topic;
     }
 
+    updateTopic(data: Partial<TopicData>): void {
+        if (!data.key) return;
+        const { key, lessons, ...newData } = data;
+
+        const topic = this.topics.find((t) => t.key === key);
+        if (!topic) return;
+
+        Object.assign(topic, newData);
+
+        if (lessons) {
+            topic.removeLessons();
+            lessons.forEach((l) => {
+                topic.addLesson(l);
+            });
+        }
+    }
+
     removeTopic(key: string) {
         this.topics = this.topics.filter((t) => t.key !== key);
     }
 
-    moveTopic(fromIndex: number, toIndex: number) {
+    moveTopic(fromIndex: number, toIndex: number): Record<number, string> {
+        let newOrder = [];
         const reordered = [...this.sortedTopics];
         const [moved] = reordered.splice(fromIndex, 1);
-        if (toIndex > fromIndex) {
-            toIndex -= 1;
+        if (fromIndex > toIndex) {
+            toIndex++;
         }
         reordered.splice(toIndex, 0, moved);
-        reordered.forEach((t, i) => t.sortOrder = i);
+        reordered.forEach((t, i) => {
+            newOrder[i] = t.key;
+            return t.sortOrder = (i + 1) * 10
+        });
         this.topics = reordered;
+        return newOrder;
     }
 
     moveLesson(fromTopicKey: string, toTopicKey: string, fromIndex: number, toIndex: number) {

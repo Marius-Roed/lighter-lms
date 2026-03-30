@@ -206,27 +206,35 @@ export class CourseService {
         return topic.serialize() ?? "";
     }
 
-    moveTopic(fromKey: string, toKey: string, position: "before" | "after" = "after") {
-        const fromTopic = this.course.topics.find(t => t.key === fromKey);
-        const toTopic = this.course.topics.find(t => t.key === toKey);
-        const positionAdjust = position === "after" ? 1 : 0;
+    moveTopic(fromIndex: number, toIndex: number) {
+        const fromTopic = this.course.sortedTopics[fromIndex];
+        const toTopic = this.course.sortedTopics[toIndex];
 
         if (!(fromTopic instanceof Topic) || !(toTopic instanceof Topic)) return;
 
         const snapshot = Array.from(this.course.topics.map(t => {
-            return { key: t.key, sort: t.sortOrder };
+            return { key: t.key, sort: t.sortOrder, updatedAt: t.updatedAt };
         }));
 
-        this.course.moveTopic(fromTopic.sortOrder, toTopic.sortOrder + positionAdjust);
+        const reordered = this.course.moveTopic(fromIndex, toIndex);
 
-        this.#api.moveTopic(fromTopic.key, toTopic.key).catch((e) => {
-            console.error(e);
-            snapshot.forEach(({ key, sort }) => {
-                const topic = this.course.topics.find(t => t.key === key)
-                if (topic) topic.sortOrder = sort;
+        this.#api.moveTopic(fromTopic.key, reordered)
+            .then((res) => {
+                res.forEach((n) => {
+                    this.course.updateTopic(n);
+                });
+            })
+            .catch((e) => {
+                console.error(e);
+                snapshot.forEach(({ key, sort, updatedAt }) => {
+                    const topic = this.course.topics.find(t => t.key === key)
+                    if (topic) {
+                        topic.sortOrder = sort;
+                        topic.updatedAt = updatedAt;
+                    }
+                });
+                // TODO: Toast failure.
             });
-            // TODO: Toast failure.
-        });
     }
 
     deleteTopic(topicKey: string) {

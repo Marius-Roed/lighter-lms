@@ -14,6 +14,7 @@ class Base_Controller {
 	public Lighter_LMS_Schema $schema;
 
 	public function __construct( \wpdb $wpdb ) {
+		$this->db            = $wpdb;
 		$this->schema        = new Lighter_LMS_Schema( $wpdb );
 		$this->topics        = new Topics_Repository( $wpdb );
 		$this->topic_lessons = new Topic_Lessons_Repository( $wpdb );

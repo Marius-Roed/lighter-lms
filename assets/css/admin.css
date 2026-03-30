@@ -2060,6 +2060,10 @@ table.form-table.lighter-user-courses {
     transition-property: height, width, inset;
     transition-duration: .2s;
     transition-timing-function: ease-out;
+
+    &>:last-child {
+        gap: 0.5rem;
+    }
 }
 
 @starting-style {
