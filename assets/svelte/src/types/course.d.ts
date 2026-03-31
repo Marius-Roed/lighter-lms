@@ -13,16 +13,27 @@ interface TopicData {
     lessons?: LessonData[];
 }
 
+export type LessonType = "video" | "text" | "download" | "live";
+
+type LighterMeta = Record<number, { course_id: number, title: string, topics?: Record<number, { key: string, sort_order: number, title: string }> }>;
+
 interface LessonData extends WPRestPost {
-    type: "lesson";
-    lesson_key: string;
-    lesson_type: "video" | "text" | "download" | "live";
-    parent_key: string;
-    sort_order: number;
+    type: "lighter_lessons";
+    lighter_lesson_key: string;
+    lighter_lesson_type: LessonType;
+    _lighter_meta: LighterMeta;
+}
+
+interface LessonDataCreate extends WPRestPostCreate {
+    type: "lighter_lessons";
+    lighter_lesson_key: string;
+    lighter_lesson_type: LessonType;
+    _lighter_meta?: LighterMeta;
 }
 
 export type {
     CourseData,
     TopicData,
-    LessonData
+    LessonData,
+    LessonDataCreate
 };

@@ -24,15 +24,23 @@ class Topic_Service {
 		return lighter()->lms->db->topics->find( $id );
 	}
 
-	public function get( int|string $id ): object {
+	public function get( int|string $id ): ?Topic {
 		$topic = lighter()->lms->db->topics->find( $id );
 
 		if ( ! $topic ) {
 			// NOTE: Maybe log or notify not found.
-			$topic = (object) array();
+			return null;
 		}
 
-		return $topic;
+		return new Topic(
+			ID: $topic->ID,
+			title: $topic->title,
+			topic_key: $topic->topic_key,
+			course_id: $topic->course_id,
+			sort_order: $topic->sort_order,
+			created_at: $topic->created_at,
+			updated_at: $topic->updated_at,
+		);
 	}
 
 	public function get_by_course( int $id ): array {
@@ -216,4 +224,16 @@ class Topic_Service {
 
 		return $rest_item;
 	}
+}
+
+readonly class Topic {
+	public function __construct(
+		public int $ID,
+		public string $topic_key,
+		public string $title,
+		public int $course_id,
+		public int $sort_order,
+		public string $updated_at,
+		public string $created_at,
+	) {}
 }

@@ -1,3 +1,4 @@
+import type { Post } from "$lib/posts.svelte.js";
 import type { PostStatus } from "$lib/utils/index.ts";
 import type { CourseData } from "./course.d.ts";
 
@@ -6,6 +7,7 @@ export { };
 declare global {
     type EditStatus = "clean" | "dirty";
     type AvailableStore = "woocommerce" | "fluentcart" | "memberpress";
+    type Merge<A, B> = A & Omit<B, keyof A>;
 
     interface Window {
         LighterLMS: LighterLMS;
@@ -141,24 +143,59 @@ declare global {
         to_ping: string;
     }
 
-    interface WPRestPost {
+    interface WPRenderedField {
+        rendered: string;
+    }
+
+    interface WPRawField {
+        raw: string;
+    }
+
+    interface WPTextField extends WPRenderedField {
+        raw?: string;
+    }
+
+    interface WPRestPostReadOnly {
         id: number;
-        slug: string;
-        status: PostStatus;
         type: string;
-        title: { rendered: string; raw?: string };
-        content: { rendered: string; raw?: string };
-        excerpt: { rendered: string; raw?: string };
-        author: string;
-        date: string;
         date_gmt: string;
         modified: string;
         modified_gmt: string;
-        menu_order: number;
-        parent: number;
-        meta: Record<string, unknown>;
         _links?: Record<string, unknown[]>;
     }
+
+    interface WPRestPostFields {
+        slug?: string;
+        status?: PostStatus;
+        title?: WPRawField;
+        content?: WPRawField;
+        excerpt?: WPRawField;
+        author?: number;
+        date?: string;
+        menu_order?: number;
+        parent?: number;
+        meta?: Record<string, unknown>;
+    }
+
+    interface WPRestPost extends WPRestPostReadOnly {
+        slug?: string;
+        status?: PostStatus;
+        title: WPTextField;
+        content: WPTextField;
+        excerpt: WPTextField;
+        author?: number;
+        date?: string;
+        menu_order?: number;
+        parent?: number;
+        meta?: Record<string, unknown>;
+    }
+
+    interface WPRestPostCreateRequired {
+        title: string;
+        status: PostStatus;
+    }
+
+    type WPRestPostCreate = Merge<WPRestPostCreateRequired, WPRestPostFields>;
 
     interface CourseSettings {
         showIcons: boolean;

@@ -1241,6 +1241,8 @@
         position: relative;
         width: 180px;
         height: 180px;
+        border-radius: 4px;
+        overflow: hidden;
 
         img {
             width: 100%;

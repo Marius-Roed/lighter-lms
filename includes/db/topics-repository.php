@@ -27,9 +27,9 @@ class Topics_Repository {
 	 * Find topic by id or key
 	 *
 	 * @param int|string $id ID or key of the topic.
-	 * @return ?object The found topic or null.
+	 * @return ?TopicRow The found topic or null.
 	 */
-	public function find( int|string $id ): ?object {
+	public function find( int|string $id ): ?TopicRow {
 		$sql = "SELECT * FROM {$this->table} WHERE ";
 		if ( Randflake::validate( $id ) ) {
 			$sql .= 'topic_key = %s';
@@ -38,24 +38,28 @@ class Topics_Repository {
 			$id   = (int) $id;
 		}
 
-		return $this->db->get_row(
+		$row = $this->db->get_row(
 			$this->db->prepare(
 				$sql,
 				$id
 			)
 		) ?: null;
+
+		return TopicRow::from_object( $row );
 	}
 
 	/**
 	 * Find topics by course id
 	 */
 	public function find_by_course( int $id ): ?array {
-		return $this->db->get_results(
+		$results = $this->db->get_results(
 			$this->db->prepare(
 				"SELECT * FROM {$this->table} WHERE course_id = %d ORDER BY sort_order ASC",
 				$id
 			)
 		);
+
+		return array_map( fn( $row ) => TopicRow::from_object( $row ), $results );
 	}
 
 	public function insert( array $data ): int {
@@ -233,5 +237,29 @@ class Topics_Repository {
 		);
 
 		return $found === $this->table;
+	}
+}
+
+readonly class TopicRow {
+	public function __construct(
+		public int $ID,
+		public string $topic_key,
+		public string $title,
+		public int $course_id,
+		public int $sort_order,
+		public string $updated_at,
+		public string $created_at,
+	) {}
+
+	public static function from_object( object $obj ): self {
+		return new self(
+			ID: $obj->ID,
+			topic_key: $obj->topic_key,
+			title: $obj->title,
+			course_id: $obj->course_id,
+			sort_order: $obj->sort_order,
+			updated_at: $obj->updated_at,
+			created_at: $obj->created_at,
+		);
 	}
 }

@@ -1,8 +1,8 @@
 import { lighterFetch } from "./lighter-fetch.ts";
 import type { Lesson } from "$state/course-lesson.svelte.ts";
 import type { Topic } from "$state/course-topic.svelte.ts";
-import { addQueryArgs } from "$lib/utils/index.ts";
-import type { LessonData, TopicData } from "$types/course.d.ts";
+import { addQueryArgs, type PostStatus } from "$lib/utils/index.ts";
+import type { LessonData, LessonDataCreate, TopicData } from "$types/course.d.ts";
 
 export class CourseAPI {
     readonly #courseId: number;
@@ -13,11 +13,11 @@ export class CourseAPI {
 
     // ─── Lesson ───────────────────────────────────────
 
-    createLesson(data: Lesson) {
-        return lighterFetch<Lesson>({
-            path: "lesson",
+    createLesson(data: LessonDataCreate) {
+        return lighterFetch<LessonData>({
+            url: "wp/v2/lighter_lessons",
             method: "POST",
-            data: data.toRestData(),
+            data,
         });
     }
 
@@ -31,16 +31,16 @@ export class CourseAPI {
 
     updateLessonTitle(lessonId: number, title: string) {
         return lighterFetch({
-            path: `lesson/${lessonId}`,
+            url: `wp/v2/lighter_lessons/${lessonId}`,
             method: "PATCH",
             data: { title },
         });
     }
 
-    updateLessonStatus(lessonId: number, status: string) {
+    updateLessonStatus(lessonId: number, status: PostStatus) {
         return lighterFetch<LessonData>({
-            path: `lesson/${lessonId}`,
-            method: "PUT",
+            url: `wp/v2/lighter_lessons/${lessonId}`,
+            method: "PATCH",
             data: { status },
         });
     }
@@ -49,9 +49,9 @@ export class CourseAPI {
         throw new Error("Not yet impletmented!");
     }
 
-    deleteLesson(lessonKey: string) {
+    deleteLesson(lessonKey: number) {
         return lighterFetch({
-            path: `lesson/${lessonKey}`,
+            url: `wp/v2/lighter_lessons/${lessonKey}`,
             method: "DELETE",
         });
     }

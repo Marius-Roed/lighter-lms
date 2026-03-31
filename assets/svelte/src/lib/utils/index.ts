@@ -19,5 +19,5 @@ export function randflake() {
     return new Randflake();
 }
 
-export const POSTSTATUS = ["publish", "pending", "draft", "auto-draft", "future", "private"] as const;
+export const POSTSTATUS = ["publish", "pending", "draft", "auto-draft", "future", "private", "trash"] as const;
 export type PostStatus = (typeof POSTSTATUS)[number];

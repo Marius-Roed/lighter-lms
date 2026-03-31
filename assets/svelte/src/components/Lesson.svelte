@@ -39,7 +39,11 @@
         {#if settings.showIcons}
             <Icon name={lesson.lessonType} className="lesson-icon" />
         {/if}
-        <Editable bind:value={lesson.title} tag="h4" />
+        <Editable
+            bind:value={lesson.title}
+            tag="h4"
+            save={async (v) => service.renameLesson(lesson.key, v)}
+        />
     </div>
     <div class="actions">
         <EditLesson text="Edit lesson" {lesson} />
@@ -61,7 +65,8 @@
                 >
                 <button
                     type="button"
-                    onclick={() => confirmDeleteLesson(lesson)}>Delete</button
+                    onclick={() => service.deleteLesson(lesson.id)}
+                    >Delete</button
                 >
                 <hr />
                 <Submenu anchor={lesson.title}>
@@ -79,8 +84,9 @@
                             type="button"
                             class={{
                                 active: lesson.status === key,
-                                hidden: key === "auto-draft",
+                                hidden: key === "auto-draft" || key === "trash",
                             }}
+                            disabled={key === "auto-draft"}
                             onclick={() =>
                                 service.setLessonStatus(lesson.key, key)}
                             >{key}</button

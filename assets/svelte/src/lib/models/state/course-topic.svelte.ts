@@ -12,9 +12,9 @@ export class Topic {
     isExpanded = $state(false);
     updatedAt = $state("");
 
-    readonly sortedLessons = $derived(
-        [...this.lessons ?? []].sort((a, b) => a.sortOrder - b.sortOrder)
-    );
+    readonly sortedLessons = $derived.by(() => {
+        return [...this.lessons ?? []].sort((a, b) => a.sortOrder - b.sortOrder).filter((l) => l.status !== "trash");
+    });
 
     constructor(data: TopicData) {
         this.key = data.key ?? randflake().generate();
@@ -38,7 +38,10 @@ export class Topic {
         });
     }
 
-    toggleIsExpanded(): void {
+    toggleIsExpanded(force?: boolean): void {
+        if (force !== null) {
+            this.isExpanded = force;
+        }
         this.isExpanded = !this.isExpanded;
     }
 

@@ -149,7 +149,8 @@ class Lesson_Post extends Post_Type {
 			$this->post_type,
 			'_lighter_meta',
 			array(
-				'get_callback' => fn( $post ) => $this->get_lesson_meta( (int) $post['id'] ),
+				'get_callback'    => fn( $post ) => $this->get_lesson_meta( (int) $post['id'] ),
+				'update_callback' => fn( $value, $object ) => $this->update_lesson_meta( $object, $value ),
 			)
 		);
 	}
@@ -161,12 +162,12 @@ class Lesson_Post extends Post_Type {
 	 * @param \WP_Post  $post       The post object.
 	 */
 	public function save_post( int $post_id, \WP_Post $post ): void {
-		$nonce = $_POST['lighter_nonce'];
+		$nonce = $_POST['lighter_nonce'] ?? '';
 		if ( ! $this->verify_nonce( $post, $nonce, $this->post_type . '_fields' ) ) {
 			return;
 		}
 
-		$settings = $_POST['settings'];
+		$settings = $_POST['settings'] ?? array();
 
 		$this->_save_settings( $post, $settings );
 	}
@@ -178,20 +179,19 @@ class Lesson_Post extends Post_Type {
 	 * @param array $args The settings to save.
 	 */
 	protected function _save_settings( \WP_Post $post, array $args ): void {
-		$topic_db = new Topics();
-		$parents  = $args['parents'];
+		$parents = $args['parents'];
 
-		update_post_meta( $post->ID, '_lighter_parent_topic', $parents[0] ?? null );
 		foreach ( $parents as $parent ) {
-			$topic  = $topic_db->get( $parent );
-			$lesson = new Lessons(
+			$topic = lighter()->lms->topic->get( $parent );
+			if ( ! $topic ) {
+				continue;
+			}
+			lighter()->lms->lesson->create_topic_relationship(
 				array(
-					'lesson' => $post->ID,
-					'parent' => $topic->post_id,
-					'topic'  => $topic->ID,
+					'lesson_id' => $post->ID,
+					'topic_id'  => $topic->ID,
 				)
 			);
-			$lesson->save();
 		}
 
 		if ( isset( $args['slug'] ) && ! empty( $args['slug'] ) ) {
@@ -240,10 +240,57 @@ class Lesson_Post extends Post_Type {
 		);
 	}
 
-	public function get_lesson_meta( \WP_Post|int $post ): object {
+	public function get_lesson_meta( \WP_Post|int $post ): array {
 		$post = get_post( $post );
+		$meta = array();
 
-		return (object) array();
+		$topics = lighter()->lms->lesson->get_parent_topics( $post );
+
+		foreach ( $topics as $topic ) {
+			if ( ! isset( $meta[ $topic->course_id ] ) ) {
+				$meta[ $topic->course_id ] = array(
+					'course_id' => $topic->course_id,
+					'title'     => get_the_title( $topic->course_id ),
+				);
+			}
+
+			$meta[ $topic->course_id ]['topics'][] = array(
+				'key'        => $topic->topic_key,
+				'title'      => $topic->title,
+				'sort_order' => $topic->sort_order,
+			);
+		}
+
+		return $meta;
+	}
+
+	public function update_lesson_meta( \WP_Post|int $post, mixed $new_value ): void {
+		foreach ( $new_value as $course_id => $course ) {
+			if ( $course_id !== $course['course_id'] ) {
+				continue;
+			}
+
+			$course_post = get_post( $course_id );
+
+			if ( $course_post->post_type !== lighter_lms()->course_post_type || empty( $course['topics'] ) ) {
+				continue;
+			}
+
+			foreach ( $course['topics'] as $topic ) {
+				$exists = lighter()->lms->topic->get( $topic['key'] );
+				if ( ! $exists ) {
+					continue;
+				}
+
+				lighter()->lms->lesson->update_topic_relationship(
+					array(
+						'topic_id'   => $exists->ID,
+						'lesson_id'  => $post->ID,
+						'sort_order' => $topic['sort_order'],
+					)
+				);
+			}
+		}
 	}
 
 	/**
@@ -256,7 +303,7 @@ class Lesson_Post extends Post_Type {
 	 *
 	 * @return int The saved lesson ID.
 	 */
-	public static function save_from_course( array $args, int $parent_id, array $topic, Topics $topic_db ): int {
+	public static function save_from_course( array $args, int $parent_id, array $topic ): int {
 		$insert_args = array(
 			'post_title'  => $args['title'],
 			'post_status' => $args['postStatus'],
@@ -279,7 +326,7 @@ class Lesson_Post extends Post_Type {
 		}
 
 		if ( $inserted ) {
-			$t      = $topic_db->get( $topic['key'] );
+			$t      = lighter()->lms->topic->get( $topic['key'] );
 			$l_args = array(
 				'lesson' => $inserted,
 				'parent' => $parent_id,

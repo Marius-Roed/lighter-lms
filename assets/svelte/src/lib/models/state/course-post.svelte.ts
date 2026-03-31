@@ -10,7 +10,7 @@ export class Course {
     readonly publishDateGMT: string;
     readonly modifiedDate: string;
     readonly modifiedDateGMT: string;
-    readonly author: string;
+    readonly author: number;
     readonly type: string;
 
     title = $state("");

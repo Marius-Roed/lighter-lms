@@ -132,7 +132,7 @@
                 />
             </div>
             <div class="lessons-amount">
-                <p>Lessons ({topic.lessons?.length ?? 0})</p>
+                <p>Lessons ({topic.sortedLessons?.length ?? 0})</p>
             </div>
             <div class="actions">
                 <div class="add">

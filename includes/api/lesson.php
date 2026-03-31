@@ -8,34 +8,27 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 
-class Course extends Base_Controller {
+class Lesson extends Base_Controller {
 
 	public function register_routes(): void {
 		register_rest_route(
 			$this->namespace,
-			'/courses/(?P<id>\d+)',
+			'/lesson/(?P<id>\d+)',
 			array(
 				array(
 					'methods'             => 'GET',
-					'callback'            => array( $this, 'get_course' ),
+					'callback'            => array( $this, 'get_lesson' ),
 					'permission_callback' => array( $this, 'can_read' ),
 					'args'                => array(
-						'id'     => array(
+						'id' => array(
 							'validate_callback' => fn( $v ) => is_numeric( $v ),
 							'sanitize_callback' => 'absint',
-						),
-						'topics' => array(
-							'required'          => false,
-							'type'              => 'boolean',
-							'description'       => 'Appends an array of all topics and their lessons.',
-							'validate_callback' => fn( $v ) => wp_validate_boolean( $v ),
-							'sanitze_callback'  => 'wp_validate_boolean',
 						),
 					),
 				),
 				array(
 					'methods'             => 'DELETE',
-					'callback'            => array( $this, 'delete_course' ),
+					'callback'            => array( $this, 'delete_lesson' ),
 					'permission_callback' => array( $this, 'can_delete' ),
 				),
 			)
@@ -50,8 +43,8 @@ class Course extends Base_Controller {
 		return current_user_can( 'delete_post', $request->get_param( 'id' ) );
 	}
 
-	public function get_course( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$post = $this->get_post_or_error( $request->get_param( 'id' ), lighter_lms()->course_post_type );
+	public function get_lesson( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$post = $this->get_post_or_error( $request->get_param( 'id' ), lighter_lms()->lesson_post_type );
 
 		if ( is_wp_error( $post ) ) {
 			return $post;
@@ -65,8 +58,8 @@ class Course extends Base_Controller {
 		return $this->success( $data );
 	}
 
-	public function delete_course( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$post = $this->get_post_or_error( $request->get_param( 'id' ), lighter_lms()->course_post_type );
+	public function delete_lesson( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		$post = $this->get_post_or_error( $request->get_param( 'id' ), lighter_lms()->lesson_post_type );
 
 		if ( is_wp_error( $post ) ) {
 			return $post;
@@ -80,5 +73,13 @@ class Course extends Base_Controller {
 				'id'      => $post->ID,
 			)
 		);
+	}
+
+	public function pre_save_lesson( \WP_Post $post, \WP_REST_Request $request, bool $creating ): void {
+		$title = $request->get_param( 'title' );
+		if ( $title ) {
+			$title            = sanitize_text_field( $title );
+			$post->post_title = $title;
+		}
 	}
 }

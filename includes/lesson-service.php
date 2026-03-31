@@ -2,6 +2,8 @@
 
 namespace LighterLMS;
 
+use LighterLMS\DB\TopicRow;
+
 defined( 'ABSPATH' ) || exit;
 
 class Lesson_Service {
@@ -23,6 +25,9 @@ class Lesson_Service {
 		return $courses;
 	}
 
+	/**
+	 * @return TopicRow[]
+	 */
 	public function get_parent_topics( int|\WP_Post $lesson ): array {
 		$lesson = get_post( $lesson );
 
@@ -42,6 +47,63 @@ class Lesson_Service {
 
 	public function move() {
 		throw new \Exception( 'Not implemeneted!' );
+	}
+
+	/**
+	* Creates a relationship between a lesson and a topic
+	*
+	* @param array{ topic_id: int, lesson_id: int, sort_order: int } $data
+	*/
+	public function create_topic_relationship( array $data ): void {
+		$topics = lighter()->lms->db->topic_lessons->find_by_lesson( $data['lesson_id'] );
+		if ( ! $topics ) {
+			return;
+		}
+
+		foreach ( $topics as $topic ) {
+			if ( $topic->ID == $data['topic_id'] ) {
+				return;
+			}
+		}
+
+		try {
+			lighter()->lms->db->topic_lessons->insert( $data );
+		} catch ( \Throwable $e ) {
+		}
+	}
+
+	/**
+	* Updates the relation between a lesson and topic.
+	* Creates one if no already existant
+	*
+	* @param array{ topic_id: int, lesson_id: int, sort_order: int } $data
+	*/
+	public function update_topic_relationship( array $data ): bool {
+		[
+			'topic_id' => $topic_id,
+			'lesson_id' => $lesson_id,
+			'sort_order' => $sort_order
+		] = $data;
+
+		$exists = lighter()->lms->db->topic_lessons->find( $topic_id, $lesson_id );
+		if ( ! $exists ) {
+
+			try {
+				lighter()->lms->db->topic_lessons->insert( $data );
+			} catch ( \Throwable $e ) {
+				return false;
+			}
+			return true;
+		}
+
+		try {
+			lighter()->lms->db->topic_lessons->update( $exists->ID, $sort_order );
+		} catch ( \Throwable $e ) {
+			error_log( $e );
+			return false;
+		}
+
+		return true;
 	}
 
 	public static function normalise_for_rest( int|\WP_Post $lesson, $context = 'edit' ) {

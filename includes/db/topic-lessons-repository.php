@@ -34,28 +34,39 @@ class Topic_Lessons_Repository {
 
 	/**
 	* Gets all rows by a given topic id.
+	*
+	* @return TopicLessonRow[]
 	*/
 	public function find_by_topic( int $id ): ?array {
-		return $this->db->get_results(
+		$results = $this->db->get_results(
 			$this->db->prepare(
 				"SELECT * FROM {$this->table} WHERE topic_id = %d",
 				$id
 			)
 		);
+
+		return array_map( fn( $row ) => TopicLessonRow::from_object( $row ), $results );
 	}
 
 	/**
 	* Gets all rows by a given lesson id.
+	*
+	* @return null|TopicLessonRow[]
 	*/
 	public function find_by_lesson( int $id ): ?array {
-		return $this->db->get_results(
+		$results = $this->db->get_results(
 			$this->db->prepare(
 				"SELECT * FROM {$this->table} WHERE lesson_id = %d",
 				$id
 			)
 		);
+
+		return array_map( fn( $row ) => TopicLessonRow::from_object( $row ), $results );
 	}
 
+	/**
+	 * @param array{ topic: int, lesson: int, sort_order: ?int} $data
+	 */
 	public function insert( array $data ): int {
 		$topic_id   = (int) ( $data['topic'] ?? $data['topic_id'] );
 		$lesson_id  = (int) ( $data['lesson'] ?? $data['lesson_id'] );
@@ -63,7 +74,7 @@ class Topic_Lessons_Repository {
 
 		$inserted = $this->db->insert(
 			$this->table,
-			compact( $topic_id, $lesson_id, $sort_order ),
+			compact( 'topic_id', 'lesson_id', 'sort_order' ),
 			array()
 		);
 
@@ -72,6 +83,20 @@ class Topic_Lessons_Repository {
 		}
 
 		return $inserted;
+	}
+
+	public function update( int $row_id, int $sort_order ): void {
+		$updated = $this->db->update(
+			$this->table,
+			array( 'sort_order' => $sort_order ),
+			array( 'ID' => $row_id ),
+			array( '%d' ),
+			array( '%d' ),
+		);
+
+		if ( ! $updated ) {
+			throw new Exception( 'Failed to update topic-lesson row: ' . $this->db->last_error );
+		}
 	}
 
 	public function delete( int $id ): void {
@@ -118,5 +143,23 @@ class Topic_Lessons_Repository {
 				throw new Exception( "Failed to delete topic-lesson row, topic_id {$topic_id}; lesson_id {$lesson_id}: " . $this->db->last_error );
 			}
 		}
+	}
+}
+
+readonly class TopicLessonRow {
+	public function __construct(
+		public int $ID,
+		public int $topic_id,
+		public int $lesson_id,
+		public int $sort_order,
+	) {}
+
+	public static function from_object( object $obj ): self {
+		return new self(
+			ID: $obj->ID,
+			topic_id: $obj->topic_id,
+			lesson_id: $obj->lesson_id,
+			sort_order: $obj->sort_order,
+		);
 	}
 }

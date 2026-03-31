@@ -1,6 +1,6 @@
 import { CourseAPI } from "$lib/api/course-api.ts";
 import { Randflake } from "$lib/utils/randflake.ts";
-import type { CourseData, LessonData, TopicData } from "$types/course.js";
+import type { CourseData, LessonData, LessonDataCreate, LessonType, TopicData } from "$types/course.js";
 import { Lesson } from "../state/course-lesson.svelte.ts";
 import { Course } from "../state/course-post.svelte.ts";
 import { Topic } from "../state/course-topic.svelte.ts";
@@ -91,7 +91,13 @@ export class CourseService {
             : this.course.allLessons.find((l) => l.id === lessonKey);
         if (!lesson) return;
 
+        const oldVal = lesson.status;
+
         lesson.setStatus(value);
+
+        this.#api.updateLessonStatus(lesson.id, value).catch(() => {
+            lesson.setStatus(oldVal);
+        });
     }
 
     createLesson(topicKey: string, data: { title: string, lesson_type?: string }): void {
@@ -99,49 +105,47 @@ export class CourseService {
         if (!topic) return;
 
         const placeholder = {
-            id: -Date.now(),
-            lesson_key: new Randflake().generate(),
-            slug: "",
-            date: new Date().toISOString(),
-            date_gmt: new Date().toISOString(),
-            modified: new Date().toISOString(),
-            modified_gmt: new Date().toISOString(),
-            author: "",
-            parent: 0,
-            parent_key: topicKey,
-            title: { rendered: data.title },
-            content: { rendered: "" },
-            excerpt: { rendered: "" },
-            menu_order: topic.lessons.length,
-            sort_order: topic.lessons.length,
-            status: "auto-draft" as const,
-            type: "lesson" as "lesson",
-            lesson_type: data.lesson_type ?? "text",
-            meta: {},
-        };
+            lighter_lesson_key: new Randflake().generate(),
+            title: data.title,
+            status: "draft" as const,
+            type: "lighter_lessons",
+            lighter_lesson_type: (data.lesson_type ?? "text") as LessonType,
+            _lighter_meta: {
+                [this.course.id]: {
+                    course_id: this.course.id,
+                    title: this.course.title,
+                    topics: [
+                        {
+                            key: topic.key,
+                            sort_order: (topic.sortedLessons?.length + 1) * 10,
+                            title: topic.title,
+                        }
+                    ]
+                }
+            },
+        } satisfies LessonDataCreate;
 
-        topic.addLesson(placeholder);
+        const lesson = Lesson.fromCreate(placeholder);
+        topic.addLesson(lesson);
 
-        this.#api.createLesson(new Lesson(placeholder)).then((lesson) => {
-            topic.removeLesson(placeholder.lesson_key);
-            topic.addLesson(lesson);
+        this.#api.createLesson(placeholder).then((realLesson) => {
+            lesson.update(realLesson);
         }).catch(() => {
-            topic.removeLesson(placeholder.lesson_key);
+            topic.removeLesson(placeholder.lighter_lesson_key);
             // TODO: Toast failure.
         });
     }
 
-    deleteLesson(topicKey: string, lessonId: number) {
-        const topic = this.course.topics.find(t => t.key === topicKey);
-        if (!topic) return;
-
-        const lesson = topic.lessons.find(l => l.id === lessonId);
+    deleteLesson(lessonId: number) {
+        const lesson = this.course.allLessons.find(l => l.id === lessonId);
         if (!lesson) return;
+
+        const topic = this.course.topics.find((t) => t.key === lesson.parentKey);
 
         const snapshot = [...topic.lessons];
         topic.removeLesson(lesson.key);
 
-        this.#api.deleteLesson(lesson.key).catch(() => {
+        this.#api.deleteLesson(lesson.id).catch(() => {
             topic.lessons = snapshot;
             // TODO: Toast error
         });
@@ -172,7 +176,7 @@ export class CourseService {
         const placeholder: TopicData = {
             key: new Randflake().generate(),
             title,
-            course: this.course.id,
+            course_id: this.course.id,
             sort_order: this.course.topics.length,
             lessons
         }
