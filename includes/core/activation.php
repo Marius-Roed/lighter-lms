@@ -32,11 +32,10 @@ class Activation {
 			return;
 		}
 
-		$mu_bootstrap = WPMU_PLUGIN_DIR . '/lighter.php';
-		$mu_dir       = WPMU_PLUGIN_DIR . '/lighter/';
+		$mu_file = WPMU_PLUGIN_DIR . '/lighter.php';
 		$source       = LIGHTER_LMS_PATH . 'mu-plugin/';
 
-		if ( $wp_filesystem->exists( $mu_bootstrap ) && defined( 'LIGHTER_LMS_REQUIRED_MU_VERSION' ) && version_compare( LIGHTER_LMS_REQUIRED_MU_VERSION, '1.0.0', '>=' ) ) {
+		if ( $wp_filesystem->exists( $mu_file ) && defined( 'LIGHTER_LMS_REQUIRED_MU_VERSION' ) && version_compare( LIGHTER_LMS_REQUIRED_MU_VERSION, '1.0.0', '>=' ) ) {
 			return;
 		}
 
@@ -44,8 +43,7 @@ class Activation {
 			$wp_filesystem->mkdir( WPMU_PLUGIN_DIR );
 		}
 
-		self::_copy_directory( $source, $mu_dir );
-		$wp_filesystem->copy( $source . 'lighter.php', $mu_bootstrap, true );
+		$wp_filesystem->copy( $source . 'lighter.php', $mu_file, true );
 	}
 
 	private static function _init_filesystem(): ?bool {
@@ -56,42 +54,5 @@ class Activation {
 		}
 
 		return WP_Filesystem();
-	}
-
-	private static function _copy_directory( string $source, string $dest ): bool {
-		global $wp_filesystem;
-
-		if ( ! $wp_filesystem->is_dir( $source ) ) {
-			error_log( "LighterLMS: Source directory \"$source\" does not exist." );
-			return false;
-		}
-
-		if ( ! $wp_filesystem->is_dir( $dest ) ) {
-			$wp_filesystem->mkdir( $dest );
-		}
-
-		$files = $wp_filesystem->dirlist( $source );
-
-		if ( empty( $files ) ) {
-			return false;
-		}
-
-		foreach ( $files as $file => $file_info ) {
-			$source_path = trailingslashit( $source ) . $file;
-			$dest_path   = trailingslashit( $dest ) . $file;
-
-			if ( 'd' === $file_info['type'] ) {
-				if ( ! self::_copy_directory( $source_path, $dest_path ) ) {
-					return false;
-				}
-			} else {
-				if ( ! $wp_filesystem->copy( $source_path, $dest_path, true ) ) {
-					error_log( "LighterLMS: Failed to copy \"$source_path\" to \"$dest_path\"." );
-					return false;
-				}
-			}
-		}
-
-		return true;
 	}
 }
