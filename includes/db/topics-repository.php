@@ -17,6 +17,7 @@ class Topics_Repository {
 		$this->db    = $db ?: $wpdb;
 		$this->table = $this->db->prefix . lighter_lms()->topics_table;
 
+		// NOTE: Maybe assume table exists. Query is quite slow
 		if ( ! $this->_table_exists() ) {
 			_doing_it_wrong( 'Topics_Controller', 'Topics db class was instantiated with out the table present', '1.0.0' );
 			return null;

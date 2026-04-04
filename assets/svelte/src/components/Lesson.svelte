@@ -46,7 +46,11 @@
         />
     </div>
     <div class="actions">
-        <EditLesson text="Edit lesson" {lesson} />
+        <button
+            type="button"
+            class="lighter-btn transparent"
+            onclick={() => service.editModal.open(lesson.id)}
+        >Edit Lesson</button>
         <div class="lesson-menu">
             <ActionMenu bind:this={actionMenu}>
                 {#snippet trigger()}

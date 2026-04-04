@@ -9,11 +9,12 @@ export class Lesson {
     readonly author: number;
     readonly type = "lesson" as const;
     readonly parentKey: string;
+    readonly editLink: string;
 
     title = $state("");
     sortOrder = $state(0);
     status = $state<LessonData["status"]>("auto-draft");
-    lessonType = $state<LessonData["lesson_type"]>("text");
+    lessonType = $state<LessonData["lighter_lesson_type"]>("text");
     modified = $state("");
 
     readonly #original: LessonData;
@@ -27,15 +28,30 @@ export class Lesson {
         this.#original = data;
         this.id = data.id;
         this.key = data.lighter_lesson_key ?? randflake().generate();
-        this.slug = data.slug;
-        this.date = data.date;
-        this.author = data.author;
+        this.slug = data.slug ?? "";
+        this.date = data.date ?? "";
+        this.author = data.author ?? 0;
         this.title = data.title.raw ?? data.title.rendered;
         this.status = data.status;
         this.lessonType = "text";
         this.modified = data.modified;
 
+        this.editLink = this.getEditLink(data);
         this.parentKey = this.parseParentKey(data);
+    }
+
+    getEditLink(data: LessonData): string {
+        const url = new URL(data.permalink_template);
+        url.pathname = "/wp-admin/post.php"
+        const action = 
+            LighterLMS.course.settings.editor !== "classic-editor"
+                ? (LighterLMS?.course?.settings?.editor ?? false)
+                : "edit";
+        const params = new URLSearchParams({ post: data.id.toString(), action });
+
+        url.search = params.toString()
+
+        return url.toString();
     }
 
     parseParentKey(data: LessonData): string {

@@ -1,24 +1,16 @@
 <script>
-    import {
-        editModal,
-        editNextLesson,
-        editPrevLesson,
-        getLesson,
-        lessons,
-        syncLesson,
-    } from "$lib/state.svelte.js";
     import Icon from "./Icon.svelte";
     import { lighterFetch } from "$api/lighter-fetch";
+    import { getCourseService } from "$lib/utils/index.ts";
+
+    let service = getCourseService();
 
     let iframeEl = $state(),
         iframeReady = $state(false);
 
-    let fewerLessons = $derived(getLesson(editModal.lesson?.key) <= 0),
-        moreLessons = $derived(getLesson(editModal.lesson?.key));
-
     async function getPermalink() {
-        if (editModal.lesson.id) {
-            return editModal.lesson.permalink;
+        if (service.editModal.currentLesson.id) {
+            return service.editModal.currentLesson.permalink;
         }
 
         const res = await lighterFetch({
@@ -26,19 +18,14 @@
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                title: editModal.lesson.title,
-                parent_topic: editModal.lesson.parentTopicKey,
+                title: service.editModal.currentLesson.title,
                 meta: {
-                    _lighter_lesson_key: editModal.lesson.key,
+                    _lighter_lesson_key: service.editModal.currentLesson.key,
                 },
             }),
         });
 
-        const idx = getLesson(editModal.lesson.key);
-
-        lessons[idx].permalink = res.permalink;
-        lessons[idx].id = res.ID;
-        return lessons[idx].permalink;
+        return res.permalink;
     }
 
     let src = $derived.by(async () => {
@@ -47,13 +34,13 @@
                 ? (LighterLMS?.course?.settings?.editor ?? false)
                 : false;
 
-        if (!editModal.lesson) return "";
+        if (!service.editModal.currentLesson) return "";
 
-        if (!editModal.lesson.id) {
+        if (!service.editModal.currentLesson?.id) {
             await getPermalink();
         }
 
-        const url = new URL(editModal.lesson.permalink);
+        const url = new URL(service.editModal.currentLesson.editLink);
         const params = new URLSearchParams(url.search);
 
         if (editor) {
@@ -67,10 +54,9 @@
     });
 
     function close() {
-        editModal.open = false;
-        iframeReady = false;
+        service.editModal.close();
 
-        syncLesson(editModal.lesson.key);
+        // syncLesson(editModal.lesson.key);
     }
 
     /**
@@ -80,7 +66,7 @@
      */
     function dialogControl(el) {
         $effect(() => {
-            if (editModal.open) {
+            if (service.editModal.currentLesson) {
                 if (!el.open) el.showModal();
                 document.body.style.position = "fixed";
                 document.body.style.top = `-${window.scrollY}px`;
@@ -99,7 +85,7 @@
     }
 
     function handleIframeLoad() {
-        if (!iframeEl.contentWindow || !editModal.open) return;
+        if (!iframeEl.contentWindow || !service.editModal.currentLesson) return;
 
         try {
             const doc = iframeEl.contentDocument;
@@ -131,6 +117,11 @@
             console.warn("Iframe naviagtion check failed:", e);
         }
     }
+
+    $effect(() => {
+        service.editModal.currentLessonId;
+        iframeReady = false;
+    });
 </script>
 
 <dialog
@@ -143,7 +134,7 @@
 >
     <header>
         <div class="lighter-dia-info">
-            <h3>Edit {editModal.lesson?.title ?? ""}</h3>
+            <h3>Edit "{service.editModal.currentLesson?.title ?? ""}"</h3>
         </div>
         <div class="lighter-dia-actions">
             <button
@@ -151,8 +142,8 @@
                 class="change-lesson"
                 title="Previous lesson"
                 style="rotate:90deg;"
-                onclick={editPrevLesson}
-                disabled={fewerLessons}
+                onclick={() => service.editModal.goPrev()}
+                disabled={!service.editModal.previousLesson}
             >
                 <Icon name="chevron" />
             </button>
@@ -161,8 +152,8 @@
                 class="change-lesson"
                 title="Next lesson"
                 style="rotate:-90deg"
-                onclick={editNextLesson}
-                disabled={moreLessons}
+                onclick={() => service.editModal.goNext()}
+                disabled={!service.editModal.nextLesson}
             >
                 <Icon name="chevron" />
             </button>
@@ -175,11 +166,11 @@
         {#if !iframeReady}
             <div class="lighter-editor-skeleton"></div>
         {/if}
-        {#if editModal.open}
+        {#if service.editModal.currentLesson}
             {#await src then src}
                 <iframe
-                    title={`Edit ${editModal.lesson?.title ?? "undefined"}`}
-                    id={"edit-" + editModal.key}
+                    title={`Edit ${service.editModal.currentLesson?.title ?? "undefined"}`}
+                    id={"edit-" + service.editModal.currentLesson.key}
                     {src}
                     bind:this={iframeEl}
                     onload={handleIframeLoad}

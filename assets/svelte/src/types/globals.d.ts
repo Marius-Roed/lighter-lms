@@ -179,7 +179,7 @@ declare global {
 
     interface WPRestPost extends WPRestPostReadOnly {
         slug?: string;
-        status?: PostStatus;
+        status: PostStatus;
         title: WPTextField;
         content: WPTextField;
         excerpt: WPTextField;

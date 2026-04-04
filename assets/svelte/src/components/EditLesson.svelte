@@ -1,23 +1,14 @@
-<script>
-    /**
-     * @typedef {object} EditLessonProps
-     * @property {string} text
-     * @property {import('$lib/state.svelte.js').Lesson} lesson
-     */
-
+<script lang="ts">
     import Icon from "./Icon.svelte";
-    import { lighterFetch } from "$api/lighter-fetch";
+    import { lighterFetch } from "$lib/api/lighter-fetch.ts";
     import { editLesson, updateLesson } from "$lib/state.svelte.js";
 
-    /** @type {EditLessonProps} */
     let { text, lesson, ...props } = $props();
 
     let isEditing = $state(false);
 
-    /** @type {HTMLDialogElement} */
-    let dialogEl = $state();
-    /** @type {HTMLIFrameElement} */
-    let iframeEl = $state();
+    let dialogEl: HTMLDialogElement = $state();
+    let iframeEl: HMTLIFrameElement = $state();
 
     let lessonPromise = $state();
     let iframeSrc = $state(null);

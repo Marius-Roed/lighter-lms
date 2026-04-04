@@ -23,6 +23,7 @@ abstract class Post_Type {
 
 		add_action( 'save_post_' . $this->post_type, array( $this, 'save_post' ), 10, 2 );
 		add_action( 'manage_' . $this->post_type . '_posts_custom_column', array( $this, 'custom_columns' ), 10, 2 );
+		add_action( 'delete_post_' . $this->post_type, array( $this, 'delete_post' ), 10, 2 );
 
 		add_filter( 'manage_' . $this->post_type . '_posts_columns', array( $this, 'columns' ) );
 		add_filter( 'rest_' . $this->post_type . '_query', array( $this, 'rest_query' ), 20, 2 );
@@ -97,14 +98,13 @@ abstract class Post_Type {
 		return ! $this->skip_next_save;
 	}
 
-	/**
-	 * Saves the post data (override in child class)
-	 */
+	/** Saves the post data (override in child class) */
 	abstract public function save_post( int $post_id, \WP_Post $post ): void;
 
-	/**
-	 * Save the post settings (override in child class)
-	 */
+	/** Deletes necessary meta just before it is deleted from the database (override in child class) */
+	abstract public function delete_post( int $post_id, \WP_Post $post ): void;
+
+	/** Save the post settings (override in child class) */
 	abstract protected function _save_settings( \WP_Post $post, array $args ): void;
 
 	/** Registers the post meta boxes (override in child class - default empty) */

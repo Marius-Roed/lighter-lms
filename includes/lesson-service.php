@@ -106,6 +106,28 @@ class Lesson_Service {
 		return true;
 	}
 
+	public function delete_topic_relationship( int|\WP_Post $lesson ): void {
+		$post = get_post( $lesson );
+
+		if ( $post->post_type !== lighter_lms()->lesson_post_type ) {
+			_doing_it_wrong( __FUNCTION__, "Cannot call topic-lesson delete on a post of type \"$post->post_type\"", '1.0.0' );
+			return;
+		}
+
+		$exists = lighter()->lms->db->topic_lessons->find_by_lesson( $post->ID );
+		if ( ! $exists ) {
+			return;
+		}
+
+		foreach ( $exists as $lesson_row ) {
+			try {
+				lighter()->lms->db->topic_lessons->delete( $lesson_row->ID );
+			} catch ( \Throwable $e ) {
+				error_log( $e );
+			}
+		}
+	}
+
 	public static function normalise_for_rest( int|\WP_Post $lesson, $context = 'edit' ) {
 		global $post;
 		$original_post = $post; // WARN: as `prepare_item_for_reponse` changes the global $post variable

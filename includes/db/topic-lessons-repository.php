@@ -37,13 +37,22 @@ class Topic_Lessons_Repository {
 	*
 	* @return TopicLessonRow[]
 	*/
-	public function find_by_topic( int $id ): ?array {
-		$results = $this->db->get_results(
-			$this->db->prepare(
-				"SELECT * FROM {$this->table} WHERE topic_id = %d",
-				$id
-			)
-		);
+	public function find_by_topic( int $id, bool $trashed = false ): ?array {
+		if ( ! $trashed ) {
+			$results = $this->db->get_results(
+				$this->db->prepare(
+					"SELECT * FROM {$this->table} tl INNER JOIN {$this->db->posts} p ON p.ID = tl.lesson_id WHERE p.post_status != 'trash' AND tl.topic_id = %d",
+					$id
+				)
+			);
+		} else {
+			$results = $this->db->get_results(
+				$this->db->prepare(
+					"SELECT * FROM {$this->table} WHERE topic_id = %d",
+					$id
+				)
+			);
+		}
 
 		return array_map( fn( $row ) => TopicLessonRow::from_object( $row ), $results );
 	}

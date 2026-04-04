@@ -5,6 +5,7 @@ namespace LighterLMS;
 defined( 'ABSPATH' ) || exit;
 
 use LighterLMS\DB\Topics_Controller;
+use WP_Post;
 
 /**
  * @extends Post_Type<mixed, mixed>
@@ -170,6 +171,10 @@ class Course_Post extends Post_Type {
 			);
 			$this->skip_next_save = false;
 		}
+	}
+
+	public function delete_post( int $post_id, WP_Post $post ): void {
+		throw new \Exception( 'Not implemented' );
 	}
 
 	/**
@@ -369,7 +374,7 @@ class Course_Post extends Post_Type {
 
 		if ( ! empty( $topics ) ) {
 			$topics = array_map(
-				fn($t) => lighter()->lms->topic::normalise_for_rest($t, true),
+				fn( $t ) => lighter()->lms->topic::normalise_for_rest( $t, true ),
 				$topics
 			);
 		}

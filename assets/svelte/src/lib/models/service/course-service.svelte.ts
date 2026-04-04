@@ -4,20 +4,24 @@ import type { CourseData, LessonData, LessonDataCreate, LessonType, TopicData } 
 import { Lesson } from "../state/course-lesson.svelte.ts";
 import { Course } from "../state/course-post.svelte.ts";
 import { Topic } from "../state/course-topic.svelte.ts";
+import { EditModal } from "../state/edit-modal.svelte.ts";
 
 export class CourseService {
     readonly #api: CourseAPI;
+    editModal: EditModal;
 
-    course = $state<Course>(null);
+    course = $state<Course>();
     error = $state<string>("");
 
     constructor(data: CourseData) {
         this.course = new Course(data);
         this.#api = new CourseAPI(data.id);
+
+        this.editModal = new EditModal(() => this.course?.allLessons ?? []);
     }
 
     renameLesson(lessonKey: string, newTitle: string) {
-        const lesson = this.course.getLessonByKey(lessonKey);
+        const lesson = this.course?.getLessonByKey(lessonKey);
         if (!lesson) return;
 
         const oldTitle = lesson.title;
@@ -87,8 +91,8 @@ export class CourseService {
 
     setLessonStatus(lessonKey: string | number, value: LessonData['status']): void {
         const lesson = typeof lessonKey === "string"
-            ? this.course.getLessonByKey(lessonKey)
-            : this.course.allLessons.find((l) => l.id === lessonKey);
+            ? this.course?.getLessonByKey(lessonKey)
+            : this.course?.allLessons.find((l) => l.id === lessonKey);
         if (!lesson) return;
 
         const oldVal = lesson.status;
@@ -101,7 +105,7 @@ export class CourseService {
     }
 
     createLesson(topicKey: string, data: { title: string, lesson_type?: string }): void {
-        const topic = this.course.topics.find((t) => t.key === topicKey);
+        const topic = this.course?.topics.find((t) => t.key === topicKey);
         if (!topic) return;
 
         const placeholder = {
@@ -111,9 +115,9 @@ export class CourseService {
             type: "lighter_lessons",
             lighter_lesson_type: (data.lesson_type ?? "text") as LessonType,
             _lighter_meta: {
-                [this.course.id]: {
-                    course_id: this.course.id,
-                    title: this.course.title,
+                [this.course?.id ?? 0]: {
+                    course_id: this.course?.id ?? 0,
+                    title: this.course?.title ?? "",
                     topics: [
                         {
                             key: topic.key,
@@ -137,10 +141,11 @@ export class CourseService {
     }
 
     deleteLesson(lessonId: number) {
-        const lesson = this.course.allLessons.find(l => l.id === lessonId);
+        const lesson = this.course?.allLessons.find(l => l.id === lessonId);
         if (!lesson) return;
 
-        const topic = this.course.topics.find((t) => t.key === lesson.parentKey);
+        const topic = this.course?.topics.find((t) => t.key === lesson.parentKey);
+        if ( !topic) return;
 
         const snapshot = [...topic.lessons];
         topic.removeLesson(lesson.key);
@@ -152,49 +157,49 @@ export class CourseService {
     }
 
     insertTopic(title: string, nodeKey: string, position: "before" | "after" = "after", lessons: LessonData[] = []): void {
-        const existingTopic = this.course.topics.find(t => t.key === nodeKey);
+        const existingTopic = this.course?.topics.find(t => t.key === nodeKey);
         if (!existingTopic) throw new Error(`Cannot find node to insert adjacent topic on`);
 
         const placeholder: TopicData = {
             key: new Randflake().generate(),
             title,
-            course: this.course.id,
+            courseId: this.course?.id ?? 0,
             sortOrder: position === "before" ? existingTopic.sortOrder : existingTopic.sortOrder + 1,
             lessons
         }
 
-        this.course.topics.forEach(t => {
+        this.course?.topics.forEach(t => {
             t.sortOrder = t.sortOrder > existingTopic.sortOrder ? t.sortOrder + 1 : t.sortOrder;
 
             if (position === "before") t.sortOrder++;
         });
 
-        this.course.addTopic(placeholder);
+        this.course?.addTopic(placeholder);
     }
 
     createTopic(title: string, lessons: LessonData[] = []): void {
         const placeholder: TopicData = {
             key: new Randflake().generate(),
             title,
-            course_id: this.course.id,
-            sort_order: this.course.topics.length,
+            courseId: this.course?.id ?? 0,
+            sortOrder: this.course?.topics?.length ?? 0,
             lessons
         }
 
-        this.course.addTopic(placeholder);
+        this.course?.addTopic(placeholder);
 
         this.#api.createTopic(new Topic(placeholder)).then((real) => {
-            this.course.removeTopic(placeholder.key);
-            this.course.addTopic(real);
+            this.course?.removeTopic(placeholder.key);
+            this.course?.addTopic(real);
         }).catch((e) => {
             console.error(e);
-            this.course.removeTopic(placeholder.key);
+            this.course?.removeTopic(placeholder.key);
             // TODO: Toast failure.
         });
     }
 
     renameTopic(topicKey: string, newTitle: string) {
-        const topic = this.course.topics.find((t) => t.key === topicKey);
+        const topic = this.course?.topics.find((t) => t.key === topicKey);
         if (!topic) return;
 
         const oldTitle = topic.title;
@@ -211,27 +216,27 @@ export class CourseService {
     }
 
     moveTopic(fromIndex: number, toIndex: number) {
-        const fromTopic = this.course.sortedTopics[fromIndex];
-        const toTopic = this.course.sortedTopics[toIndex];
+        const fromTopic = this.course?.sortedTopics[fromIndex];
+        const toTopic = this.course?.sortedTopics[toIndex];
 
         if (!(fromTopic instanceof Topic) || !(toTopic instanceof Topic)) return;
 
-        const snapshot = Array.from(this.course.topics.map(t => {
+        const snapshot = Array.from(this.course?.topics.map(t => {
             return { key: t.key, sort: t.sortOrder, updatedAt: t.updatedAt };
-        }));
+        }) ?? []);
 
-        const reordered = this.course.moveTopic(fromIndex, toIndex);
+        const reordered = this.course?.moveTopic(fromIndex, toIndex) ?? [];
 
         this.#api.moveTopic(fromTopic.key, reordered)
             .then((res) => {
                 res.forEach((n) => {
-                    this.course.updateTopic(n);
+                    this.course?.updateTopic(n);
                 });
             })
             .catch((e) => {
                 console.error(e);
                 snapshot.forEach(({ key, sort, updatedAt }) => {
-                    const topic = this.course.topics.find(t => t.key === key)
+                    const topic = this.course?.topics.find(t => t.key === key)
                     if (topic) {
                         topic.sortOrder = sort;
                         topic.updatedAt = updatedAt;
@@ -242,24 +247,17 @@ export class CourseService {
     }
 
     deleteTopic(topicKey: string) {
-        const topic = this.course.topics.find((t) => t.key === topicKey);
+        const topic = this.course?.topics.find((t) => t.key === topicKey);
         if (!topic) return;
 
-        const snapshot = [...this.course.topics];
+        const snapshot = [...this.course?.topics ?? []];
 
-        this.course.removeTopic(topicKey);
+        this.course?.removeTopic(topicKey);
 
         this.#api.deleteTopic(topicKey).catch(() => {
-            this.course.topics = snapshot;
+            if (this.course)
+                this.course.topics = snapshot;
             // TODO: Toast failure.
         });
-    }
-
-    shuffleTopics() {
-        this.course.topics?.map(t => {
-            t.sortOrder = Math.floor(Math.random() * 9);
-            return t;
-        });
-        console.log(this.course.topics);
     }
 }
