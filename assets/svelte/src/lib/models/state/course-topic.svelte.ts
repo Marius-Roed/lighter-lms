@@ -21,7 +21,7 @@ export class Topic {
         this.courseId = data.courseId;
         this.title = data.title;
         this.sortOrder = data.sortOrder;
-        this.lessons = data.lessons?.map((l) => new Lesson(l));
+        this.lessons = data.lessons?.map((l) => new Lesson(l)) ?? [];
     }
 
     addLesson(data: LessonData | Lesson): void {
@@ -39,10 +39,11 @@ export class Topic {
     }
 
     toggleIsExpanded(force?: boolean): void {
-        if (force !== null) {
+        if (typeof force !== 'undefined') {
             this.isExpanded = force;
+        } else {
+            this.isExpanded = !this.isExpanded;
         }
-        this.isExpanded = !this.isExpanded;
     }
 
     getHiddenData(): object {

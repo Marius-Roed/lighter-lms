@@ -78,8 +78,22 @@ class Lesson extends Base_Controller {
 	public function pre_save_lesson( \WP_Post $post, \WP_REST_Request $request, bool $creating ): void {
 		$title = $request->get_param( 'title' );
 		if ( $title ) {
-			$title            = sanitize_text_field( $title );
-			$post->post_title = $title;
+			$title = sanitize_text_field( $title );
+            wp_update_post([ 'ID' => $post->ID, 'post_title' => $title ]);
 		}
+	}
+
+	public function prepare_lesson_item( WP_REST_Response $response, \WP_Post $post, WP_REST_Request $request ): WP_REST_Response {
+		$data = $response->get_data();
+
+		if ( ! isset( $data['title'] ) ) {
+			$data['title']['rendered'] = get_the_title( $post );
+            if ( $request->get_param('context') === 'edit' )
+                $data['title']['raw'] = $post->post_title;
+		}
+
+		$response->set_data( $data );
+
+		return $response;
 	}
 }

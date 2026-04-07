@@ -10,6 +10,7 @@ export class Lesson {
     readonly type = "lesson" as const;
     readonly parentKey: string;
     readonly editLink: string;
+    readonly lighterMeta: LessonData['_lighter_meta'];
 
     title = $state("");
     sortOrder = $state(0);
@@ -17,7 +18,7 @@ export class Lesson {
     lessonType = $state<LessonData["lighter_lesson_type"]>("text");
     modified = $state("");
 
-    readonly #original: LessonData;
+    #original!: LessonData;
     readonly isDirty = $derived(
         this.title !== this.#original.title.rendered
         || this.status !== this.#original.status
@@ -35,13 +36,14 @@ export class Lesson {
         this.status = data.status;
         this.lessonType = "text";
         this.modified = data.modified;
+        this.lighterMeta = data._lighter_meta;
 
         this.editLink = this.getEditLink(data);
         this.parentKey = this.parseParentKey(data);
     }
 
     getEditLink(data: LessonData): string {
-        const url = new URL(data.permalink_template);
+        const url = new URL(data.permalink_template ?? data.link ?? window.location.href);
         url.pathname = "/wp-admin/post.php"
         const action = 
             LighterLMS.course.settings.editor !== "classic-editor"
@@ -56,17 +58,21 @@ export class Lesson {
 
     parseParentKey(data: LessonData): string {
         const meta = data._lighter_meta;
-        if (!meta || !meta[window.LighterLMS?.course?.id]) return;
+        const courseId = window.LighterLMS?.course?.id;
+        if (!meta || !courseId || !meta[courseId]) return "";
 
-        return meta[window.LighterLMS?.course?.id].topics[0].key;
+        const course = meta[courseId];
+        return course.topics?.[0].key ?? "";
 
     }
 
     parseSortOrder(data: LessonData): number {
         const meta = data._lighter_meta;
-        if (!meta || !meta[window.LighterLMS?.course?.id]) return;
+        const courseId = window.LighterLMS?.course?.id;
+        if (!meta || !courseId || !meta[courseId]) return 0;
 
-        return meta[window.LighterLMS?.course?.id].topics[0].sort_order;
+        const course = meta[courseId];
+        return course.topics?.[0].sort_order ?? 0;
     }
 
     setStatus(v: LessonData['status']): void {
@@ -119,20 +125,19 @@ export class Lesson {
             lighter_lesson_type: this.lessonType,
             type: "lighter_lessons",
             slug: this.slug,
-            date_gmt: null,
-            modified_gmt: null,
-            menu_order: null,
-            excerpt: { rendered: null },
-            content: { rendered: null },
-            meta: null,
-            parent: null,
-            _lighter_meta: {
-            }
+            date_gmt: "",
+            modified_gmt: "",
+            menu_order: undefined,
+            excerpt: { rendered: "" },
+            content: { rendered: "" },
+            meta: undefined,
+            parent: undefined,
+            _lighter_meta: this.lighterMeta,
         };
     }
 
     serialize(): string {
-        return JSON.stringify(this.toRestData());
+        return JSON.stringify({ parentTopic: this.parentKey, ...this.toRestData()});
     }
 
     static deserialize(data: string): Lesson {
@@ -147,7 +152,6 @@ export class Lesson {
 
         return new Lesson({
             id: 0,
-            type: "lighter_lessons",
             date_gmt: "",
             modified: "",
             modified_gmt: "",
@@ -160,7 +164,7 @@ export class Lesson {
 
             ...data,
 
-            title: toTextField(data.title),
+            title: { rendered: data.title, raw: data.title },
             content: toTextField(data.content),
             excerpt: toTextField(data.excerpt),
         });

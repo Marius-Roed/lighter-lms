@@ -21,7 +21,7 @@ interface LessonData extends WPRestPost {
     type: "lighter_lessons";
     lighter_lesson_key: string;
     lighter_lesson_type: LessonType;
-    _lighter_meta: LighterMeta;
+    _lighter_meta?: LighterMeta;
 }
 
 interface LessonDataCreate extends WPRestPostCreate {

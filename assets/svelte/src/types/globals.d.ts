@@ -187,6 +187,8 @@ declare global {
         date?: string;
         menu_order?: number;
         parent?: number;
+        link?: string;
+        permalink_template?: string;
         meta?: Record<string, unknown>;
     }
 

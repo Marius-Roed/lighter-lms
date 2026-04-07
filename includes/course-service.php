@@ -57,7 +57,7 @@ class Course_Service {
 		}
 	}
 
-	public function get_topics( int $id ): ?array {
+	public function get_topics( int|\WP_Post $id ): ?array {
 		$post = get_post( $id );
 
 		if ( $post->post_type !== lighter_lms()->course_post_type ) {
@@ -65,7 +65,7 @@ class Course_Service {
 			return null;
 		}
 
-		return lighter()->lms->db->topics->find_by_course( $id );
+		return lighter()->lms->db->topics->find_by_course( $post->ID );
 	}
 
 	public function get_settings( int $id ): array {

@@ -2,115 +2,128 @@ import { lighterFetch } from "./lighter-fetch.ts";
 import type { Lesson } from "$state/course-lesson.svelte.ts";
 import type { Topic } from "$state/course-topic.svelte.ts";
 import { addQueryArgs, type PostStatus } from "$lib/utils/index.ts";
-import type { LessonData, LessonDataCreate, TopicData } from "$types/course.d.ts";
+import type {
+  LessonData,
+  LessonDataCreate,
+  TopicData,
+} from "$types/course.d.ts";
 
 export class CourseAPI {
-    readonly #courseId: number;
+  readonly #courseId: number;
 
-    constructor(courseId: number) {
-        this.#courseId = courseId;
-    }
+  constructor(courseId: number) {
+    this.#courseId = courseId;
+  }
 
-    // ─── Lesson ───────────────────────────────────────
+  // ─── Lesson ───────────────────────────────────────
 
-    createLesson(data: LessonDataCreate) {
-        return lighterFetch<LessonData>({
-            url: "wp/v2/lighter_lessons",
-            method: "POST",
-            data,
-        });
-    }
+  createLesson(data: LessonDataCreate) {
+    return lighterFetch<LessonData>({
+      url: "wp/v2/lighter_lessons",
+      method: "POST",
+      data,
+    });
+  }
 
-    updateLesson(lessonId: number, data: Lesson) {
-        return lighterFetch({
-            path: `lesson/${lessonId}`,
-            method: "PUT",
-            data: data.toRestData()
-        });
-    }
+  updateLesson(lessonId: number, data: Lesson) {
+    return lighterFetch({
+      path: `lesson/${lessonId}`,
+      method: "PUT",
+      data: data.toRestData(),
+    });
+  }
 
-    updateLessonTitle(lessonId: number, title: string) {
-        return lighterFetch({
-            url: `wp/v2/lighter_lessons/${lessonId}`,
-            method: "PATCH",
-            data: { title },
-        });
-    }
+  updateLessonTitle(lessonId: number, title: string) {
+    return lighterFetch({
+      url: `wp/v2/lighter_lessons/${lessonId}`,
+      method: "PATCH",
+      data: { title },
+    });
+  }
 
-    updateLessonStatus(lessonId: number, status: PostStatus) {
-        return lighterFetch<LessonData>({
-            url: `wp/v2/lighter_lessons/${lessonId}`,
-            method: "PATCH",
-            data: { status },
-        });
-    }
+  updateLessonStatus(lessonId: number, status: PostStatus) {
+    return lighterFetch<LessonData>({
+      url: `wp/v2/lighter_lessons/${lessonId}`,
+      method: "PATCH",
+      data: { status },
+    });
+  }
 
-    updateLessonOrder(fromTopicKey: string, toTopicKey: string, data) {
-        throw new Error("Not yet impletmented!");
-    }
+  updateLessonOrder(
+    data: { key: string; sortOrder: number }[],
+    topicKey: string,
+  ) {
+    return lighterFetch({
+      path: "lesson/updateOrder",
+      data: {
+        courseId: this.#courseId,
+        topic: topicKey,
+        data,
+      },
+    });
+  }
 
-    deleteLesson(lessonKey: number) {
-        return lighterFetch({
-            url: `wp/v2/lighter_lessons/${lessonKey}`,
-            method: "DELETE",
-        });
-    }
+  deleteLesson(lessonKey: number) {
+    return lighterFetch({
+      url: `wp/v2/lighter_lessons/${lessonKey}`,
+      method: "DELETE",
+    });
+  }
 
-    // ─── Topic ───────────────────────────────────────
+  // ─── Topic ───────────────────────────────────────
 
-    createTopic(data: Topic) {
-        return lighterFetch<TopicData>({
-            path: `course/${this.#courseId}/topic`,
-            method: "POST",
-            data: data.toRestData(),
-        });
-    }
+  createTopic(data: Topic) {
+    return lighterFetch<TopicData>({
+      path: `course/${this.#courseId}/topic`,
+      method: "POST",
+      data: data.toRestData(),
+    });
+  }
 
-    updateTopic(topicKey: string, data: Topic) {
-        return lighterFetch({
-            path: `course/${this.#courseId}/topic/${topicKey}`,
-            method: "PATCH",
-            data: data.toRestData()
-        });
-    }
+  updateTopic(topicKey: string, data: Topic) {
+    return lighterFetch({
+      path: `course/${this.#courseId}/topic/${topicKey}`,
+      method: "PATCH",
+      data: data.toRestData(),
+    });
+  }
 
-    updateTopicTitle(topicKey: string, title: string) {
-        return lighterFetch({
-            path: `course/${this.#courseId}/topic/${topicKey}`,
-            method: "PATCH",
-            data: { title }
-        });
-    }
+  updateTopicTitle(topicKey: string, title: string) {
+    return lighterFetch({
+      path: `course/${this.#courseId}/topic/${topicKey}`,
+      method: "PATCH",
+      data: { title },
+    });
+  }
 
-    updateTopicOrder(topicKeys: string[]) {
-        return lighterFetch({
-            path: `course/${this.#courseId}/topic-order`,
-            method: "PUT",
-            data: { order: topicKeys }
-        });
-    }
+  updateTopicOrder(topicKeys: string[]) {
+    return lighterFetch({
+      path: `course/${this.#courseId}/topic-order`,
+      method: "PUT",
+      data: { order: topicKeys },
+    });
+  }
 
-    moveTopic(topicKey: string, reordered: Record<number, string>) {
-        return lighterFetch<TopicData[]>({
-            path: `course/${this.#courseId}/topic-move`,
-            method: "PUT",
-            data: { topic_key: topicKey, reordered }
-        });
-    }
+  moveTopic(topicKey: string, reordered: Record<number, string>) {
+    return lighterFetch<TopicData[]>({
+      path: `course/${this.#courseId}/topic-move`,
+      method: "PUT",
+      data: { topic_key: topicKey, reordered },
+    });
+  }
 
-    deleteTopic(topicKey: string) {
-        return lighterFetch({
-            path: `course/${this.#courseId}/topic/${topicKey}`,
-            method: "DELETE",
-        });
-    }
+  deleteTopic(topicKey: string) {
+    return lighterFetch({
+      path: `course/${this.#courseId}/topic/${topicKey}`,
+      method: "DELETE",
+    });
+  }
 
-    getTopic(topicKey: string, withLessons = false) {
-        let url = `course/${this.#courseId}/topic/${topicKey}`;
-        return lighterFetch({
-            path: addQueryArgs(url, { withLessons }),
-            method: "GET",
-        });
-    }
+  getTopic(topicKey: string, withLessons = false) {
+    let url = `course/${this.#courseId}/topic/${topicKey}`;
+    return lighterFetch({
+      path: addQueryArgs(url, { withLessons }),
+      method: "GET",
+    });
+  }
 }
-

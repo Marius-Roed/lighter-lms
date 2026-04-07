@@ -81,4 +81,24 @@ class Course extends Base_Controller {
 			)
 		);
 	}
+
+	public function prepare_course_item( WP_REST_Response $response, \WP_Post $post, WP_REST_Request $request ): WP_REST_Response {
+		$data = $response->get_data();
+
+		if ( ! isset( $data['title'] ) ) {
+			$data['title']['rendered'] = get_the_title( $post );
+			if ( $request->get_param( 'context' ) === 'edit' ) {
+				$data['title']['raw'] = $post->post_title;
+			}
+		}
+
+		if ( $request->get_param( 'full_structure' ) ) {
+			$topics         = lighter()->lms->course->get_topics( $post );
+			$topics         = array_map( fn( $t ) => lighter()->lms->topic->normalise_for_rest( $t, true ), $topics );
+			$data['topics'] = $topics;
+		}
+
+		$response->set_data( $data );
+		return $response;
+	}
 }

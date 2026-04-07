@@ -23,9 +23,14 @@ class REST_API {
 		$this->_controllers = array(
 			new Course(),
 			new Topic(),
+			new Lesson(),
 		);
 
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( 'rest_insert_lighter_lessons', array( $this->_controllers[2], 'pre_save_lesson' ), 10, 3 );
+
+		add_filter( 'rest_prepare_lighter_courses', array( $this->_controllers[0], 'prepare_course_item' ), 10, 3 );
+		add_filter( 'rest_prepare_lighter_lessons', array( $this->_controllers[2], 'prepare_lesson_item' ), 10, 3 );
 	}
 
 	public function register_routes(): void {

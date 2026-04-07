@@ -68,7 +68,7 @@ export class Course {
     }
 
     moveTopic(fromIndex: number, toIndex: number): Record<number, string> {
-        let newOrder = [];
+        let newOrder: string[] = [];
         const reordered = [...this.sortedTopics];
         const [moved] = reordered.splice(fromIndex, 1);
         if (fromIndex > toIndex) {
@@ -83,25 +83,25 @@ export class Course {
         return newOrder;
     }
 
-    moveLesson(fromTopicKey: string, toTopicKey: string, fromIndex: number, toIndex: number) {
+    moveLesson(fromIndex: number, toIndex: number, fromTopicKey: string, toTopicKey?: string) {
         const fromTopic = this.topics.find((t) => t.key === fromTopicKey);
-        const toTopic = this.topics.find((t) => t.key === toTopicKey);
+        const toTopic = this.topics.find((t) => t.key === toTopicKey) ?? fromTopic;
         if (!fromTopic || !toTopic) return;
 
-        const fromLessons: Lesson[] = [...fromTopic.sortedLessons];
+        const fromLessons = [...fromTopic.sortedLessons];
         const [moved] = fromLessons.splice(fromIndex, 1);
 
         if (fromTopicKey === toTopicKey) {
             fromLessons.splice(toIndex, 0, moved);
-            fromLessons.forEach((l, i) => l.sortOrder = i);
+            fromLessons.forEach((l, i) => l.sortOrder = (i + 1) * 10);
             fromTopic.lessons = fromLessons;
         } else {
-            fromLessons.forEach((l, i) => l.sortOrder = i);
+            fromLessons.forEach((l, i) => l.sortOrder = (i + 1) * 10);
             fromTopic.lessons = fromLessons;
 
             const toLessons: Lesson[] = [...toTopic.sortedLessons];
             toLessons.splice(toIndex, 0, moved);
-            toLessons.forEach((l, i) => l.sortOrder = i);
+            toLessons.forEach((l, i) => l.sortOrder = (i + 1) * 10);
             toTopic.lessons = toLessons;
         }
     }
