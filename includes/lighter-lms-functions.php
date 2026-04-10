@@ -86,7 +86,7 @@ if ( ! function_exists( 'lighter_attrify' ) ) {
 	/**
 	 * Parses a string as an attribute. "Lighter LMS" -> "lighter-lms"
 	 *
-	 * @param mixed $value The input to parse
+	 * @param mixed  $value The input to parse
 	 * @param string $seperator="-" The string to use as a seperator
 	 * @return string The attributified string
 	 */
@@ -103,7 +103,7 @@ if ( ! function_exists( 'lighter_get_course_lessons' ) ) {
 	 *
 	 * @param \WP_Post|int $course The course
 	 * @param \WP_User|int $user The user
-	 * @param bool $with_topics Whether to return the topic field.
+	 * @param bool         $with_topics Whether to return the topic field.
 	 *
 	 * @phpstan-import-type CourseData from Types
 	 *
@@ -158,7 +158,7 @@ if ( ! function_exists( 'lighter_save_product' ) ) {
 	 * Saves a product, optionally to a certain post.
 	 *
 	 * @param object $args The product object to save.
-	 * @param int? $post_id The id of the post to save it to. 0 will not save it to a post.
+	 * @param int?   $post_id The id of the post to save it to. 0 will not save it to a post.
 	 */
 	function lighter_save_product( $args, $post_id = 0 ) {
 		$store = lighter_lms()->defaults()->store;
@@ -251,7 +251,7 @@ if ( ! function_exists( 'lighter_course_sidebar' ) ) {
 	 * Creates and prints the sidebar of a course to be viewed on the frontend.
 	 *
 	 * @param WP_Post|int $post The course to generate the sidebar of.
-	 * @param bool $display Whether to display the outout. Will return the generated HTML if false.
+	 * @param bool        $display Whether to display the outout. Will return the generated HTML if false.
 	 *
 	 * @return string|null The generated HTML.
 	 */
@@ -316,9 +316,9 @@ if ( ! function_exists( 'lighter_sidebar_item' ) ) {
 	/**
 	 * Generate html for a sidebar item.
 	 *
-	 * @param array $item The sidebar item
+	 * @param array      $item The sidebar item
 	 * @param CourseData $data The course data
-	 * @param bool $display Whether to ouput the content. Will be returned if not output.
+	 * @param bool       $display Whether to ouput the content. Will be returned if not output.
 	 *
 	 * @return string|null The generated content.
 	 */
@@ -376,7 +376,6 @@ if ( ! function_exists( 'lighter_normalise_posts' ) ) {
 	function lighter_normalise_posts( $posts ) {
 		/**
 		 * @param WP_Post $post
-		 *
 		 *
 		 * @return PostNorm
 		 */
@@ -495,9 +494,9 @@ if ( ! function_exists( 'lihgter_grant_course_access' ) ) {
 	/**
 	 * Give course access to a specified user
 	 *
-	 * @param int $course_id The id of the course to give access to.
+	 * @param int               $course_id The id of the course to give access to.
 	 * @param int|\WP_User|null $user The ID or user object to give access to. Defaults to the logged in user.
-	 * @param int[] $lessons Array of lesson IDs to give access to.
+	 * @param int[]             $lessons Array of lesson IDs to give access to.
 	 */
 	function lighter_grant_course_access( $course_id, $user = null, $lessons ) {
 		$user = new User_Access( $user );
@@ -511,8 +510,8 @@ if ( ! function_exists( 'lighter_sanitize_access' ) ) {
 	 *
 	 * Sanitizes an access object, making sure all items are valid lesson ID's, and the key's are valid topic keys.
 	 *
-	 * @param object|array  $access     The access object to sanitize
-	 * @param int           $post_id    The course post ID.
+	 * @param object|array $access     The access object to sanitize
+	 * @param int          $post_id    The course post ID.
 	 *
 	 * @return array The sanitized access object.
 	 */

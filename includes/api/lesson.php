@@ -33,10 +33,42 @@ class Lesson extends Base_Controller {
 				),
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'/lesson/updateOrder',
+			array(
+				array(
+					'methods'             => 'PUT',
+					'callback'            => array( $this, 'update_order' ),
+					'permission_callback' => array( $this, 'read_lessons' ),
+					'args'                => array(
+						'to'   => array(
+							'required' => true,
+							'type'     => 'object',
+						),
+						'from' => array(
+							'required' => false,
+							'type'     => 'object',
+						),
+					),
+				),
+			)
+		);
 	}
 
 	public function can_read( WP_REST_Request $request ): bool {
 		return current_user_can( 'read_post', $request->get_param( 'id' ) );
+	}
+
+	public function read_lessons( WP_REST_Request $request ): bool {
+		$to = $request->get_param( 'to' );
+		if ( ! $to ) {
+			return false;
+		}
+
+		$can_read = array_map( fn( $p ) => current_user_can( 'read_post', $p['id'] ), $to['reorder'] );
+		return ! empty( $can_read ) && ! in_array( false, $can_read, strict: true );
 	}
 
 	public function can_delete( WP_REST_Request $request ): bool {
@@ -56,6 +88,21 @@ class Lesson extends Base_Controller {
 		}
 
 		return $this->success( $data );
+	}
+
+	public function update_order( WP_REST_Request $request ): WP_Error|WP_REST_Response {
+		$to_data   = $request->get_param( 'to' );
+		$from_data = $request->get_param( 'from' );
+
+		$reordered = lighter()->lms->topic->reorder_lessons( $to_data, $from_data );
+
+		if ( is_wp_error( $reordered ) ) {
+			return $reordered;
+		}
+
+		$course = lighter()->lms->course->get_topics( $reordered->course_id );
+
+		return $this->success( array_map( fn( $t ) => lighter()->lms->topic->normalise_for_rest( $t, true ), $course ) );
 	}
 
 	public function delete_lesson( WP_REST_Request $request ): WP_REST_Response|WP_Error {
@@ -79,7 +126,12 @@ class Lesson extends Base_Controller {
 		$title = $request->get_param( 'title' );
 		if ( $title ) {
 			$title = sanitize_text_field( $title );
-            wp_update_post([ 'ID' => $post->ID, 'post_title' => $title ]);
+			wp_update_post(
+				array(
+					'ID'         => $post->ID,
+					'post_title' => $title,
+				)
+			);
 		}
 	}
 
@@ -88,8 +140,9 @@ class Lesson extends Base_Controller {
 
 		if ( ! isset( $data['title'] ) ) {
 			$data['title']['rendered'] = get_the_title( $post );
-            if ( $request->get_param('context') === 'edit' )
-                $data['title']['raw'] = $post->post_title;
+			if ( $request->get_param( 'context' ) === 'edit' ) {
+				$data['title']['raw'] = $post->post_title;
+			}
 		}
 
 		$response->set_data( $data );

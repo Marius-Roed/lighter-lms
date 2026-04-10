@@ -58,5 +58,15 @@ namespace LighterLMS;
  *  type: string
  * }
  *
+ * @phpstan-type LessonReorder array{
+ *  id: int,
+ *  key: string,
+ *  sort_order: int
+ * }
+ *
+ * @phpstan-type ReorderData array{
+ *   topic_key: string,
+ *   reorder: LessonReorder[]
+ * }
  */
 class Types {}

@@ -8,6 +8,9 @@ import type {
   TopicData,
 } from "$types/course.d.ts";
 
+type Reorder = { id: number; key: string; sort_order: number };
+type UpdateData = { topic_key: string; reorder: Reorder[] };
+
 export class CourseAPI {
   readonly #courseId: number;
 
@@ -49,17 +52,11 @@ export class CourseAPI {
     });
   }
 
-  updateLessonOrder(
-    data: { key: string; sortOrder: number }[],
-    topicKey: string,
-  ) {
-    return lighterFetch({
+  updateLessonOrder(to: UpdateData, from?: UpdateData) {
+    return lighterFetch<TopicData[]>({
       path: "lesson/updateOrder",
-      data: {
-        courseId: this.#courseId,
-        topic: topicKey,
-        data,
-      },
+      method: "PUT",
+      data: { to, from },
     });
   }
 

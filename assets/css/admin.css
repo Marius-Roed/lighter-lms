@@ -381,6 +381,8 @@
       position: absolute;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' fill='%23000000' version='1.1' id='Capa_1' width='800px' height='800px' viewBox='0 0 479.461 479.461' xml:space='preserve'%3E%3Cg%3E%3Cpath d='M342.236,207.155C256.918,94.897,276.324,0,276.324,0C-24.458,254.8,110.686,382.955,121.363,393.564 c25.529,25.363,45.805,41.529,46.055,85.896c18.998-18.998,81.77-61.174,23.126-154.471c0,0-52.378-73.133,42.372-141.769 c-3.079,156.009,115.921,136.509,44.007,295.527C276.924,478.748,497.338,411.23,342.236,207.155z'/%3E%3C/g%3E%3C/svg%3E");
       background-repeat: no-repeat;
+      background-size: 35%;
+      background-position: 50% 45%;
       height: 100%;
       width: 100%;
     }

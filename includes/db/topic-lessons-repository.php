@@ -4,24 +4,24 @@ namespace LighterLMS\DB;
 
 defined( 'ABSPATH' ) || exit;
 
-use Exception;
-use wpdb;
-
+/**
+ * @phpstan-type TopicLessonRow object{ID: int, topic_id: int, lesson_id: int, sort_order: int}
+ */
 class Topic_Lessons_Repository {
 
 	protected \wpdb $db;
 	public string $table;
 
-	public function __construct( \wpdb|null $db = null ) {
+	public function __construct( ?\wpdb $db = null ) {
 		global $wpdb;
 
-		$this->db    = $db ?: $wpdb;
+		$this->db    = $db ?? $wpdb;
 		$this->table = $this->db->prefix . lighter_lms()->topic_lessons_table;
 	}
 
 	/**
-	* Gets the row with given topic and lesson id
-	*/
+	 * Gets the row with given topic and lesson id
+	 */
 	public function find( int $topic_id, int $lesson_id ): ?object {
 		return $this->db->get_row(
 			$this->db->prepare(
@@ -33,142 +33,138 @@ class Topic_Lessons_Repository {
 	}
 
 	/**
-	* Gets all rows by a given topic id.
-	*
-	* @return TopicLessonRow[]
-	*/
-	public function find_by_topic( int $id, bool $trashed = false ): ?array {
-		if ( ! $trashed ) {
-			$results = $this->db->get_results(
-				$this->db->prepare(
-					"SELECT * FROM {$this->table} tl INNER JOIN {$this->db->posts} p ON p.ID = tl.lesson_id WHERE p.post_status != 'trash' AND tl.topic_id = %d",
-					$id
-				)
-			);
-		} else {
-			$results = $this->db->get_results(
+	 * @return TopicLessonRow[]|null
+	 */
+	public function find_by_topic( int $id, bool $include_trashed = false ): ?array {
+		if ( $include_trashed ) {
+			return $this->db->get_results(
 				$this->db->prepare(
 					"SELECT * FROM {$this->table} WHERE topic_id = %d",
 					$id
 				)
 			);
+		} else {
 		}
 
-		return array_map( fn( $row ) => TopicLessonRow::from_object( $row ), $results );
+		return $this->db->get_results(
+			$this->db->prepare(
+				"SELECT * FROM {$this->table} tl
+                INNER JOIN {$this->db->posts} p ON p.ID = tl.lesson_id
+                WHERE p.post_status != 'trash' AND tl.topic_id = %d",
+				$id
+			)
+		);
 	}
 
 	/**
-	* Gets all rows by a given lesson id.
-	*
-	* @return null|TopicLessonRow[]
-	*/
+	 * @return TopicLessonRow[]|null
+	 */
 	public function find_by_lesson( int $id ): ?array {
-		$results = $this->db->get_results(
+		return $this->db->get_results(
 			$this->db->prepare(
 				"SELECT * FROM {$this->table} WHERE lesson_id = %d",
 				$id
 			)
 		);
-
-		return array_map( fn( $row ) => TopicLessonRow::from_object( $row ), $results );
 	}
 
 	/**
-	 * @param array{ topic: int, lesson: int, sort_order: ?int} $data
+	 * @throws \RuntimeException
 	 */
-	public function insert( array $data ): int {
-		$topic_id   = (int) ( $data['topic'] ?? $data['topic_id'] );
-		$lesson_id  = (int) ( $data['lesson'] ?? $data['lesson_id'] );
-		$sort_order = (int) $data['sort_order'];
-
+	public function insert( int $topic_id, int $lesson_id, int $sort_order ): int {
 		$inserted = $this->db->insert(
 			$this->table,
 			compact( 'topic_id', 'lesson_id', 'sort_order' ),
-			array()
+			array( '%d', '%d', '%d' )
 		);
 
 		if ( $inserted === false ) {
-			throw new Exception( 'Failed to insert topic-lesson row: ' . $this->db->last_error );
+			throw new \RuntimeException(
+				'Failed to insert topic-lesson row: ' . $this->db->last_error
+			);
 		}
 
 		return $inserted;
 	}
 
-	public function update( int $row_id, int $sort_order ): void {
+	/**
+	 * @param array{ topic_id: int, lesson_id: int, sort_order: int } $data The new data to update the row
+	 *
+	 * @throws \RuntimeException
+	 */
+	public function update( int $row_id, array $data ): void {
+		$allowed  = array( 'topic_id', 'lesson_id', 'sort_order' );
+		$new_data = array_map( 'intval', array_intersect_key( $data, array_flip( $allowed ) ) );
+
+		if ( empty( $new_data ) ) {
+			return;
+		}
+
 		$updated = $this->db->update(
 			$this->table,
-			array( 'sort_order' => $sort_order ),
+			$new_data,
 			array( 'ID' => $row_id ),
-			array( '%d' ),
+			array_fill( 0, count( $new_data ), '%d' ),
 			array( '%d' ),
 		);
 
-		if ( ! $updated ) {
-			throw new Exception( 'Failed to update topic-lesson row: ' . $this->db->last_error );
+		if ( $updated === false ) {
+			throw new \RuntimeException( "Failed to update topic-lesson row ($row_id): " . $this->db->last_error );
 		}
 	}
 
 	public function delete( int $id ): void {
-		$deleted = $this->db->delete(
-			$this->table,
-			array( 'ID' => $id ),
-			array( '%d' )
-		);
-
-		if ( $deleted === false ) {
-			throw new Exception( "Failed to delete topic-lesson row $id: " . $this->db->last_error );
-		}
+		$this->_delete_where( array( 'ID' => $id ) );
 	}
 
 	public function delete_by_topic( int $id ): void {
-		$deleted = $this->db->delete(
-			$this->table,
-			array( 'topic_id' => $id ),
-			array( '%d' )
-		);
-
-		if ( $deleted === false ) {
-			throw new Exception( "Failed to delete topic-lesson row, with topic_id $id: " . $this->db->last_error );
-		}
+		$this->_delete_where( array( 'topic_id' => $id ) );
 	}
 
+	/**
+	 * @param array<string, int> $ids Map of lesson_id => sort_order
+	 */
 	public function bulk_update_sort_order( int $topic_id, array $ids ) {
 		foreach ( $ids as $lesson_id => $sort_order ) {
-			$lesson_id  = (int) $lesson_id;
-			$sort_order = (int) $sort_order;
-
 			$updated = $this->db->update(
 				$this->table,
 				array(
-					'sort_order' => $sort_order,
+					'sort_order' => (int) $sort_order,
 				),
 				array(
 					'topic_id'  => $topic_id,
-					'lesson_id' => $lesson_id,
+					'lesson_id' => (int) $lesson_id,
 				)
 			);
 
 			if ( $updated === false ) {
-				throw new Exception( "Failed to delete topic-lesson row, topic_id {$topic_id}; lesson_id {$lesson_id}: " . $this->db->last_error );
+				throw new \RuntimeException(
+					"Failed to delete topic-lesson row, topic_id {$topic_id}; lesson_id {$lesson_id}: "
+					. $this->db->last_error
+				);
 			}
 		}
 	}
-}
 
-readonly class TopicLessonRow {
-	public function __construct(
-		public int $ID,
-		public int $topic_id,
-		public int $lesson_id,
-		public int $sort_order,
-	) {}
-
-	public static function from_object( object $obj ): self {
-		return new self(
-			ID: $obj->ID,
-			topic_id: $obj->topic_id,
-			lesson_id: $obj->lesson_id,
-			sort_order: $obj->sort_order,
+	/**
+	 * @param array<string, int> $where
+	 *
+	 * @throws \RuntimeException
+	 */
+	private function _delete_where( array $where ) {
+		$deleted = $this->db->delete(
+			$this->table,
+			$where,
+			array( '%d' )
 		);
+
+		if ( $deleted === false ) {
+			$label = array_values( $where )[0];
+			$id    = array_keys( $where )[0];
+			throw new \RuntimeException(
+				"Failed to delete topic-lesson row with $label ($id): "
+				. $this->db->last_error
+			);
+		}
 	}
 }

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { getContext } from "svelte";
   import { tooltip } from "$lib/tooltip.ts";
   import Lesson from "./Lesson.svelte";
   import Icon from "./Icon.svelte";
@@ -8,6 +7,7 @@
   import { getCourseService } from "$lib/utils/index.ts";
   import { hiddenInput } from "$lib/snippets.svelte";
   import ProgressBtn from "./ui/ProgressBtn.svelte";
+  import type { LessonData } from "$types/course.js";
 
   interface Props {
     topic: Topic;
@@ -19,7 +19,7 @@
 
   let canDrag = $state(false),
     isPopoverOpen = $state(false),
-    lessonList: HMTLDivElement;
+    lessonList: HTMLDivElement;
 
   function handleHeadClick(e: MouseEvent) {
     if (
@@ -88,7 +88,9 @@
 
   function makeDummyDragged(event: DragEvent) {
     const el = document.createElement("div");
-    console.log(event);
+    el.classList.add("lighter-lesson", "clone");
+    el.innerHTML =
+      '<div class="lesson-title"><h4>Lesson</h4></div><div class="actions"><button type="button" class="lighter-btn transparent">Edit Lesson</button></div>';
     return el;
   }
 
@@ -98,9 +100,9 @@
 
     e.preventDefault();
 
-    const dragged =
-      lessonList.querySelector("[draggable='true']") ??
-      document.querySelector(".lighter-lesson[draggable='true']");
+    const dragged = (lessonList.querySelector(".clone") ??
+      document.querySelector(".lighter-lesson.clone") ??
+      makeDummyDragged(e)) as HTMLElement;
 
     dragged.style.opacity = "0.5";
     dragged.style.display = "flex";
@@ -127,24 +129,19 @@
     if ((e.relatedTarget as HTMLElement)?.closest(".lighter-lesson-wrap"))
       return;
 
-    for (const lesson of e.dataTransfer!.items) {
-    }
-
-    const dragging = lessonList.querySelector('[draggable="true"]');
-    if (dragging) {
-      dragging.style.opacity = "0";
-      dragging.style.display = "none";
-    }
+    (lessonList.querySelector(".clone") as HTMLElement)?.remove();
   }
 
   function handleDrop(e: DragEvent) {
     e.preventDefault();
+    e.stopPropagation();
 
-    const dropped = lessonList.querySelector('[draggable="true"]');
-    const toIndex = Array.prototype.indexOf.call(
+    const dropped = lessonList.querySelector(".clone");
+    const childIndex = Array.prototype.indexOf.call(
       dropped.parentNode.children,
       dropped,
     );
+    const toIndex = childIndex > 0 ? childIndex - 1 : 0;
 
     for (const lesson of e.dataTransfer!.items) {
       if (lesson.type !== "application/x-lighterlms-lesson") continue;
@@ -153,9 +150,10 @@
         const data = JSON.parse(raw) as LessonData;
         if (!data) return;
 
-        const sortOrder = data._lighter_meta[
-          window.LighterLMS.course.id
-        ]?.topics.find((t) => t.key === data.parentTopic).sort_order;
+        const sortOrder =
+          data._lighter_meta[window.LighterLMS.course.id]?.topics.find(
+            (t) => t.key === data.parentTopic,
+          ).sort_order ?? 10;
         const fromIndex = sortOrder / 10 - 1;
         const toTopic = data.parentTopic !== topic.key ? topic.key : null;
 
@@ -233,7 +231,7 @@
           <button
             type="button"
             class="expand-module"
-            onclick={topic.toggleIsExpanded}
+            onclick={() => topic.toggleIsExpanded()}
             {@attach tooltip(topic.isExpanded ? "Collapse" : "Expand")}
           >
             <Icon name="chevron" />

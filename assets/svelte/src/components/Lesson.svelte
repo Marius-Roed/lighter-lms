@@ -6,7 +6,6 @@
   import type { SvelteComponent } from "svelte";
   import ActionMenu from "./action-menu/ActionMenu.svelte";
   import Editable from "./Editable.svelte";
-  import EditLesson from "./EditLesson.svelte";
   import Icon from "./Icon.svelte";
   import Submenu from "./action-menu/Submenu.svelte";
 
@@ -26,8 +25,13 @@
     service.editModal.open(lesson.id);
   }
 
-  function handleMouseDown(e) {
-    if (e.target.closest("button, .editable-text, input, .action-menu")) return;
+  function handleMouseDown(e: MouseEvent) {
+    if (
+      (e.target as HTMLElement).closest(
+        "button, .editable-text, input, .action-menu",
+      )
+    )
+      return;
     canDrag = true;
   }
 
@@ -48,17 +52,28 @@
       "application/x-lighterlms-lesson",
     );
 
-    requestAnimationFrame(() => (e.target.style.opacity = "0.5"));
+    requestAnimationFrame(() => {
+      const target = e.target as HTMLElement;
+      const clone = target.cloneNode(true) as HTMLElement;
+      clone.classList.add("clone");
+
+      target.style.opacity = "0";
+      target.style.display = "none";
+
+      target.parentNode.insertBefore(clone, target);
+    });
   }
 
   function handleDragEnd(e: DragEvent) {
     e.stopPropagation();
     canDrag = false;
     (e.target as HTMLElement).style.opacity = "";
-    (e.target as HTMLElement).style.display = "flex";
+    (e.target as HTMLElement).style.display = "";
+    document.querySelector(".clone")?.remove();
   }
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   class="lighter-lesson"
   role="listitem"
@@ -97,7 +112,7 @@
           <Icon name="threeDots" className={warn} />
         {/snippet}
         <button type="button" onclick={editLesson}>Edit</button>
-        <button type="button" onclick={() => service.moveModal.open()}
+        <button type="button" onclick={() => service.moveModal.open(lesson)}
           >Move</button
         >
         <button type="button" onclick={() => service.deleteLesson(lesson.id)}

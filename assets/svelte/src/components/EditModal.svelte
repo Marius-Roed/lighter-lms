@@ -1,6 +1,6 @@
 <script>
   import Icon from "./Icon.svelte";
-  import { lighterFetch } from "$api/lighter-fetch";
+  import { lighterFetch } from "$lib/api/lighter-fetch.ts";
   import { getCourseService } from "$lib/utils/index.ts";
 
   let service = getCourseService();
@@ -16,13 +16,12 @@
     const res = await lighterFetch({
       path: "lesson",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      data: {
         title: service.editModal.currentLesson.title,
         meta: {
           _lighter_lesson_key: service.editModal.currentLesson.key,
         },
-      }),
+      },
     });
 
     return res.permalink;

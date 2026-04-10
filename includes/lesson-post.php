@@ -160,8 +160,8 @@ class Lesson_Post extends Post_Type {
 	/**
 	 * Save lesson content
 	 *
-	 * @param int       $post_id    The post ID.
-	 * @param \WP_Post  $post       The post object.
+	 * @param int      $post_id    The post ID.
+	 * @param \WP_Post $post       The post object.
 	 */
 	public function save_post( int $post_id, \WP_Post $post ): void {
 		$nonce = $_POST['lighter_nonce'] ?? '';
@@ -178,7 +178,7 @@ class Lesson_Post extends Post_Type {
 	 * Save lesson settings.
 	 *
 	 * @param \WP_Post $post The post object.
-	 * @param array $args The settings to save.
+	 * @param array    $args The settings to save.
 	 */
 	protected function _save_settings( \WP_Post $post, array $args ): void {
 		$parents = $args['parents'];
@@ -260,11 +260,7 @@ class Lesson_Post extends Post_Type {
 				);
 			}
 
-			$meta[ $topic->course_id ]['topics'][] = array(
-				'key'        => $topic->topic_key,
-				'title'      => $topic->title,
-				'sort_order' => $topic->sort_order,
-			);
+			$meta[ $topic->course_id ]['topics'][] = lighter()->lms->lesson->get_topic_data( $post, $topic );
 		}
 
 		return $meta;
@@ -302,9 +298,9 @@ class Lesson_Post extends Post_Type {
 	/**
 	 * Save lesson
 	 *
-	 * @param array $args the lesson arguments.
-	 * @param int $parent_id The ID of the parent saving the lesson.
-	 * @param array $topic The topic data.
+	 * @param array  $args the lesson arguments.
+	 * @param int    $parent_id The ID of the parent saving the lesson.
+	 * @param array  $topic The topic data.
 	 * @param Topics $topic_db
 	 *
 	 * @return int The saved lesson ID.

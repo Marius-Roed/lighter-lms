@@ -4,6 +4,10 @@ namespace LighterLMS;
 
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * @phpstan-import-type ReorderData from Types
+ * @phpstan-import-type LessonReorder from Types
+ */
 class Topic_Service {
 	public function create( int $course_id, string $title ): object {
 		$siblings   = lighter()->lms->db->topics->find_by_course( $course_id );
@@ -24,7 +28,10 @@ class Topic_Service {
 		return lighter()->lms->db->topics->find( $id );
 	}
 
-	public function get( int|string $id ): ?Topic {
+	public function get( int|string|Topic $id ): ?Topic {
+		if ( $id instanceof Topic ) {
+			return $id;
+		}
 		$topic = lighter()->lms->db->topics->find( $id );
 
 		if ( ! $topic ) {
@@ -86,10 +93,10 @@ class Topic_Service {
 	}
 
 	/**
-	* Move a topic to a new position. Reorders all sibling topics.
-	*
-	* @param string[]|int[] $ordered_topic_ids All topic ids/keys in the desired new order, including the $id.
-	*/
+	 * Move a topic to a new position. Reorders all sibling topics.
+	 *
+	 * @param string[]|int[] $ordered_topic_ids All topic ids/keys in the desired new order, including the $id.
+	 */
 	public function move( int|string $id, int $course_id, array $ordered_topic_ids ): void {
 		lighter()->lms->db->start_transaction();
 
@@ -154,6 +161,31 @@ class Topic_Service {
 		}
 
 		return lighter()->lms->db->topics->find( $new_id );
+	}
+
+	/**
+	 * @param ReorderData  $to_data The new lesson data of the topic being moved to.
+	 * @param ?ReorderData $from_data The new lesson data of the topic being moved from. Can be null if the lesson is being moved within the same topic.
+	 */
+	public function reorder_lessons( array $to_data, ?array $from_data = null ): \WP_Error|Topic {
+		$to_topic   = lighter()->lms->topic->get( $to_data['topic_key'] );
+		$from_topic = $from_data ? lighter()->lms->topic->get( $from_data['topic_key'] ) : $to_topic;
+
+		if ( ! $to_topic || ! $from_topic ) {
+			return new \WP_Error( 'topic_not_found', 'Could not find topic to reorder', compact( 'to_topic', 'from_topic', 'to_data', 'from_data' ) );
+		}
+
+		if ( $to_topic->topic_key === $from_topic->topic_key ) {
+			$reordered = $this->_reorder_lessons( $to_data['reorder'], $to_topic );
+		} else {
+			$reordered = $this->_reorder_lessons( $to_data['reorder'], $to_topic, $from_data['reorder'], $from_topic );
+		}
+
+		if ( is_wp_error( $reordered ) ) {
+			return $reordered;
+		}
+
+		return lighter()->lms->topic->get( $to_data['topic_key'] );
 	}
 
 	public function search( string $query ): array {
@@ -223,6 +255,81 @@ class Topic_Service {
 		}
 
 		return $rest_item;
+	}
+
+	/**
+	 * @param LessonReorder[]  $new_order
+	 * @param ?LessonReorder[] $old_order
+	 */
+	private function _reorder_lessons(
+		array $new_order,
+		Topic|string|int $topic,
+		?array $old_order = null,
+		Topic|string|int|null $from_topic = null
+	) {
+		if ( ! empty( $old_order ) && $from_topic === null ) {
+			// NOTE: $old_order cannot have something and $from_topic be null.
+			// This is why we simply return. Maybe a there is a better way to
+			// handle this.
+			return;
+		}
+
+		$topic      = lighter()->lms->topic->get( $topic );
+		$from_topic = ! empty( $old_order ) ? lighter()->lms->topic->get( $from_topic ) : $topic;
+
+		if ( ! $topic ) {
+			return;
+		}
+
+		lighter()->lms->db->start_transaction();
+
+		try {
+			foreach ( $new_order as $lesson ) {
+				$topic_lesson = lighter()->lms->db->topic_lessons->find( $from_topic->ID, $lesson['id'] );
+				if ( ! $topic_lesson ) {
+					continue;
+				}
+
+				lighter()->lms->db->topic_lessons->update(
+					$topic_lesson->ID,
+					array(
+						'topic_id'   => $topic->ID,
+						'sort_order' => $lesson['sort_order'],
+					)
+				);
+			}
+
+			if ( ! empty( $old_order ) ) {
+				foreach ( $old_order as $lesson ) {
+					$topic_lesson = lighter()->lms->db->topic_lessons->find( $from_topic->ID, $lesson['id'] );
+					if ( ! $topic_lesson ) {
+						continue;
+					}
+
+					lighter()->lms->db->topic_lessons->update(
+						$topic_lesson->ID,
+						array(
+							'topic_id'   => $from_topic->ID,
+							'sort_order' => $lesson['sort_order'],
+						)
+					);
+				}
+			}
+
+			lighter()->lms->db->commit();
+		} catch ( \Throwable $e ) {
+			lighter()->lms->db->rollback();
+			return new \WP_Error(
+				'failed_topic_reorder',
+				"Could not reorder topic: {$e->getMessage()}",
+				array(
+					'from_topic' => $from_topic,
+					'from_data'  => $old_order,
+					'to_topic'   => $topic,
+					'to_order'   => $new_order,
+				)
+			);
+		}
 	}
 }
 
