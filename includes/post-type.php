@@ -2,6 +2,10 @@
 
 namespace LighterLMS;
 
+use LighterLMS\Attributes\Action;
+use LighterLMS\Attributes\Filter;
+use LighterLMS\Traits\Lighter_LMS_Hooks;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -9,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
  * @template TKey
  */
 abstract class Post_Type {
+	use Lighter_LMS_Hooks;
 
 	public string $post_type;
 	protected bool $skip_next_save            = false;
@@ -30,11 +35,7 @@ abstract class Post_Type {
 		add_filter( 'get_user_option_screen_layout_' . $this->post_type, array( $this, 'screen_layout' ) );
 
 		if ( ! self::$shared_hooks_added ) {
-			add_action( 'do_meta_boxes', array( __CLASS__, 'remove_submitdiv' ) );
-			add_action( 'edit_form_after_title', array( __CLASS__, 'no_script' ) );
-
-			add_filter( 'post_class', array( __CLASS__, 'post_class' ), 10, 3 );
-			add_filter( 'lighter_lms_admin_object', array( __CLASS__, 'js_objects' ), 10, 2 );
+			$this->register_hooks();
 			self::$shared_hooks_added = true;
 		}
 	}
@@ -113,8 +114,8 @@ abstract class Post_Type {
 	/**
 	 * Custom columns for admin list view (override in child class - default none)
 	 *
-	 * @param string    $column     The column name.
-	 * @param int       $post_id    The post ID.
+	 * @param string $column     The column name.
+	 * @param int    $post_id    The post ID.
 	 */
 	public function custom_columns( string $column, int $post_id ): void {}
 
@@ -131,8 +132,8 @@ abstract class Post_Type {
 	/**
 	 * Modifies REST args (override in child class)
 	 *
-	 * @param array             $args   The query args.
-	 * @param \WP_REST_Request  $req    The request object.
+	 * @param array            $args   The query args.
+	 * @param \WP_REST_Request $req    The request object.
 	 * @return array
 	 */
 	public function rest_query( array $args, \WP_REST_Request $req ): array {
@@ -150,6 +151,7 @@ abstract class Post_Type {
 	}
 
 	/** Remove submit and slug metaboxes */
+	#[Action( 'do_meta_boxes' )]
 	public static function remove_submitdiv(): void {
 		$course_post_type = lighter_lms()->course_post_type;
 		$lesson_post_type = lighter_lms()->lesson_post_type;
@@ -165,9 +167,10 @@ abstract class Post_Type {
 	 *
 	 * @param string[] $classes An array of post class names.
 	 * @param string[] $class An array of additional class names added to the post.
-	 * @param int $post_id The post ID.
+	 * @param int      $post_id The post ID.
 	 * @string[]
 	 */
+	#[Filter( 'post_class', accepted_args: 3 )]
 	public static function post_class( array $classes, array $class, int $post_id ): array {
 		if ( ! is_admin() ) {
 			return $classes;
@@ -200,6 +203,7 @@ abstract class Post_Type {
 	 *
 	 * @param \WP_Post $post The post object.
 	 */
+	#[Action( 'edit_form_after_title' )]
 	public static function no_script( \WP_Post $post ): void {
 		if ( ! in_array( $post->post_type, lighter_lms()->post_types ) ) {
 			return;
@@ -216,10 +220,11 @@ abstract class Post_Type {
 	/**
 	 * Add JS objects to admin
 	 *
-	 * @param array $obj Existing object
+	 * @param array  $obj Existing object
 	 * @param string $screen_id The current screen ID.
 	 * @return array
 	 */
+	#[Filter( 'lighter_lms_admin_object', accepted_args: 2 )]
 	final public static function js_objects( array $obj, string $screen_id ): array {
 		if ( 'lighter_lessons' === $screen_id ) {
 			$obj['lesson']['settings'] = lighter_get_lesson_settings();

@@ -8,16 +8,18 @@ use LighterLMS\Admin\Admin;
 use LighterLMS\Assets;
 use LighterLMS\Admin\Settings;
 use LighterLMS\API\REST_API;
+use LighterLMS\Attributes\Action;
 use LighterLMS\Course_Service;
 use LighterLMS\DB;
 use LighterLMS\DB\Base_Controller;
 use LighterLMS\DB\Lighter_LMS_Schema;
-use LighterLMS\Lesson_Post;
 use LighterLMS\Lesson_Service;
 use LighterLMS\Topic_Service;
+use LighterLMS\Traits\Lighter_LMS_Hooks;
 use LighterLMS\WooCommerce\WC;
 
 final class Lighter_LMS {
+	use Lighter_LMS_Hooks;
 
 	private static ?self $_instance = null;
 
@@ -82,13 +84,15 @@ final class Lighter_LMS {
 	private function __construct() {
 		global $wpdb;
 
+		$this->register_hooks();
+
 		$this->includes();
 
-		add_action( 'upgrade_process_complete', array( $this, 'maybe_update_schema' ), 10, 2 );
+		// add_action( 'upgrade_process_complete', array( $this, 'maybe_update_schema' ), 10, 2 );
 
 		do_action( 'lighter_lms_before_load' );
 
-		add_action( 'init', array( $this, 'init_update_checker' ), 5 );
+		// add_action( 'init', array( $this, 'init_update_checker' ), 5 );
 		add_action( 'admin_post_save_lighter_lms_settings', array( Settings::class, 'save' ) );
 
 		$this->db = new Base_Controller( $wpdb );
@@ -117,6 +121,7 @@ final class Lighter_LMS {
 		include LIGHTER_LMS_PATH . 'includes/lighter-lms-functions.php';
 	}
 
+	#[Action( 'upgrade_process_complete' )]
 	public function maybe_update_schema( $upgrader, $hook_extra ): void {
 		global $wpdb;
 
@@ -137,6 +142,7 @@ final class Lighter_LMS {
 		$schema->maybe_upgrade();
 	}
 
+	#[Action( 'init_update_checker', 5 )]
 	public function init_update_checker(): void {
 		if ( ! is_admin() && ! defined( 'DOING_CRON' ) ) {
 			return;

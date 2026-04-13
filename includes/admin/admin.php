@@ -4,32 +4,19 @@ namespace LighterLMS\Admin;
 
 defined( 'ABSPATH' ) || exit;
 
-use LighterLMS\Lessons;
+use LighterLMS\Attributes\Action;
+use LighterLMS\Attributes\Filter;
+use LighterLMS\Traits\Lighter_LMS_Hooks;
 use LighterLMS\User_Access;
-use WP_User;
 
 final class Admin {
+	use Lighter_LMS_Hooks;
 
 	public function __construct() {
-		add_action( 'admin_enqueue_scripts', array( $this, 'admin_app' ) );
-		add_action( 'admin_init', array( $this, 'admin_init' ) );
-		add_action( 'admin_menu', array( $this, 'admin_menu' ), 9 );
-		add_action( 'current_screen', array( $this, 'current_screen' ) );
-		add_action( 'admin_notices', array( $this, 'admin_notices' ) );
-		add_action( 'admin_post_lighter_complete_lesson', array( $this, 'complete_lesson' ) );
-		add_action( 'admin_post_nopriv_lighter_complete_lesson', array( $this, 'complete_lesson' ) );
-		add_action( 'edit_user_profile', array( $this, 'user_access' ), 5 );
-		add_action( 'show_user_profile', array( $this, 'user_access' ), 5 );
-		add_action( 'user_new_form', array( $this, 'user_access' ), 5 );
-		add_action( 'edit_user_profile_update', array( $this, 'save_user_access' ) );
-		add_action( 'personal_options_update', array( $this, 'save_user_access' ) );
-		add_action( 'user_register', array( $this, 'save_user_access' ) );
-
-		add_filter( 'menu_order', array( $this, 'menu_order' ) );
-		add_filter( 'admin_body_class', array( $this, 'dialog_editor' ) );
-		add_filter( 'screen_options_show_screen', array( $this, 'remove_options' ), 10, 2 );
+		$this->register_hooks();
 	}
 
+	#[Filter( 'admin_body_class' )]
 	public function dialog_editor( string $classes ): string {
 		$in_dialog = $_GET['in_dialog'] ?? false;
 		if ( $in_dialog ) {
@@ -39,6 +26,7 @@ final class Admin {
 		return $classes;
 	}
 
+	#[Action( 'admin_menu', priority: 9 )]
 	public function admin_menu(): void {
 		global $menu, $submenu;
 
@@ -66,6 +54,7 @@ final class Admin {
 		);
 	}
 
+	#[Action( 'admin_init' )]
 	public function admin_init(): void {
 		$per_page = isset( $_GET['limit'] ) ? (int) $_GET['limit'] : 20;
 		$per_page = max( 1, min( 100, $per_page ) );
@@ -102,6 +91,7 @@ final class Admin {
 		);
 	}
 
+	#[Action( 'admin_notices' )]
 	public function admin_notices() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
@@ -186,7 +176,10 @@ final class Admin {
 		Settings::render();
 	}
 
-	public function user_access( WP_User $user ): void {
+	#[Action( 'edit_user_profile', 5 )]
+	#[Action( 'show_user_profile', 5 )]
+	#[Action( 'user_new_form', 5 )]
+	public function user_access( \WP_User $user ): void {
 		if ( is_string( $user ) ? $user !== 'add-new-user' : ! current_user_can( 'edit_user', $user->ID ) ) {
 			return;
 		}
@@ -200,6 +193,9 @@ final class Admin {
 		);
 	}
 
+	#[Action( 'edit_user_profile_update' )]
+	#[Action( 'personal_options_update' )]
+	#[Action( 'user_register' )]
 	public function save_user_access( int $user_id ): void {
 		if ( ! current_user_can( 'edit_user', $user_id ) ) {
 			return;
@@ -227,6 +223,7 @@ final class Admin {
 	 *
 	 * @param \WP_Screen $screen The current screen object
 	 */
+	#[Filter( 'current_screen' )]
 	public function current_screen( \WP_Screen $screen ): void {
 		$screen_id = strpos( $screen->id, 'edit-' ) !== false ? substr( $screen->id, 5 ) : $screen->id;
 		if ( str_contains( $screen_id, 'lighter-lms' ) || in_array( $screen_id, lighter_lms()->post_types ) ) {
@@ -239,9 +236,10 @@ final class Admin {
 	/**
 	 * removes the screen options from the course table list
 	 *
-	 * @param bool $show
+	 * @param bool       $show
 	 * @param \WP_Screen $srceen
 	 */
+	#[Filter( 'screen_options_show_screen', accepted_args: 2 )]
 	public function remove_options( bool $show, \WP_Screen $screen ): bool {
 		if (
 			$screen->id === 'edit-' . lighter_lms()->course_post_type ||
@@ -284,6 +282,7 @@ final class Admin {
 		lighter_view( 'post-list-header', array( 'admin' => true ) );
 	}
 
+	#[Filter( 'menu_order' )]
 	public function menu_order( array $menu ): array {
 		global $submenu;
 
@@ -318,6 +317,7 @@ final class Admin {
 		return $lighter_order;
 	}
 
+	#[Action( 'admin_enqueue_scripts' )]
 	public function admin_app( string $hook_suffix ): void {
 		wp_enqueue_style( 'lighter-dia-editor', LIGHTER_LMS_URL . 'assets/css/dialog-editor.css', array(), LIGHTER_LMS_VERSION );
 		wp_enqueue_style( 'lighter-lms-admin', LIGHTER_LMS_URL . 'assets/css/admin.css', array(), LIGHTER_LMS_VERSION, false );
@@ -460,6 +460,8 @@ final class Admin {
 		}
 	}
 
+	#[Action( 'admin_post_lighter_complete_lesson' )]
+	#[Action( 'admin_post_nopriv_lighter_complete_lesson' )]
 	public function complete_lesson(): void {
 		$user      = new User_Access();
 		$course_id = intval( $_POST['course_id'] ?? 0 );

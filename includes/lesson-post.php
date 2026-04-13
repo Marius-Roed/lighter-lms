@@ -2,8 +2,6 @@
 
 namespace LighterLMS;
 
-use WP_Post;
-
 defined( 'ABSPATH' ) || exit;
 
 class Lesson_Post extends Post_Type {
@@ -213,7 +211,7 @@ class Lesson_Post extends Post_Type {
 		return;
 	}
 
-	public function delete_post( int $post_id, WP_Post $post ): void {
+	public function delete_post( int $post_id, \WP_Post $post ): void {
 		lighter()->lms->lesson->delete_topic_relationship();
 	}
 
