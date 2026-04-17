@@ -3,78 +3,42 @@
 /** @var \WP_Post */
 $post;
 
-$course_description = get_post_meta( $post->ID, '_course_description', true );
+$current_tab = $_GET['tab'] ?? 'general';
 
-$tags = get_terms( array( 'taxonomy' => 'course-tags' ) );
-$tags = array_map(
-	fn( $tag ) => array(
-		'id'       => $tag->term_id,
-		'name'     => $tag->name,
-		'count'    => $tag->count,
-		'slug'     => $tag->slug,
-		'taxonomy' => $tag->taxonomy,
-	),
-	$tags
+$tabs = array(
+	'general'   => 'General',
+	'advanced'  => 'Advanced',
+	'selling'   => 'Selling',
+	'downloads' => 'Downloads',
 );
-
-$selected_tags = wp_get_post_terms( $post->ID, 'course-tags' );
-$selected_tags = array_map(
-	fn( $tag ) => array(
-		'id'       => $tag->term_id,
-		'name'     => $tag->name,
-		'count'    => $tag->count,
-		'slug'     => $tag->slug,
-		'taxonomy' => $tag->taxonomy,
-	),
-	$selected_tags
-);
-
 ?>
-<script>
-	var lighterCourse = {
-		tags: {
-			all: <?php echo wp_json_encode( $tags ); ?>,
-			selected: <?php echo wp_json_encode( $selected_tags ); ?>
-		}
-	};
-</script>
 <div id="lighter-course-settings">
 	<ul class="settings-tabs">
-		<li tabindex="0" role="tab" class="active"><span>General</span></li>
-		<li tabindex="0" role="tab"><span>Advanced</span></li>
-		<li tabindex="0" role="tab"><span>Selling</span></li>
-		<li tabindex="0" role="tab"><span>Downloads</span></li>
+	<?php
+	foreach ( $tabs as $key => $tab ) {
+		$is_active = $key === $current_tab;
+		printf(
+			'<li role="0" id="%s-tab" %stabindex="%s" aria-selected="%s" aria-controls="%s"><span><a href="%s">%s</a></span></li>',
+			$key,
+			$is_active ? 'class="active" ' : '',
+			$is_active ? '0' : '-1',
+			$is_active ? 'true' : 'false',
+			$key . '-panel',
+			admin_url( "post.php?post={$post->ID}&action=edit&tab=$key" ),
+			$tab
+		);
+	}
+	?>
 	</ul>
-	<div class="box">
-		<div class="grid">
-			<div class="course-vis">
-				<h3>Course visibility</h3>
-				<span>
-					<b>Status:</b>
-					<select name="post_status" value="<?php echo esc_attr( $post->post_status ); ?>">
-						<option value="publish">Published</option>
-						<option value="pending">Pending review</option>
-						<option value="future">Schedule</option>
-						<option value="private">Private</option>
-						<option value="draft">Draft</option>
-					</select>
-				</span>
-				<span><b>Published on:</b><?php echo esc_html( $post->post_date ); ?></span>
-			</div>
-			<div class="course-tags">
-				<h3>Tags</h3>
-				<div class="tag-search">
-					<div class="search-wrap" role="search" style="width: 100%;">
-						<div class="selected-tags">
-						</div>
-						<input type="text" class="search" placeholder="">
-					</div>
-				</div>
-			</div>
-			<div class="course-desc">
-				<h3>Description</h3>
-				<textarea id="course-description" name="course_description" cols="35" rows="8" placeholder="Enter an eye catching description..."><?php echo esc_textarea( $course_description ); ?></textarea>
-			</div>
-		</div>
+	<div role="tabpanel" tabindex="0" id="<?php echo esc_attr( $current_tab ); ?>-panel" aria-labelledby="<?php echo esc_attr( $current_tab ); ?>-panel" class="box <?php echo esc_attr( $current_tab ); ?>">
+			<?php
+			lighter_view(
+				"course-settings/$current_tab",
+				array(
+					'admin' => true,
+					'post'  => $post,
+				)
+			);
+			?>
 	</div>
 </div>

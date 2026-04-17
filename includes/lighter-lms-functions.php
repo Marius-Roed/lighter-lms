@@ -175,10 +175,12 @@ if ( ! function_exists( 'ligter_get_course_product' ) ) {
 	 *
 	 * Get the product obj with Lighter fields
 	 *
-	 * @param int $product_id
+	 * @param int $post_id
 	 * @return object
 	 */
-	function lighter_get_course_product( $product_id ) {
+	function lighter_get_course_product( $post_id ) {
+		$product_id = get_post_meta( $post_id, '_lighter_product_id', true );
+
 		if ( ! $product_id ) {
 			_doing_it_wrong( __FUNCTION__, 'Cannot fetch product of empty product id', '1.0' );
 			return (object) array();
@@ -196,8 +198,8 @@ if ( ! function_exists( 'lighter_get_course_settings' ) ) {
 	 *
 	 * Returns the settings for a given course id
 	 *
-	 * @param int $post Post id or post object. Defaults to the global post.
-	 * @return array|bool The settings as an associative array. False if it fails.
+	 * @param WP_Post|int $post Post id or post object. Defaults to the global post.
+	 * @return array The settings as an associative array.
 	 */
 	function lighter_get_course_settings( $post = 0 ) {
 		$course = get_post( $post );
@@ -206,33 +208,19 @@ if ( ! function_exists( 'lighter_get_course_settings' ) ) {
 		$thumbnail_id = get_post_thumbnail_id( $post_id );
 
 		if ( $course->post_type != lighter_lms()->course_post_type ) {
-			return false;
+			return array();
 		}
-
-		$product_id = get_post_meta( $post_id, '_lighter_product_id', true );
 
 		$settings = array(
-			'baseUrl'        => 'kurser',
-			'currency'       => lighter_lms()->defaults()->currency,
-			'description'    => get_post_meta( $post_id, '_course_description', true ),
-			'displayHeader'  => get_post_meta( $post_id, '_course_display_theme_header', true ) ?: lighter_lms()->defaults()->course_hide_theme_header,
-			'displaySidebar' => get_post_meta( $post_id, '_course_display_theme_sidebar', true ) ?: lighter_lms()->defaults()->course_hide_theme_sidebar,
-			'displayFooter'  => get_post_meta( $post_id, '_course_display_theme_footer', true ) ?: lighter_lms()->defaults()->course_hide_theme_footer,
-			'editor'         => lighter_lms()->defaults()->editor,
-			'product'        => lighter_get_course_product( $product_id ),
-			'publishedOn'    => $course->post_date_gmt,
-			'status'         => $course->post_status,
+			'displayHeader'  => (bool) get_post_meta( $post_id, '_course_display_theme_header', true ) ?: lighter_lms()->defaults()->course_hide_theme_header,
+			'displaySidebar' => (bool) get_post_meta( $post_id, '_course_display_theme_sidebar', true ) ?: lighter_lms()->defaults()->course_hide_theme_sidebar,
+			'displayFooter'  => (bool) get_post_meta( $post_id, '_course_display_theme_footer', true ) ?: lighter_lms()->defaults()->course_hide_theme_footer,
+			'product'        => lighter_get_course_product( $post_id ),
 			'showIcons'      => get_post_meta( $post_id, '_lighter_show_lesson_icons', true ) ?: lighter_lms()->defaults()->course_show_lesson_icons,
 			'showProgress'   => get_post_meta( $post_id, '_lighter_show_lesson_prog', true ) ?: lighter_lms()->defaults()->course_show_progress,
-			'userLocale'     => str_replace( '_', '-', get_user_locale() ),
-			'store'          => lighter_lms()->defaults()->store,
-			'sync_prod_img'  => get_post_meta( $post_id, '_course_sync_prod_img', true ) ?: lighter_lms()->defaults()->course_sync_prod_img,
-			'slug'           => $course->post_name,
+			'syncProductImg' => (bool) get_post_meta( $post_id, '_course_sync_prod_img', true ) ?: lighter_lms()->defaults()->course_sync_prod_img,
+			'tags'           => wp_get_post_terms( $post_id, 'course-tags', array( 'fields' => 'ids' ) ),
 		);
-
-		if ( $settings['store'] === 'woocommerce' ) {
-			$settings['currency'] = \get_woocommerce_currency();
-		}
 
 		if ( $thumbnail_id ) {
 			$settings['thumbnail'] = array(
@@ -243,6 +231,24 @@ if ( ! function_exists( 'lighter_get_course_settings' ) ) {
 		}
 
 		return $settings;
+	}
+}
+
+if ( ! function_exists( 'lighter_get_course_downloads' ) ) {
+	/**
+	 * Retrieves the downloadable files for a course.
+	 *
+	 * @param WP_Post|int $course The course
+	 *
+	 * @return array<>
+	 */
+	function lighter_get_course_downloads( WP_Post|int $post ): array {
+		$post = get_post( $post );
+
+		if ( $post->post_type !== lighter_lms()->course_post_type ) {
+			return array();
+		}
+		return array();
 	}
 }
 

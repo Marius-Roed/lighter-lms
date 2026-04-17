@@ -4,14 +4,12 @@
   import DeleteModal from "$components/DeleteModal.svelte";
   import EditModal from "$components/EditModal.svelte";
   import MoveModal from "$components/MoveModal.svelte";
-  import { CourseService } from "$lib/models/service/course-service.svelte.ts";
-  import { setCourseService } from "$lib/utils/index.ts";
   import { flip } from "svelte/animate";
   import type { TopicData } from "$types/course.js";
   import { setContext } from "svelte";
+  import { getCourseService } from "$lib/utils/index.ts";
 
-  const service = new CourseService(LighterLMS.course);
-  setCourseService(service);
+  const service = getCourseService();
 
   let empty = $derived(!service.course.sortedTopics.length);
   let list: HTMLOListElement;

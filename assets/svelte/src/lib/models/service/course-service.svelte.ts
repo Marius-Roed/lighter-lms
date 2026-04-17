@@ -9,6 +9,7 @@ import type {
 } from "$types/course.js";
 import { Lesson } from "../state/course-lesson.svelte.ts";
 import { Course } from "../state/course-post.svelte.ts";
+import { CourseSettings } from "../state/course-settings.svelte.ts";
 import { Topic } from "../state/course-topic.svelte.ts";
 import { EditModal } from "../state/edit-modal.svelte.ts";
 import { MoveModal } from "../state/lesson-move.svelte.ts";
@@ -17,6 +18,7 @@ export class CourseService {
   readonly #api: CourseAPI;
   readonly editModal: EditModal;
   readonly moveModal: MoveModal;
+  readonly settings: CourseSettings<typeof LighterLMS.globals.store>;
 
   course = $state<Course>() as Course;
   error = $state<string>("");
@@ -24,6 +26,7 @@ export class CourseService {
   constructor(data: CourseData) {
     this.course = new Course(data);
     this.#api = new CourseAPI(data.id);
+    this.settings = new CourseSettings(() => this.course, data.settings);
 
     this.editModal = new EditModal(() => this.course.allLessons ?? []);
     this.moveModal = new MoveModal(() => this.course);
@@ -224,7 +227,7 @@ export class CourseService {
       key: new Randflake().generate(),
       title,
       courseId: this.course.id ?? 0,
-      sortOrder: this.course.topics?.length ?? 0,
+      sortOrder: ((this.course.topics?.length ?? 0) + 1) * 10,
       lessons,
     };
 

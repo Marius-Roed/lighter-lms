@@ -17,12 +17,6 @@ export class MoveModal {
   constructor(initial: () => Course) {
     this.#initial = initial;
     this.chosenCourse = initial().id;
-
-    $effect.root(() => {
-      $effect(() => {
-        $inspect(this.filteredTopics);
-      });
-    });
   }
 
   initialCourse: CourseData = $derived.by(() => {
@@ -31,7 +25,8 @@ export class MoveModal {
 
   courses = $derived.by(() =>
     [this.initialCourse, ...this.rawCourses].sort(
-      (a, b) => new Date(b.date ?? 0) - new Date(a.date ?? 0),
+      (a, b) =>
+        new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime(),
     ),
   );
 
@@ -91,7 +86,6 @@ export class MoveModal {
               (l: LessonData) => l.id === this.openedLesson?.id,
             )
           : -1;
-        console.log(openedIdx);
 
         const lessons = topic.lessons?.filter((_, idx: number) => {
           if (!isOpenedTopic) return true;

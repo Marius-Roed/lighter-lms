@@ -5,6 +5,7 @@ namespace LighterLMS;
 defined( 'ABSPATH' ) || exit;
 
 use LighterLMS\DB\Topics_Controller;
+use LighterLMS\Traits\Lighter_LMS_Hooks;
 use WP_Post;
 
 /**
@@ -84,14 +85,17 @@ class Course_Post extends Post_Type {
 	/**
 	 * Save post content
 	 *
-	 * @param int       $post_id    The post ID.
-	 * @param \WP_Post  $post       The post object.
+	 * @param int      $post_id    The post ID.
+	 * @param \WP_Post $post       The post object.
 	 */
 	public function save_post( int $post_id, \WP_Post $post ): void {
 		$nonce = $_POST['lighter_nonce'] ?? '';
 		if ( ! $this->verify_nonce( $post, $nonce, $this->post_type . '_fields' ) ) {
 			return;
 		}
+
+		file_put_contents( LIGHTER_LMS_PATH . '/log.log', var_export( $_POST, true ) );
+		return;
 
 		if ( isset( $_POST['topics'] ) ) {
 			foreach ( $_POST['topics'] as $topic ) {
@@ -122,8 +126,8 @@ class Course_Post extends Post_Type {
 	/**
 	 * Save course settings.
 	 *
-	 * @param \WP_Post  $post The post object.
-	 * @param array     $args The settings to save.
+	 * @param \WP_Post $post The post object.
+	 * @param array    $args The settings to save.
 	 */
 	protected function _save_settings( \WP_Post $post, array $args ): void {
 		$tags               = $args['tags'] ?? array();
@@ -242,8 +246,8 @@ class Course_Post extends Post_Type {
 	/**
 	 * Course custom columns content
 	 *
-	 * @param string    $column     The column name
-	 * @param int       $post_id    The post ID.
+	 * @param string $column     The column name
+	 * @param int    $post_id    The post ID.
 	 */
 	public function custom_columns( string $column, int $post_id ): void {
 		switch ( $column ) {
@@ -259,8 +263,8 @@ class Course_Post extends Post_Type {
 	/**
 	 * Course REST query modifier
 	 *
-	 * @param array             $args   The query args.
-	 * @param \WP_REST_Request  $req    The request object.
+	 * @param array            $args   The query args.
+	 * @param \WP_REST_Request $req    The request object.
 	 *
 	 * @return array
 	 */
@@ -389,12 +393,12 @@ class Course_Post extends Post_Type {
 				'raw'      => $post->post_title,
 			), // Use get_the_title to go through all filters
 			'content'      => array(
-				'rendered' => '',
-				'raw'      => '',
+				'rendered' => get_the_content( post: $post ),
+				'raw'      => $post->post_content,
 			),
 			'excerpt'      => array(
-				'rendered' => '',
-				'raw'      => '',
+				'rendered' => get_the_excerpt( $post ),
+				'raw'      => $post->post_excerpt,
 			),
 			'author'       => (int) $post->post_author,
 			'date'         => $post->post_date,

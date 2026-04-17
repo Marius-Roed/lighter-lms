@@ -1,139 +1,138 @@
-<script>
-    import Editable from "$components/Editable.svelte";
-    import settings from "$lib/settings.svelte";
+<script lang="ts">
+  import Editable from "$components/Editable.svelte";
+  import settings from "$lib/settings.svelte";
+  import { getCourseService } from "$lib/utils/index.ts";
 
-    let frame;
+  const service = getCourseService();
 
-    const downloads = $derived(settings.product.downloads);
+  let frame: Media;
 
-    /** @param {string} file */
-    const getExtension = (file) => {
-        if (!file) return "";
-        const url = new URL(file);
-        const pathname = url.pathname;
+  const downloads = $derived(service.settings.product.downloads);
 
-        const filename = pathname.split("/").pop();
+  const getExtension = (file: string) => {
+    if (!file) return "";
+    const url = new URL(file);
+    const pathname = url.pathname;
 
-        if (!filename) return "File type not found";
+    const filename = pathname.split("/").pop();
 
-        const idx = filename.indexOf(".");
-        if (idx === -1) return "No file type found";
+    if (!filename) return "File type not found";
 
-        let ext = filename.slice(idx);
-        ext = ext.split("?")[0].split("#")[0];
+    const idx = filename.indexOf(".");
+    if (idx === -1) return "No file type found";
 
-        return ext.replace(/^\.+/, "").toLowerCase();
-    };
+    let ext = filename.slice(idx);
+    ext = ext.split("?")[0].split("#")[0];
 
-    /**
-     * @param {Object} obj
-     */
-    function isEmpty(obj) {
-        for (const prop in obj) {
-            if (obj.hasOwnProperty(prop)) {
-                return false;
-            }
-        }
-        return true;
+    return ext.replace(/^\.+/, "").toLowerCase();
+  };
+
+  function isEmpty(obj: Object) {
+    for (const prop in obj) {
+      if (obj.hasOwnProperty(prop)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function openMediaModal(idx: number) {
+    if (!wp || !wp.media) {
+      console.error(
+        "Could not open media modal. Did you forget to enqueue wp_media?",
+      );
+      return;
     }
 
-    function openMediaModal(idx) {
-        if (!wp || !wp.media) {
-            console.error(
-                "Could not open media modal. Did you forget to enqueue wp_media?",
-            );
-            return;
-        }
-
-        if (frame) {
-            frame.open();
-            return;
-        }
-
-        frame = wp.media({
-            title: "",
-            button: {
-                text: "Use this media",
-            },
-            multiple: false,
-        });
-
-        frame.on("select", () => {
-            const attachment = frame.state().get("selection").first().toJSON();
-
-            settings.product.downloads[idx] = {
-                file: attachment.url,
-                name: attachment.title,
-            };
-        });
-
-        frame.open();
+    if (frame) {
+      frame.open();
+      return;
     }
+
+    // @ts-ignore
+    frame = wp.media({
+      title: "",
+      button: {
+        text: "Use this media",
+      },
+      multiple: false,
+    });
+
+    frame.on("select", () => {
+      // @ts-ignore
+      const attachment = frame.state().get("selection").first().toJSON();
+
+      settings.product.downloads[idx] = {
+        file: attachment.url,
+        name: attachment.title,
+      };
+    });
+
+    frame.open();
+  }
 </script>
 
 {#if downloads}
-    <table class="lighter-downloads">
-        <thead>
-            <tr>
-                <td>File name</td>
-                <td>File url</td>
-                <td align="center">File type</td>
-                <td>
-                    <span class="screen-reader-text">Actions</span>
-                </td>
-            </tr>
-        </thead>
-        <tbody>
-            {#each downloads as download, i}
-                {@const fileType = getExtension(download.file)}
-                <tr>
-                    <td><Editable bind:value={download.name} /></td>
-                    <td><input type="text" bind:value={download.file} /></td>
-                    <td align="center">{fileType}</td>
-                    <td>
-                        <button
-                            type="button"
-                            class="lighter-btn transparent"
-                            onclick={() => openMediaModal(i)}
-                        >
-                            Choose file
-                        </button>
-                    </td>
-                </tr>
-            {/each}
-        </tbody>
-    </table>
-    <button
+  <table class="lighter-downloads">
+    <thead>
+      <tr>
+        <td>File name</td>
+        <td>File url</td>
+        <td align="center">File type</td>
+        <td>
+          <span class="screen-reader-text">Actions</span>
+        </td>
+      </tr>
+    </thead>
+    <tbody>
+      {#each downloads as download, i}
+        {@const fileType = getExtension(download.file)}
+        <tr>
+          <td><Editable bind:value={download.name} /></td>
+          <td><input type="text" bind:value={download.file} /></td>
+          <td align="center">{fileType}</td>
+          <td>
+            <button
+              type="button"
+              class="lighter-btn transparent"
+              onclick={() => openMediaModal(i)}
+            >
+              Choose file
+            </button>
+          </td>
+        </tr>
+      {/each}
+    </tbody>
+  </table>
+  <button
+    type="button"
+    class="lighter-btn"
+    onclick={() => downloads.push({ name: "", file: "" })}>Add new file</button
+  >
+{:else}
+  <div class="no-downloads">
+    <p>No downloads found for this course</p>
+    <div>
+      <button
         type="button"
         class="lighter-btn"
-        onclick={() => downloads.push({ name: "", file: "" })}
-        >Add new file</button
-    >
-{:else}
-    <div class="no-downloads">
-        <p>No downloads found for this course</p>
-        <div>
-            <button
-                type="button"
-                class="lighter-btn"
-                onclick={() => {
-                    if (downloads) {
-                        downloads.push({ name: "", file: "" });
-                    } else {
-                        settings.product.downloads = [{ name: "", file: "" }];
-                    }
-                }}>Add first file</button
-            >
-            {#if isEmpty(settings.product)}
-                or
-                <button
-                    type="button"
-                    class="lighter-btn transparent"
-                    onclick={() =>
-                        document.getElementById("selling-tab").click()}
-                    >link to a product</button
-                >
-            {/if}
-        </div>
+        onclick={() => {
+          if (downloads) {
+            downloads.push({ name: "", file: "" });
+          } else {
+            settings.product.downloads = [{ name: "", file: "" }];
+          }
+        }}>Add first file</button
+      >
+      {#if isEmpty(settings.product)}
+        or
+        <button
+          type="button"
+          class="lighter-btn transparent"
+          onclick={() => document.getElementById("selling-tab").click()}
+          >link to a product</button
+        >
+      {/if}
     </div>
+  </div>
 {/if}

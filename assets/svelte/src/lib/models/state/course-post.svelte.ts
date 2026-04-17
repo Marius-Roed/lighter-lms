@@ -1,21 +1,26 @@
 import type { CourseData, TopicData } from "$/types/course.d.ts";
 import { Topic } from "./course-topic.svelte.ts";
 import type { Lesson } from "./course-lesson.svelte.ts";
+import type { PostStatus } from "$lib/utils/index.ts";
+import { SvelteDate } from "svelte/reactivity";
 
 export class Course {
   readonly id: number;
   readonly key: string;
-  readonly slug: string;
-  readonly publishDate: string;
-  readonly publishDateGMT: string;
+  readonly dateGMT: string;
   readonly modifiedDate: string;
   readonly modifiedDateGMT: string;
   readonly author: number;
-  readonly type: string;
+  readonly type: string = "course";
 
   title = $state("");
   sortOrder = $state(0);
   topics = $state<Topic[]>([]);
+  status = $state<PostStatus>("auto-draft");
+  date: Date = $state(new SvelteDate());
+  slug = $state("");
+  excerpt = $state("");
+  content = $state("");
 
   readonly sortedTopics = $derived(
     [...this.topics].sort((a, b) => a.sortOrder - b.sortOrder),
@@ -28,18 +33,18 @@ export class Course {
   constructor(data: CourseData) {
     this.id = data.id;
     this.key = data.key;
-    this.slug = data.slug;
-    this.exceprt = data.excerpt;
-    this.publishDate = data.date;
-    this.publishDateGMT = data.date_gmt;
+    this.slug = data.slug ?? "";
+    this.content = data.content?.rendered ?? "";
+    this.excerpt = data.excerpt?.rendered ?? "";
+    this.date = new SvelteDate(data.date ?? Date.now());
+    this.dateGMT = data.date_gmt;
     this.modifiedDate = data.modified;
     this.modifiedDateGMT = data.modified_gmt;
-    this.author = data.author;
-    this.type = data.type;
+    this.author = data.author ?? 0;
     this.title = data.title.rendered;
-    this.sortOrder = data.menu_order;
+    this.sortOrder = data.menu_order ?? 0;
     this.status = data.status;
-    this.topics = data.topics.map((t) => new Topic(t));
+    this.topics = data.topics?.map((t) => new Topic(t)) ?? [];
   }
 
   addTopic(data: TopicData): Topic {
@@ -122,14 +127,17 @@ export class Course {
       id: this.id,
       key: this.key,
       slug: this.slug,
-      date: this.publishDate,
-      date_gmt: this.publishDateGMT,
+      content: { rendered: this.content },
+      date: this.date.toISOString(),
+      date_gmt: this.dateGMT,
+      excerpt: { rendered: this.excerpt },
       modified: this.modifiedDate,
       modified_gmt: this.modifiedDateGMT,
       menu_order: this.sortOrder,
+      status: this.status,
       author: this.author,
       title: { rendered: this.title },
-      type: this.type,
+      type: this.type as CourseData["type"],
       topics: this.sortedTopics.map((t) => t.toRestData()),
     };
   }

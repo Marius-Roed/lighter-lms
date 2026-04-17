@@ -41,12 +41,6 @@ export class Lesson {
     this.editLink = this.getEditLink(data);
     this.parentKey = this.parseParentKey(data);
     this.sortOrder = this.parseSortOrder(data);
-
-    $effect.root(() => {
-      $effect(() => {
-        console.log(this.title, this.sortOrder);
-      });
-    });
   }
 
   getEditLink(data: LessonData): string {
@@ -113,6 +107,7 @@ export class Lesson {
       date: this.date,
       key: this.key,
       slug: this.slug,
+      status: this.status,
       lesson_type: this.lessonType,
       lighter_meta: {
         [this.parentKey]: this.sortOrder,

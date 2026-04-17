@@ -1,6 +1,7 @@
 interface CourseData extends WPRestPost {
   type: "course";
   key: string;
+  settings: CourseSettingsData;
   topics?: Topic[];
 }
 

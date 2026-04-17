@@ -1,290 +1,252 @@
 import type { Post } from "$lib/posts.svelte.js";
+import type { Product } from "$lib/settings.svelte.js";
 import type { PostStatus } from "$lib/utils/index.ts";
 import type { CourseData } from "./course.d.ts";
 
-export { };
+export {};
 
 declare global {
-    type EditStatus = "clean" | "dirty";
-    type AvailableStore = "woocommerce" | "fluentcart" | "memberpress";
-    type Merge<A, B> = A & Omit<B, keyof A>;
+  type EditStatus = "clean" | "dirty";
+  type AvailableStore = "woocommerce" | "fluentcart" | "memberpress";
+  type AvailableEditors = "classic-editor" | "gutenberg" | "elementor";
+  type Merge<A, B> = A & Omit<B, keyof A>;
 
-    interface Window {
-        LighterLMS: LighterLMS;
-        lighterCourses: lighterCourses;
-        lighterCourse: lighterCourse;
-    }
+  interface Window {
+    LighterLMS: LighterLMS;
+    lighterCourses: lighterCourses;
+    lighterCourse: lighterCourse;
+  }
 
-    interface LighterLMS<S extends AvailableStore = AvailableStore> {
-        machineId: number;
-        nonce: string;
-        restUrl: string;
-        namespace: string;
-        course: LighterCourse<S>;
-        settings: {
-            builders: {
-                plugins: string[];
-                active: string;
-            }
-            stores: {
-                plugins: string[];
-                active: string;
-            }
-        }
-        lesson?: {
-            settings: object;
-        }
-        user?: {
-            courses: Course[]
-            owns: {
-                course_id: number,
-                lessons: number[]
-            }[]
-        }
-        addAction: Function;
-        addFilter: Function;
-        doAction: Function;
-        applyFilter: Function;
-        course?: {
-            settings: CourseSettings;
-        }
-    }
-    const LighterLMS: LighterLMS;
-
-    type CourseAccess = {
-        [x: string]: (string | number)[];
+  interface LighterLMS {
+    machineId: number;
+    nonce: string;
+    restUrl: string;
+    namespace: string;
+    course: LighterCourse;
+    settings: {
+      builders: {
+        plugins: string[];
+        active: string;
+      };
+      stores: {
+        plugins: string[];
+        active: string;
+      };
     };
+    lesson?: {
+      settings: object;
+    };
+    user?: {
+      courses: Course[];
+      owns: {
+        course_id: number;
+        lessons: number[];
+      }[];
+    };
+    globals: LighterGlobalSettings;
+    addAction: Function;
+    addFilter: Function;
+    doAction: Function;
+    applyFilter: Function;
+  }
+  const LighterLMS: LighterLMS;
 
-    interface LighterCourse<S extends AvailableStore> extends CourseData {
-        settings: {
-            baseUrl: string;
-            currency: string;
-            description: string;
-            displayFooter: boolean;
-            displayHeader: boolean;
-            displaySidebar: boolean;
-            editor: string;
-            product?: Product<S>;
-            publishedOn: Date;
-            showIcons: boolean;
-            showProgress: boolean;
-            slug: string;
-            status: CourseStatus;
-            store: S;
-            sync_prod_img: boolean;
-            thumbnail: {
-                alt: string;
-                id: number;
-                src: string;
-            };
-            userLocale: string;
-        }
-    }
+  type CourseAccess = {
+    [x: string]: (string | number)[];
+  };
 
-    interface WooProduct {
-        access: CourseAccess[];
-        auto_comp: boolean;
-        boolean: auto_hide;
-        description: string;
-        downloads: Array;
-        id: number | string;
-        images: Array;
-        name: string;
-        regular_price: string;
-        sale_price: string;
-        short_description: string;
-        stock_quantity?: number;
-        menu_order: number;
-        sku: string;
-        catalog_visibility: "visible" | "catalog" | "search" | "hidden";
-    }
+  type LighterCourse<S extends AvailableStore> = CourseData &
+    CourseSettingsData<S>;
 
-    interface FluentProduct {
-        uuid: string;
-        price: number;
-    }
+  interface CourseSettingsData<S extends AvailableStore> {
+    displayFooter: boolean;
+    displayHeader: boolean;
+    displaySidebar: boolean;
+    product?: Product<S>;
+    showIcons: boolean;
+    showProgress: boolean;
+    syncProductImg: boolean;
+    tags: [];
+    thumbnail: {
+      alt: string;
+      id: number;
+      src: string;
+    };
+  }
 
-    interface MemberProduct {
-        membershipId: string;
-        expires: Date;
-    }
+  interface WPPost {
+    ID: string;
+    comment_count: string;
+    comment_status: string;
+    guid: string;
+    menu_order: string;
+    ping_status: string;
+    pinged: string;
+    post_author: string;
+    post_content: string;
+    post_content_filtered: string;
+    post_date: string;
+    post_date_gmt: string;
+    post_excerpt: string;
+    post_mime_type: string;
+    post_modified: string;
+    post_modified_gmt: string;
+    post_name: string;
+    post_parent: string;
+    post_password: string;
+    post_status: PostStatus;
+    post_title: string;
+    post_type: string;
+    to_ping: string;
+  }
 
-    type ProductMap = {
-        woocommerce: WooProduct;
-        fluentcart: FluentProduct;
-        memberpress: MemberProduct;
-    }
+  interface WPRenderedField {
+    rendered: string;
+  }
 
-    type Product<S extends AvailableStore> = ProductMap[S];
+  interface WPRawField {
+    raw: string;
+  }
 
-    interface WPPost {
-        ID: string;
-        comment_count: string;
-        comment_status: string;
-        guid: string;
-        menu_order: string;
-        ping_status: string;
-        pinged: string;
-        post_author: string;
-        post_content: string;
-        post_content_filtered: string;
-        post_date: string;
-        post_date_gmt: string;
-        post_excerpt: string;
-        post_mime_type: string;
-        post_modified: string;
-        post_modified_gmt: string;
-        post_name: string;
-        post_parent: string;
-        post_password: string;
-        post_status: PostStatus;
-        post_title: string;
-        post_type: string;
-        to_ping: string;
-    }
+  interface WPTextField extends WPRenderedField {
+    raw?: string;
+  }
 
-    interface WPRenderedField {
-        rendered: string;
-    }
+  interface WPRestPostReadOnly {
+    id: number;
+    type: string;
+    date_gmt: string;
+    modified: string;
+    modified_gmt: string;
+    _links?: Record<string, unknown[]>;
+  }
 
-    interface WPRawField {
-        raw: string;
-    }
+  interface WPRestPostFields {
+    slug?: string;
+    status?: PostStatus;
+    title?: WPRawField;
+    content?: WPRawField;
+    excerpt?: WPRawField;
+    author?: number;
+    date?: string;
+    menu_order?: number;
+    parent?: number;
+    meta?: Record<string, unknown>;
+  }
 
-    interface WPTextField extends WPRenderedField {
-        raw?: string;
-    }
+  interface WPRestPost extends WPRestPostReadOnly {
+    slug?: string;
+    status: PostStatus;
+    title: WPTextField;
+    content: WPTextField;
+    excerpt: WPTextField;
+    author?: number;
+    date?: string;
+    menu_order?: number;
+    parent?: number;
+    link?: string;
+    permalink_template?: string;
+    meta?: Record<string, unknown>;
+  }
 
-    interface WPRestPostReadOnly {
-        id: number;
-        type: string;
-        date_gmt: string;
-        modified: string;
-        modified_gmt: string;
-        _links?: Record<string, unknown[]>;
-    }
+  interface WPRestPostCreateRequired {
+    title: string;
+    status: PostStatus;
+  }
 
-    interface WPRestPostFields {
-        slug?: string;
-        status?: PostStatus;
-        title?: WPRawField;
-        content?: WPRawField;
-        excerpt?: WPRawField;
-        author?: number;
-        date?: string;
-        menu_order?: number;
-        parent?: number;
-        meta?: Record<string, unknown>;
-    }
+  type WPRestPostCreate = Merge<WPRestPostCreateRequired, WPRestPostFields>;
 
-    interface WPRestPost extends WPRestPostReadOnly {
-        slug?: string;
-        status: PostStatus;
-        title: WPTextField;
-        content: WPTextField;
-        excerpt: WPTextField;
-        author?: number;
-        date?: string;
-        menu_order?: number;
-        parent?: number;
-        link?: string;
-        permalink_template?: string;
-        meta?: Record<string, unknown>;
-    }
+  interface CourseSettings {
+    showIcons: boolean;
+    showProgress: boolean;
+    status: CourseStatus;
+    publishedOn: Date;
+    userLocale: string;
+    description: string;
+    displayHeader: boolean;
+    displaySidebar: boolean;
+    displayFooter: boolean;
+    currency: string;
+    store: string;
+    tags: Array<T>;
+    product: Product;
+  }
 
-    interface WPRestPostCreateRequired {
-        title: string;
-        status: PostStatus;
-    }
+  interface Media {
+    $el: Array;
+    activeModes: Object;
+    cid: string;
+    content: Object;
+    el: HTMLElement;
+    menu: Object;
+    modal: Object;
+    options: Object;
+    regions: Array;
+    router: Object;
+    states: Object;
+    title: Object;
+    toolbar: Object;
+    uploader: Object;
+    views: Object;
+    _selection: Object;
+    open: () => void;
+    on: (event: string, cb: () => unknown) => unknown;
+  }
 
-    type WPRestPostCreate = Merge<WPRestPostCreateRequired, WPRestPostFields>;
+  interface MediaArgs {
+    title: string;
+    button: {
+      text: string;
+    };
+    multiple: boolean;
+    library: Object;
+  }
 
-    interface CourseSettings {
-        showIcons: boolean;
-        showProgress: boolean;
-        status: CourseStatus;
-        publishedOn: Date;
-        userLocale: string;
-        description: string;
-        displayHeader: boolean;
-        displaySidebar: boolean;
-        displayFooter: boolean;
-        currency: string;
-        store: string;
-        tags: Array<T>;
-        product: Product;
-    }
+  interface tag {
+    count: number;
+    description: string;
+    id: number;
+    name: string;
+    slug: string;
+    taxonomy: string;
+  }
 
-    interface Media {
-        $el: Array;
-        activeModes: Object;
-        cid: string;
-        content: Object;
-        el: HTMLElement;
-        menu: Object;
-        modal: Object;
-        options: Object;
-        regions: Array;
-        router: Object;
-        states: Object;
-        title: Object;
-        toolbar: Object;
-        uploader: Object;
-        views: Object;
-        _selection: Object;
-    }
+  interface LighterGlobalSettings {
+    baseUrl: string;
+    courseTags: tag[];
+    currency: string;
+    editor: AvailableEditors;
+    store: AvailableStore;
+    userLocale: string;
+  }
 
-    interface MediaArgs {
-        title: string;
-        button: {
-            text: string;
-        };
-        multiple: boolean;
-        library: Object;
-    }
+  const lighterCourse: lighterCourse;
 
-    interface tag {
-        count: number;
-        id: number;
-        name: string;
-        slug: string;
-        taxonomy: string;
-    }
+  const wp: {
+    editor: {
+      autop: Function;
+      getContent: Function;
+      getDefaultSettings: Function;
+      initialize: Function;
+      remove: Function;
+      removep: Function;
+    };
+    media: (t: MediaArgs) => Media & JQuery<HTMLElement>;
+  };
 
-    interface lighterCourse {
-        tags: {
-            all: tag[];
-            selected: tag[];
-        }
-    }
-
-    const lighterCourse: lighterCourse;
-
-    const wp: {
-        editor: {
-            autop: Function;
-            getContent: Function;
-            getDefaultSettings: Function;
-            initialize: Function;
-            remove: Function;
-            removep: Function;
-        }
-        media: (t: MediaArgs) => Media & JQuery<HTMLElement>;
-    }
-
-    const tinymce: {
-        $: Function;
-        AddOnManager: Function;
-        Annotator: Function
-        DOM: {
-            $: Function;
-            $$: Function;
-            add: Function;
-            addClass: Function;
-            addStyle: Function
-        }
-        Editor: Function;
-        Env: Object;
-        get: (elementId: string) => any;
-    }
+  const tinymce: {
+    $: Function;
+    AddOnManager: Function;
+    Annotator: Function;
+    DOM: {
+      $: Function;
+      $$: Function;
+      add: Function;
+      addClass: Function;
+      addStyle: Function;
+    };
+    Editor: Function;
+    Env: Object;
+    get: (elementId: string) => any;
+  };
 }

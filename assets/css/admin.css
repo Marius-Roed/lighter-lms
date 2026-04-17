@@ -448,7 +448,7 @@
     background-color: white;
     border-bottom: 1px solid oklch(0.8492 0.0346 303.37);
     box-shadow: 0 2px 12px -9px;
-    z-index: 10;
+    z-index: 1001;
 
     .inner {
       display: flex;
@@ -1872,20 +1872,39 @@ table.form-table.lighter-user-courses {
     display: flex;
     flex-wrap: nowrap;
     justify-content: space-between;
+    margin-block-end: 4rem;
+    gap: 1rem;
   }
 
-  .general {
+  .data {
     display: grid;
     flex-grow: 1;
     grid-template-columns: repeat(2, 1fr);
     gap: 1em;
     max-width: 828px;
+  }
 
-    & > div {
+  .general,
+  .additional {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+
+    > label {
       display: flex;
-      flex-direction: column;
-      gap: 0.5em;
+      align-items: center;
+      justify-content: space-between;
+      padding-inline-end: 0.5rem;
     }
+
+    .modal-wrap {
+      align-self: center;
+      margin-block-start: 0.5rem;
+    }
+  }
+
+  .additional button {
+    margin-block-start: 1rem;
   }
 
   .img {
@@ -1899,6 +1918,10 @@ table.form-table.lighter-user-courses {
   textarea {
     width: 100%;
     border-radius: 0;
+  }
+
+  #wp-product_desc-wrap {
+    margin-block-end: 4rem;
   }
 
   h4 {
@@ -2321,12 +2344,17 @@ table.form-table.lighter-user-courses {
   display: grid;
   gap: 2em;
   justify-items: center;
+  width: 100%;
 }
 
-#course-description {
+#coursesettingsdiv #excerpt {
   width: 100%;
   min-height: 180px;
   padding-block: 12px;
+}
+
+.lighter.post-type-lighter_courses .wrap .notice {
+  margin-top: 2rem;
 }
 
 .mce-toolbar-grp.mce-container.mce-panel.mce-first.mce-last[style*="position: fixed"] {

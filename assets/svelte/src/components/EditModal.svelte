@@ -1,19 +1,20 @@
-<script>
+<script lang="ts">
   import Icon from "./Icon.svelte";
   import { lighterFetch } from "$lib/api/lighter-fetch.ts";
   import { getCourseService } from "$lib/utils/index.ts";
+  import type { LessonData } from "$types/course.js";
 
   let service = getCourseService();
 
-  let iframeEl = $state(),
+  let iframeEl: HTMLIFrameElement = $state(),
     iframeReady = $state(false);
 
   async function getPermalink() {
     if (service.editModal.currentLesson.id) {
-      return service.editModal.currentLesson.permalink;
+      return service.editModal.currentLesson.editLink;
     }
 
-    const res = await lighterFetch({
+    const res = await lighterFetch<LessonData>({
       path: "lesson",
       method: "POST",
       data: {
@@ -24,14 +25,14 @@
       },
     });
 
-    return res.permalink;
+    return "";
   }
 
   let src = $derived.by(async () => {
     const editor =
       LighterLMS.course.settings.editor !== "classic-editor"
-        ? (LighterLMS?.course?.settings?.editor ?? false)
-        : false;
+        ? (LighterLMS?.course?.settings?.editor ?? "edit")
+        : "edit";
 
     if (!service.editModal.currentLesson) return "";
 
@@ -56,12 +57,7 @@
     // syncLesson(editModal.lesson.key);
   }
 
-  /**
-   * Attach dialog to state
-   *
-   * @param {HTMLDialogElement} el
-   */
-  function dialogControl(el) {
+  function dialogControl(el: HTMLDialogElement) {
     $effect(() => {
       if (service.editModal.currentLesson) {
         if (!el.open) el.showModal();
@@ -79,6 +75,15 @@
     return () => {
       if (el.open) el.close();
     };
+  }
+
+  function handleMessage(e: MessageEvent) {
+    if (e.origin !== window.location.origin) return;
+
+    if (e.data?.type === "LIGHTER_LESSON_UPDATE") {
+      const lesson = e.data.payload;
+      console.log(lesson);
+    }
   }
 
   function handleIframeLoad() {
@@ -107,6 +112,14 @@
       if (body && !body.classList.contains("dia-editor")) {
         body.classList.add("dia-editor");
       }
+
+      iframeEl.contentWindow.postMessage(
+        {
+          type: "LIGHTER_DIALOG_INIT",
+          payload: service.editModal.currentLesson.serialize(),
+        },
+        window.location.origin,
+      );
     } catch (e) {
       console.warn("Iframe naviagtion check failed:", e);
     }
@@ -117,6 +130,8 @@
     iframeReady = false;
   });
 </script>
+
+<svelte:window onmessage={handleMessage} />
 
 <dialog
   class="lighter-modal modal-edit"

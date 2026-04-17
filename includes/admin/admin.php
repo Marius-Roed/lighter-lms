@@ -460,6 +460,42 @@ final class Admin {
 		}
 	}
 
+	#[Filter( 'lighter_lms_admin_object', accepted_args: 2 )]
+	public function global_settings( $obj, $screen_id ) {
+		$all_tags = get_terms(
+			array(
+				'taxonomy'   => 'course-tags',
+				'hide_empty' => false,
+			)
+		);
+		$all_tags = array_map(
+			fn( $t ) => array(
+				'name'        => $t->name,
+				'slug'        => $t->slug,
+				'count'       => $t->count,
+				'description' => $t->description,
+				'id'          => $t->term_id,
+				'taxonomy'    => $t->taxonomy,
+			),
+			$all_tags
+		);
+
+		$obj['globals'] = array(
+			'baseUrl'    => 'kurser',
+			'courseTags' => $all_tags,
+			'currency'   => lighter_lms()->defaults()->currency,
+			'editor'     => lighter_lms()->defaults()->editor,
+			'userLocale' => str_replace( '_', '-', get_user_locale() ),
+			'store'      => lighter_lms()->defaults()->store,
+		);
+
+		if ( lighter_lms()->defaults()->store === 'woocommerce' ) {
+			$obj['globals']['currency'] = \get_woocommerce_currency();
+		}
+
+		return $obj;
+	}
+
 	#[Action( 'admin_post_lighter_complete_lesson' )]
 	#[Action( 'admin_post_nopriv_lighter_complete_lesson' )]
 	public function complete_lesson(): void {
