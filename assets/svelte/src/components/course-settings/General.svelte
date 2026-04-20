@@ -117,8 +117,7 @@
   <div class="course-desc">
     <h3>Description</h3>
     <textarea
-      id="excerpt"
-      name="excerpt"
+      id="course-description"
       cols="35"
       rows="12"
       placeholder="Enter an eye catching description..."

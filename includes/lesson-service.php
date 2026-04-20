@@ -128,7 +128,7 @@ class Lesson_Service {
 		}
 
 		try {
-			lighter()->lms->db->topic_lessons->insert( $data );
+			lighter()->lms->db->topic_lessons->insert( ...$data );
 		} catch ( \Throwable $e ) {
 		}
 	}
@@ -150,7 +150,7 @@ class Lesson_Service {
 		if ( ! $exists ) {
 
 			try {
-				lighter()->lms->db->topic_lessons->insert( $data );
+				lighter()->lms->db->topic_lessons->insert( ...$data );
 			} catch ( \Throwable $e ) {
 				return false;
 			}

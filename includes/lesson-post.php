@@ -151,6 +151,9 @@ class Lesson_Post extends Post_Type {
 			array(
 				'get_callback'    => fn( $post ) => $this->get_lesson_meta( (int) $post['id'] ),
 				'update_callback' => fn( $value, $object ) => $this->update_lesson_meta( $object, $value ),
+				'schema'          => array(
+					'type' => 'object',
+				),
 			)
 		);
 	}
@@ -212,7 +215,7 @@ class Lesson_Post extends Post_Type {
 	}
 
 	public function delete_post( int $post_id, \WP_Post $post ): void {
-		lighter()->lms->lesson->delete_topic_relationship();
+		// lighter()->lms->lesson->delete_topic_relationship();
 	}
 
 	/**
@@ -282,13 +285,17 @@ class Lesson_Post extends Post_Type {
 					continue;
 				}
 
-				lighter()->lms->lesson->update_topic_relationship(
+				$updated = lighter()->lms->lesson->update_topic_relationship(
 					array(
 						'topic_id'   => $exists->ID,
 						'lesson_id'  => $post->ID,
 						'sort_order' => $topic['sort_order'],
 					)
 				);
+
+				if ( ! $updated ) {
+					// TODO: Maybe throw error.
+				}
 			}
 		}
 	}

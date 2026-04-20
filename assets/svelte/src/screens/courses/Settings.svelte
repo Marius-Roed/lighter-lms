@@ -43,17 +43,21 @@
 
     return v ?? "";
   };
-
-  const normSettings = $derived.by(() => {
-    const tags = service.settings.tags.flatMap((t) => t.name);
-    return {
-      ...settings,
-      tags,
-    };
-  });
 </script>
 
 <div class="lighter-settings-data">
+  <input
+    type="hidden"
+    id="excerpt"
+    name="excerpt"
+    bind:value={service.course.excerpt}
+  />
+  <input type="hidden" name="settings[slug]" bind:value={service.course.slug} />
+  <input
+    type="hidden"
+    name="settings[status]"
+    bind:value={service.course.status}
+  />
   {@render hiddenInput("settings", service.settings.getHiddenData())}
 </div>
 

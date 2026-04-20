@@ -100,15 +100,15 @@ class Course_Post extends Post_Type {
 		if ( isset( $_POST['topics'] ) ) {
 			foreach ( $_POST['topics'] as $topic ) {
 				$data = array(
-					'post_id'    => $post_id,
+					'course_id'  => $post_id,
 					'title'      => $topic['title'],
-					'sort_order' => $topic['sortOrder'],
+					'sort_order' => $topic['sort_order'],
 				);
 				lighter()->lms->db->topics->update( $topic['key'], $data );
 
 				if ( isset( $topic['lessons'] ) ) {
 					foreach ( $topic['lessons'] as $lesson ) {
-						if ( $lesson['editStatus'] != 'clean' ) {
+						if ( $lesson['dirty'] ) {
 							Lesson_Post::save_from_course( $lesson, $post_id, $topic );
 						}
 					}
@@ -130,15 +130,14 @@ class Course_Post extends Post_Type {
 	 * @param array    $args The settings to save.
 	 */
 	protected function _save_settings( \WP_Post $post, array $args ): void {
-		$tags               = $args['tags'] ?? array();
-		$product            = $args['product'] ?? array();
-		$course_description = $args['description'] ?? '';
-		$header             = isset( $args['displayHeader'] ) ? wp_validate_boolean( $args['displayHeader'] ) : false;
-		$footer             = isset( $args['displayFooter'] ) ? wp_validate_boolean( $args['displayFooter'] ) : false;
-		$sidebar            = isset( $args['displaySidebar'] ) ? wp_validate_boolean( $args['displaySidebar'] ) : false;
-		$slug               = $args['slug'] ? sanitize_post_field( 'post_name', $args['slug'], $post->ID, 'raw' ) : $post->post_name;
-		$sync_prod_img      = isset( $args['sync_prod_img'] ) ? wp_validate_boolean( $args['sync_prod_img'] ) : true;
-		$thumbnail          = $args['thumbnail'];
+		$tags          = $args['tags'] ?? array();
+		$product       = $args['product'] ?? array();
+		$header        = isset( $args['display_header'] ) ? wp_validate_boolean( $args['display_header'] ) : lighter_lms()->defaults()->course_hide_theme_header;
+		$footer        = isset( $args['display_footer'] ) ? wp_validate_boolean( $args['display_footer'] ) : lighter_lms()->defaults()->course_hide_theme_footer;
+		$sidebar       = isset( $args['display_sidebar'] ) ? wp_validate_boolean( $args['display_sidebar'] ) : lighter_lms()->defaults()->course_hide_theme_sidebar;
+		$sync_prod_img = isset( $args['sync_prod_img'] ) ? wp_validate_boolean( $args['sync_prod_img'] ) : true;
+		$slug          = $args['slug'] ? sanitize_post_field( 'post_name', $args['slug'], $post->ID, 'raw' ) : $post->post_name;
+		$thumbnail     = $args['thumbnail'];
 
 		if ( ! empty( $tags ) ) {
 			wp_set_post_terms( $post->ID, $tags, 'course-tags' );
@@ -157,7 +156,6 @@ class Course_Post extends Post_Type {
 			update_post_meta( $post->ID, '_lighter_is_restricted', true );
 		}
 
-		update_post_meta( $post->ID, '_course_description', trim( $course_description ) );
 		update_post_meta( $post->ID, '_course_display_theme_header', $header );
 		update_post_meta( $post->ID, '_course_display_theme_sidebar', $sidebar );
 		update_post_meta( $post->ID, '_course_display_theme_footer', $footer );
@@ -165,7 +163,9 @@ class Course_Post extends Post_Type {
 			set_post_thumbnail( $post->ID, $thumbnail['id'] );
 		}
 
-		if ( $post->post_name !== $slug ) {
+		file_put_contents( LIGHTER_LMS_PATH . '/log.log', var_export( $slug, true ), FILE_APPEND );
+
+		if ( $post->post_name !== $slug && ! $this->skip_next_save ) {
 			$this->skip_next_save = true;
 			wp_update_post(
 				array(
@@ -196,7 +196,7 @@ class Course_Post extends Post_Type {
 			$user_access = new User_Access();
 			if ( ! $user_access->check_course_access( $post->ID ) ) {
 				// TODO: Show access denied template.
-				wp_die( 'access denied', 'Please purchase the course or log in to view.', array( 'response' => 403 ) );
+				wp_die( 'access denied', __( 'Please purchase the course or log in to view.', 'lighterlms' ), array( 'response' => 403 ) );
 			}
 		}
 	}

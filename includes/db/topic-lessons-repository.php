@@ -9,6 +9,8 @@ defined( 'ABSPATH' ) || exit;
  */
 class Topic_Lessons_Repository {
 
+	const CACHE_GROUP = 'lighter_lms_topic_lessons';
+
 	protected \wpdb $db;
 	public string $table;
 
@@ -23,55 +25,83 @@ class Topic_Lessons_Repository {
 	 * Gets the row with given topic and lesson id
 	 */
 	public function find( int $topic_id, int $lesson_id ): ?object {
-		return $this->db->get_row(
+		$c_key  = "topic_lesson:$topic_id:$lesson_id";
+		$cached = wp_cache_get( $c_key, self::CACHE_GROUP );
+
+		if ( $cached !== false ) {
+			return $cached ?: null;
+		}
+
+		$topic = $this->db->get_row(
 			$this->db->prepare(
 				"SELECT * FROM {$this->table} WHERE topic_id = %d AND lesson_id = %d",
 				$topic_id,
 				$lesson_id
 			)
 		) ?: null;
+
+		wp_cache_set( $c_key, $topic ?? 0, self::CACHE_GROUP, HOUR_IN_SECONDS );
+
+		return $topic;
 	}
 
 	/**
 	 * @return TopicLessonRow[]|null
 	 */
 	public function find_by_topic( int $id, bool $include_trashed = false ): ?array {
-		if ( $include_trashed ) {
-			return $this->db->get_results(
-				$this->db->prepare(
-					"SELECT * FROM {$this->table} WHERE topic_id = %d",
-					$id
-				)
-			);
-		} else {
+		$c_key  = "topic:$id:" . (int) $include_trashed;
+		$cached = wp_cache_get( $c_key, self::CACHE_GROUP );
+
+		if ( $cached !== false ) {
+			return $cached ?: null;
 		}
 
-		return $this->db->get_results(
-			$this->db->prepare(
-				"SELECT * FROM {$this->table} tl
+		$sql = "SELECT * FROM {$this->table} WHERE topic_id = %d";
+		if ( ! $include_trashed ) {
+			$sql = "SELECT * FROM {$this->table} tl
                 INNER JOIN {$this->db->posts} p ON p.ID = tl.lesson_id
-                WHERE p.post_status != 'trash' AND tl.topic_id = %d",
+                WHERE p.post_status != 'trash' AND tl.topic_id = %d";
+		}
+
+		$rows = $this->db->get_results(
+			$this->db->prepare(
+				$sql,
 				$id
 			)
 		);
+
+		wp_cache_set( $c_key, $rows ?? 0, self::CACHE_GROUP, HOUR_IN_SECONDS );
+
+		return $rows;
 	}
 
 	/**
 	 * @return TopicLessonRow[]|null
 	 */
 	public function find_by_lesson( int $id ): ?array {
-		return $this->db->get_results(
+		$c_key  = 'lesson:' . $id;
+		$cached = wp_cache_get( $c_key, self::CACHE_GROUP );
+
+		if ( $cached !== false ) {
+			return $cached ?: null;
+		}
+
+		$rows = $this->db->get_results(
 			$this->db->prepare(
 				"SELECT * FROM {$this->table} WHERE lesson_id = %d",
 				$id
 			)
 		);
+
+		wp_cache_set( $c_key, $rows ?? 0, self::CACHE_GROUP, HOUR_IN_SECONDS );
+
+		return $rows;
 	}
 
 	/**
 	 * @throws \RuntimeException
 	 */
-	public function insert( int $topic_id, int $lesson_id, int $sort_order ): int {
+	public function insert( int $topic_id, int $lesson_id, int $sort_order = 10 ): int {
 		$inserted = $this->db->insert(
 			$this->table,
 			compact( 'topic_id', 'lesson_id', 'sort_order' ),
@@ -88,7 +118,7 @@ class Topic_Lessons_Repository {
 	}
 
 	/**
-	 * @param array{ topic_id: int, lesson_id: int, sort_order: int } $data The new data to update the row
+	 * @param array{ topic_id: ?int, lesson_id: ?int, sort_order: ?int } $data The new data to update the row
 	 *
 	 * @throws \RuntimeException
 	 */
@@ -98,6 +128,11 @@ class Topic_Lessons_Repository {
 
 		if ( empty( $new_data ) ) {
 			return;
+		}
+
+		$existing = $this->db->get_row( $this->db->prepare( "SELECT * FROM {$this->table} WHERE ID = %d", $row_id ) );
+		if ( ! $existing ) {
+			throw new \RuntimeException( "Cannot update topic_lesson with unknown ID \"$row_id\"." );
 		}
 
 		$updated = $this->db->update(
@@ -111,6 +146,8 @@ class Topic_Lessons_Repository {
 		if ( $updated === false ) {
 			throw new \RuntimeException( "Failed to update topic-lesson row ($row_id): " . $this->db->last_error );
 		}
+
+		$this->_invalidate_pair( (int) $existing->topic_id, (int) $existing->lesson_id );
 	}
 
 	public function delete( int $id ): void {
@@ -143,6 +180,8 @@ class Topic_Lessons_Repository {
 					. $this->db->last_error
 				);
 			}
+
+			$this->_invalidate_pair( $topic_id, $lesson_id );
 		}
 	}
 
@@ -151,20 +190,43 @@ class Topic_Lessons_Repository {
 	 *
 	 * @throws \RuntimeException
 	 */
-	private function _delete_where( array $where ) {
-		$deleted = $this->db->delete(
-			$this->table,
-			$where,
-			array( '%d' )
+	private function _delete_where( array $where ): void {
+		$column = array_key_first( $where );
+		$value  = $where[ $column ];
+
+		$rows = $this->db->get_results(
+			$this->db->prepare(
+				"SELECT topic_id, lesson_id FROM {$this->table} WHERE {$column} = %d",
+				$value
+			)
 		);
 
+		if ( empty( $rows ) ) {
+			return;
+		}
+
+		$deleted = $this->db->delete( $this->table, $where, array( '%d' ) );
+
 		if ( $deleted === false ) {
-			$label = array_values( $where )[0];
-			$id    = array_keys( $where )[0];
 			throw new \RuntimeException(
-				"Failed to delete topic-lesson row with $label ($id): "
+				"Failed to delete topic-lesson row with $column ($value): "
 				. $this->db->last_error
 			);
 		}
+
+		foreach ( $rows as $row ) {
+			$this->_invalidate_pair( (int) $row->topic_id, (int) $row->lesson_id );
+		}
+	}
+
+	private function _cache_key_pair( int $topic_id, int $lesson_id ): string {
+		return "topic_lesson:{$topic_id}:{$lesson_id}";
+	}
+
+	private function _invalidate_pair( int $topic_id, int $lesson_id ): void {
+		wp_cache_delete( $this->_cache_key_pair( $topic_id, $lesson_id ), self::CACHE_GROUP );
+		wp_cache_delete( "topic:{$topic_id}:0", self::CACHE_GROUP );
+		wp_cache_delete( "topic:{$topic_id}:1", self::CACHE_GROUP );
+		wp_cache_delete( "lesson:{$lesson_id}", self::CACHE_GROUP );
 	}
 }

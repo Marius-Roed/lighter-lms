@@ -2347,7 +2347,12 @@ table.form-table.lighter-user-courses {
   width: 100%;
 }
 
-#coursesettingsdiv #excerpt {
+#coursesettingsdiv .settings-tabs a {
+  color: #333;
+  text-decoration: none;
+}
+
+#coursesettingsdiv #course-description {
   width: 100%;
   min-height: 180px;
   padding-block: 12px;

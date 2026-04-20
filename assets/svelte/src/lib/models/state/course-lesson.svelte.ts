@@ -1,20 +1,21 @@
-import { randflake } from "$lib/utils/index.ts";
+import { randflake, type PostStatus } from "$lib/utils/index.ts";
 import type { LessonData, LessonDataCreate } from "$types/course.d.ts";
 
 export class Lesson {
-  readonly id: number;
   readonly key: string;
-  readonly slug: string;
-  readonly date: string;
-  readonly author: number;
   readonly type = "lesson" as const;
-  readonly parentKey: string;
   readonly editLink: string;
-  readonly lighterMeta: LessonData["_lighter_meta"];
+
+  slug: string;
+  date: string;
+  author: number;
+  parentKey: string;
+  lighterMeta: LessonData["_lighter_meta"];
+  id: number;
 
   title = $state("");
   sortOrder = $state(0);
-  status = $state<LessonData["status"]>("auto-draft");
+  status = $state<PostStatus>("auto-draft");
   lessonType = $state<LessonData["lighter_lesson_type"]>("text");
   modified = $state("");
 
@@ -50,7 +51,7 @@ export class Lesson {
     url.pathname = "/wp-admin/post.php";
     const action =
       LighterLMS.course.settings.editor !== "classic-editor"
-        ? (LighterLMS?.course?.settings?.editor ?? false)
+        ? (LighterLMS?.course?.settings?.editor ?? "edit")
         : "edit";
     const params = new URLSearchParams({ post: data.id.toString(), action });
 
@@ -83,19 +84,24 @@ export class Lesson {
 
   update(data: LessonData | Lesson): void {
     if (data instanceof Lesson) {
+      this.id = data.id;
       this.title = data.title;
       this.sortOrder = data.sortOrder;
       this.status = data.status;
       this.lessonType = data.lessonType;
       this.modified = data.modified;
     } else {
+      this.id = data.id;
       this.title = data.title?.raw ?? data.title?.rendered ?? this.title;
-      this.sortOrder = this.parseSortOrder(data) ?? this.sortOrder;
+      this.sortOrder = this.parseSortOrder(data) || this.sortOrder;
       this.status = data.status ?? this.status;
       this.lessonType = data.lighter_lesson_type ?? this.lessonType;
       this.modified = data.modified ?? this.modified;
+      this.author = data.author ?? this.author;
+      this.slug = data.slug ?? this.slug;
+      this.date = data.date ?? this.date;
 
-      this.#original = data;
+      this.#original = { ...this.toRestData(), ...data };
     }
   }
 
@@ -112,10 +118,11 @@ export class Lesson {
       lighter_meta: {
         [this.parentKey]: this.sortOrder,
       },
+      dirty: this.isDirty,
     };
   }
 
-  toRestData(): LessonData {
+  toRestData(): LessonData & { dirty: boolean } {
     return {
       id: this.id,
       title: { rendered: this.title },
@@ -135,6 +142,7 @@ export class Lesson {
       meta: undefined,
       parent: undefined,
       _lighter_meta: this.lighterMeta,
+      dirty: this.isDirty,
     };
   }
 

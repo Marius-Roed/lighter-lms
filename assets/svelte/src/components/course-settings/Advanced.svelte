@@ -1,7 +1,6 @@
 <script lang="ts">
   import Editable from "$components/Editable.svelte";
   import Switch from "$components/Switch.svelte";
-  import settings from "$lib/settings.svelte";
   import { getCourseService } from "$lib/utils/index.ts";
 
   const service = getCourseService();
@@ -22,6 +21,7 @@
       <span class="col-full">
         {window.location.origin}/{LighterLMS.globals.baseUrl}/<Editable
           bind:value={service.course.slug}
+          id="new-post-slug"
           placeholder="new-course"
           tag="b"
           sanitize={(v) => v.replaceAll(" ", "-").toLowerCase()}

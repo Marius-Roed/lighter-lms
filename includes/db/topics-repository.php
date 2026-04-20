@@ -29,6 +29,8 @@ class Topics_Repository {
 		'pending',
 	);
 
+	const CACHE_GROUP = 'lighter_lms_topics';
+
 	protected \wpdb $db;
 	public string $table;
 
@@ -39,6 +41,13 @@ class Topics_Repository {
 	}
 
 	public function find( int|string $id ): ?TopicRow {
+		$c_key  = $this->_cache_key_id( $id );
+		$cached = wp_cache_get( $c_key, self::CACHE_GROUP );
+
+		if ( $cached !== false ) {
+			return $cached ?: null;
+		}
+
 		$identifier = $this->_resolve_identifier( $id );
 		$format     = $identifier['column'] === 'ID' ? '%d' : '%s';
 
@@ -50,17 +59,30 @@ class Topics_Repository {
 			)
 		);
 
-		if ( ! $row ) {
-			return null;
+		$topic = $row ? new TopicRow( ...(array) $row ) : null;
+
+		// NOTE: Cache both id and key so either hits lookup hits
+		if ( $topic ) {
+			wp_cache_set( 'topic:' . $topic->ID, $topic, self::CACHE_GROUP, HOUR_IN_SECONDS );
+			wp_cache_set( 'topic:' . $topic->topic_key, $topic, self::CACHE_GROUP, HOUR_IN_SECONDS );
+		} else {
+			wp_cache_set( $c_key, 0, self::CACHE_GROUP, HOUR_IN_SECONDS );
 		}
 
-		return new TopicRow( ...(array) $row );
+		return $topic;
 	}
 
 	/**
 	 * @return TopicRow[]
 	 */
 	public function find_by_course( int $course_id ): array {
+		$c_key  = $this->_cache_key_course( $course_id );
+		$cached = wp_cache_get( $c_key, self::CACHE_GROUP );
+
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
 		$results = $this->db->get_results(
 			$this->db->prepare(
 				"SELECT * FROM {$this->table}
@@ -70,7 +92,11 @@ class Topics_Repository {
 			)
 		);
 
-		return array_map( fn( $row ) => new TopicRow( ...(array) $row ), $results );
+		$topics = array_map( fn( $row ) => new TopicRow( ...(array) $row ), $results );
+
+		wp_cache_set( $c_key, $topics, self::CACHE_GROUP, HOUR_IN_SECONDS );
+
+		return $topics;
 	}
 
 	/**
@@ -124,6 +150,11 @@ class Topics_Repository {
 			return;
 		}
 
+		$existing = $this->find( $id );
+		if ( ! $existing ) {
+			throw new \RuntimeException( "Cannot update topic with unknown identifier \"$id\"." );
+		}
+
 		$identifier = $this->_resolve_identifier( $id );
 
 		$updated = $this->db->update(
@@ -135,12 +166,24 @@ class Topics_Repository {
 		if ( $updated === false ) {
 			throw new \RuntimeException( "Failed to update topic {$id}: " . $this->db->last_error );
 		}
+
+		$this->_invalidate_topic_cache( $existing );
+
+		if ( isset( $cleaned['course_id'] ) && $cleaned['course_id'] !== $existing->course_id ) {
+			wp_cache_delete( $this->_cache_key_course( $cleaned['course_id'] ), self::CACHE_GROUP );
+		}
 	}
 
 	/**
 	 * @throws \RuntimeException
 	 */
 	public function delete( int $id ): void {
+		$topic = $this->find( $id );
+
+		if ( ! $topic ) {
+			throw new \RuntimeException( "Cannot delete topic with ID \"$id\". Not found" );
+		}
+
 		$deleted = $this->db->delete(
 			$this->table,
 			array( 'ID' => $id ),
@@ -150,6 +193,8 @@ class Topics_Repository {
 		if ( $deleted === false ) {
 			throw new \RuntimeException( "Failed to delete topic {$id}: " . $this->db->last_error );
 		}
+
+		$this->_invalidate_topic_cache( $topic );
 	}
 
 	/**
@@ -199,6 +244,7 @@ class Topics_Repository {
 	 */
 	public function bulk_update_sort_order( array $sort_orders ): void {
 		foreach ( $sort_orders as $id => $sort_order ) {
+			$topic      = $this->find( $id );
 			$identifier = $this->_resolve_identifier( $id );
 
 			$updated = $this->db->update(
@@ -210,6 +256,8 @@ class Topics_Repository {
 			if ( $updated === false ) {
 				throw new \RuntimeException( "Failed to update sort order for topic {$id}: " . $this->db->last_error );
 			}
+
+			$this->_invalidate_topic_cache( $topic );
 		}
 	}
 
@@ -230,10 +278,32 @@ class Topics_Repository {
 		);
 	}
 
+	private function _cache_key_id( int|string $id ): string {
+		return 'topic:' . $id;
+	}
+
+	private function _cache_key_course( int|string $id ): string {
+		return 'course_topics:' . $id;
+	}
+
+	private function _invalidate_topic_cache( TopicRow|string|int $topic, ?int $course_id = null ): void {
+		if ( $topic instanceof TopicRow ) {
+			wp_cache_delete( 'topic:' . $topic->ID, self::CACHE_GROUP );
+			wp_cache_delete( 'topic:' . $topic->topic_key, self::CACHE_GROUP );
+			$course_id = $course_id ?? $topic->course_id;
+		} else {
+			wp_cache_delete( 'topic:' . $topic, self::CACHE_GROUP );
+		}
+
+		if ( $course_id ) {
+			wp_cache_delete( 'course_topics:' . $course_id, self::CACHE_GROUP );
+		}
+	}
+
 	/**
 	 * @return array{column: string, value: int|string}
 	 */
-	private function _resolve_identifier( int|string $id ) {
+	private function _resolve_identifier( int|string $id ): array {
 		if ( Randflake::validate( $id ) ) {
 			return array(
 				'column' => 'topic_key',

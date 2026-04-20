@@ -149,7 +149,7 @@ export class CourseService {
           topics: [
             {
               key: topic.key,
-              sort_order: (topic.sortedLessons?.length + 1) * 10,
+              sort_order: ((topic.sortedLessons ?? []).length + 1) * 10,
               title: topic.title,
             },
           ],

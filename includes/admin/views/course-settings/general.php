@@ -42,7 +42,7 @@ $selected_tags = wp_get_post_terms( $post->ID, 'course-tags' );
 			</div>
 			<div class="course-desc">
 				<h3>Description</h3>
-				<textarea id="excerpt" name="excerpt" cols="35" rows="8" placeholder="Enter an eye catching description..."><?php echo esc_textarea( $course_description ); ?></textarea>
+				<textarea id="course-description" cols="35" rows="8" placeholder="Enter an eye catching description..."><?php echo esc_textarea( $course_description ); ?></textarea>
 			</div>
 <div class="course-img">
 <h3>Feature image</h3>
