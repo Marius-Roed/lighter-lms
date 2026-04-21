@@ -4,7 +4,7 @@
  * Plugin Name: Lighter LMS
  * Description: Lighter LMS is a lightweight LMS plugin for WordPress.
  * Author: Marius W. Roed
- * Version: 1.0.0-alpha.20
+ * Version: 1.0.0-alpha.21
  * Author URI: https://github.com/marius-roed
  * Requires PHP: 8.2
  * Requires at least: 5.3
@@ -14,14 +14,12 @@
  * @package Lighter
  */
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+defined( 'ABSPATH' ) || exit;
 
 define( 'LIGHTER_LMS__FILE__', __FILE__ );
 define( 'LIGHTER_LMS_PATH', plugin_dir_path( LIGHTER_LMS__FILE__ ) );
 define( 'LIGHTER_LMS_URL', plugin_dir_url( LIGHTER_LMS__FILE__ ) );
-define( 'LIGHTER_LMS_VERSION', '1.0.0-alpha.20' );
+define( 'LIGHTER_LMS_VERSION', '1.0.0-alpha.21' );
 define( 'LIGHTER_LMS_REQUIRED_MU_VERSION', '1.0.0' );
 
 // Autoloader

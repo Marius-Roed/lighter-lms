@@ -30,8 +30,8 @@
 
   let src = $derived.by(async () => {
     const editor =
-      LighterLMS.course.settings.editor !== "classic-editor"
-        ? (LighterLMS?.course?.settings?.editor ?? "edit")
+      LighterLMS.globals.editor !== "classic-editor"
+        ? (LighterLMS.globals.editor ?? "edit")
         : "edit";
 
     if (!service.editModal.currentLesson) return "";

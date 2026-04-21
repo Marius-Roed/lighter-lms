@@ -50,8 +50,8 @@ export class Lesson {
     );
     url.pathname = "/wp-admin/post.php";
     const action =
-      LighterLMS.course.settings.editor !== "classic-editor"
-        ? (LighterLMS?.course?.settings?.editor ?? "edit")
+      LighterLMS.globals.editor !== "classic-editor"
+        ? (LighterLMS.globals.editor ?? "edit")
         : "edit";
     const params = new URLSearchParams({ post: data.id.toString(), action });
 

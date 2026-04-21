@@ -46,14 +46,14 @@ class Topic_Lessons_Repository {
 	}
 
 	/**
-	 * @return TopicLessonRow[]|null
+	 * @return TopicLessonRow[]
 	 */
-	public function find_by_topic( int $id, bool $include_trashed = false ): ?array {
+	public function find_by_topic( int $id, bool $include_trashed = false ): array {
 		$c_key  = "topic:$id:" . (int) $include_trashed;
 		$cached = wp_cache_get( $c_key, self::CACHE_GROUP );
 
 		if ( $cached !== false ) {
-			return $cached ?: null;
+			return $cached ?: array();
 		}
 
 		$sql = "SELECT * FROM {$this->table} WHERE topic_id = %d";

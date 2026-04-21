@@ -211,11 +211,18 @@ if ( ! function_exists( 'lighter_get_course_settings' ) ) {
 			return array();
 		}
 
+		$screen = get_current_screen();
+
+		$product = null;
+		if ( is_admin() && $screen && $screen->base === 'post' && $screen->action !== 'add' ) {
+			$product = lighter_get_course_product( $post_id );
+		}
+
 		$settings = array(
 			'displayHeader'  => (bool) get_post_meta( $post_id, '_course_display_theme_header', true ) ?: lighter_lms()->defaults()->course_hide_theme_header,
 			'displaySidebar' => (bool) get_post_meta( $post_id, '_course_display_theme_sidebar', true ) ?: lighter_lms()->defaults()->course_hide_theme_sidebar,
 			'displayFooter'  => (bool) get_post_meta( $post_id, '_course_display_theme_footer', true ) ?: lighter_lms()->defaults()->course_hide_theme_footer,
-			'product'        => lighter_get_course_product( $post_id ),
+			'product'        => $product,
 			'showIcons'      => get_post_meta( $post_id, '_lighter_show_lesson_icons', true ) ?: lighter_lms()->defaults()->course_show_lesson_icons,
 			'showProgress'   => get_post_meta( $post_id, '_lighter_show_lesson_prog', true ) ?: lighter_lms()->defaults()->course_show_progress,
 			'syncProductImg' => (bool) get_post_meta( $post_id, '_course_sync_prod_img', true ) ?: lighter_lms()->defaults()->course_sync_prod_img,

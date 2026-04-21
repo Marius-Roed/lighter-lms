@@ -43,7 +43,7 @@ export class Course {
     this.author = data.author ?? 0;
     this.title = data.title.rendered;
     this.sortOrder = data.menu_order ?? 0;
-    this.status = data.status;
+    this.status = data.status === "auto-draft" ? "draft" : data.status;
     this.topics = data.topics?.map((t) => new Topic(t)) ?? [];
   }
 

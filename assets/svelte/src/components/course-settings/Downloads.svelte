@@ -7,7 +7,7 @@
 
   let frame: Media;
 
-  const downloads = $derived(service.settings.product.downloads);
+  const downloads = $derived(service.settings.product?.downloads ?? null);
 
   const getExtension = (file: string) => {
     if (!file) return "";

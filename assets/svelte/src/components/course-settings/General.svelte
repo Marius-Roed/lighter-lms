@@ -25,7 +25,7 @@
       : service.settings.thumbnail.src,
   );
   let alt = $derived(
-    service.settings.syncProductImg
+    service.settings.syncProductImg && service.settings.product
       ? service.settings.product.images[0].alt
       : service.settings.thumbnail.alt,
   );
