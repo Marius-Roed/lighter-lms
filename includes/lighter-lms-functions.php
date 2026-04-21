@@ -183,7 +183,7 @@ if ( ! function_exists( 'ligter_get_course_product' ) ) {
 
 		if ( ! $product_id ) {
 			_doing_it_wrong( __FUNCTION__, 'Cannot fetch product of empty product id', '1.0' );
-			return (object) array();
+			return null;
 		}
 
 		if ( 'woocommerce' === lighter_lms()->defaults()->store ) {
@@ -504,7 +504,7 @@ if ( ! function_exists( 'lihgter_grant_course_access' ) ) {
 	 * @param int|\WP_User|null $user The ID or user object to give access to. Defaults to the logged in user.
 	 * @param int[]             $lessons Array of lesson IDs to give access to.
 	 */
-	function lighter_grant_course_access( $course_id, $user = null, $lessons ) {
+	function lighter_grant_course_access( $course_id, $lessons, $user = null ) {
 		$user = new User_Access( $user );
 		$user->grant_course_access( $course_id, 'partial', $lessons );
 	}
