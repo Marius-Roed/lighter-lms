@@ -217,7 +217,6 @@ class Topics_Repository {
 				t.title,
 				t.sort_order,
 				p.ID         AS course_id,
-				p.post_title AS course_title,
 				CASE
 					WHEN t.title      LIKE %s THEN 'topic'
 					WHEN p.post_title LIKE %s THEN 'course'

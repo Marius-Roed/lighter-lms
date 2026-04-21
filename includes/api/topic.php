@@ -13,11 +13,23 @@ class Topic extends Base_Controller {
 	public function register_routes(): void {
 		register_rest_route(
 			$this->namespace,
-			'/course/(?P<id>\d+)/topic',
+			'/topics',
 			array(
 				array(
 					'methods'             => 'GET',
 					'callback'            => array( $this, 'get_topics' ),
+					'permission_callback' => '__return_true',
+				),
+			)
+		);
+
+		register_rest_route(
+			$this->namespace,
+			'/course/(?P<id>\d+)/topic',
+			array(
+				array(
+					'methods'             => 'GET',
+					'callback'            => array( $this, 'get_course_topics' ),
 					'permission_callback' => array( $this, 'can_read' ),
 					'args'                => $this->_get_collection_args(),
 				),
@@ -110,14 +122,26 @@ class Topic extends Base_Controller {
 		return current_user_can( 'edit_post', $request->get_param( 'id' ) );
 	}
 
-	/**
-	* Get all topics based on course id.
-	*
-	* @param WP_REST_Request $request The current request.
-	*
-	* @return WP_REST_Response|WP_Error The response object. WP_Error on any error.
-	*/
 	public function get_topics( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		if ( $request->get_param( 'q' ) ) {
+			$query  = sanitize_text_field( $request->get_param( 'q' ) );
+			$status = $request->get_param( 'status' );
+			$topics = lighter()->lms->topic->search( $query, $status ?? 'publish' );
+		}
+
+		$topic_count = array_reduce(
+			$topics ?? array(),
+			fn( $carry, $item ) => $carry += count( $item['topics'] )
+		);
+
+		$headers = array(
+			'total-topics' => $topic_count ?? 0,
+		);
+
+		return $this->success( $topics, headers: $headers );
+	}
+
+	public function get_course_topics( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$course = $this->get_post_or_error( $request->get_param( 'id' ), lighter_lms()->course_post_type );
 
 		if ( is_wp_error( $course ) ) {

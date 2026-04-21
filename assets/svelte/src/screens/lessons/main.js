@@ -1,7 +1,6 @@
 import { hydrate } from "svelte";
 import Settings from "./LessonSettings.svelte";
 
-const origin = window.origin;
 const settingsTarget = document.getElementById("lighter-settings-mount");
 
 if (!settingsTarget) {
@@ -23,7 +22,7 @@ window.addEventListener("message", (/** @type {MessageEvent} */ e) => {
 
 title?.addEventListener("input", (e) => {
   window.parent?.postMessage(
-    { type: "LIGHTER_LESSON_UPDATE", payload: e.target.value },
+    { type: "LIGHTER_LESSON_UPDATE", payload: e.target?.value },
     window.location.origin,
   );
 });

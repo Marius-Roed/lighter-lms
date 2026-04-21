@@ -495,9 +495,20 @@ if ( ! function_exists( 'lighter_get_lesson_settings' ) ) {
 		$post = get_post( $post );
 
 		$parents = lighter()->lms->lesson->get_parent_topics( $post->ID );
+        $parents = array_map(function($topic) { 
+            $course = get_post( $topic->course_id );
+            return [
+                'course_id' => $course->ID,
+                'course_title' => get_the_title( $course ),
+                'match_type' => 'topic',
+                'topics' => [
+                    ['ID' => $topic->ID, 'key' => $topic->topic_key, 'sort_order' => $topic->sort_order, 'title' => $topic->title]
+                ]
+            ];
+        }, $parents);
 
 		return array(
-			'parents' => $parents ?? array(),
+			'parents' => $parents,
 			'slug'    => $post->post_name,
 		);
 	}

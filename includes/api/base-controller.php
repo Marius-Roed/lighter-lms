@@ -15,8 +15,8 @@ abstract class Base_Controller {
 
 	abstract public function register_routes(): void;
 
-	protected function success( $data, int $status = 200 ): WP_REST_Response {
-		return new WP_REST_Response( $data, $status );
+	protected function success( $data, int $status = 200, $headers = array() ): WP_REST_Response {
+		return new WP_REST_Response( $data, $status, $headers );
 	}
 
 	protected function error( string $message, string $code, int $status = 400 ): WP_Error {

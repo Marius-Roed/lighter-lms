@@ -32,6 +32,7 @@ class Topic_Service {
 		if ( $id instanceof Topic ) {
 			return $id;
 		}
+
 		$topic = lighter()->lms->db->topics->find( $id );
 
 		if ( ! $topic ) {
@@ -188,13 +189,13 @@ class Topic_Service {
 		return lighter()->lms->topic->get( $to_data['topic_key'] );
 	}
 
-	public function search( string $query ): array {
+	public function search( string $query, string|array $status = 'publish' ): array {
 		if ( mb_strlen( trim( $query ) ) < 2 ) {
 			_doing_it_wrong( __FUNCTION__, 'Cannot call search on a string shorter than 2 characters', '1.0.0' );
 			return array();
 		}
 
-		$rows   = lighter()->lms->db->topics->search( $query );
+		$rows   = lighter()->lms->db->topics->search( $query, $status );
 		$groups = array();
 
 		foreach ( $rows as $row ) {
@@ -204,15 +205,15 @@ class Topic_Service {
 				$groups[ $course_id ] = array(
 					'match_type'   => $row->match_type,
 					'course_id'    => $course_id,
-					'course_title' => $row->course_title,
+					'course_title' => get_the_title( $course_id ),
 					'topics'       => array(),
 				);
 			}
 
 			$groups[ $course_id ]['topics'][] = array(
-				'ID'         => (int) $row->topic_id,
+				'ID'         => (int) $row->ID,
 				'key'        => $row->topic_key,
-				'title'      => $row->topic_title,
+				'title'      => $row->title,
 				'sort_order' => (int) $row->sort_order,
 			);
 		}

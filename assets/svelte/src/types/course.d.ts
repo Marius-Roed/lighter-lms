@@ -39,4 +39,23 @@ interface LessonDataCreate extends WPRestPostCreate {
   _lighter_meta?: LighterMeta;
 }
 
-export type { CourseData, TopicData, LessonData, LessonDataCreate };
+interface LessonParentCourse {
+  course_id: number;
+  course_title: string;
+  match_type: "course" | "topic";
+  topics: Array<{
+    ID: number;
+    key: string;
+    sort_order: number;
+    title: string;
+    _idx?: number;
+  }>;
+}
+
+export type {
+  CourseData,
+  TopicData,
+  LessonData,
+  LessonDataCreate,
+  LessonParentCourse,
+};

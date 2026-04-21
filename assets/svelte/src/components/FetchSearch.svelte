@@ -1,222 +1,233 @@
-<script>
-    import { lighterFetch } from "$lib/api/lighter-fetch.ts";
+<script lang="ts">
+  import { lighterFetch } from "$lib/api/lighter-fetch.ts";
+  import { addQueryArgs, isEmpty } from "$lib/utils/index.ts";
+  import type { LessonParentCourse } from "$types/course.js";
 
-    let {
-        url,
-        multi = true,
-        value = $bindable([]),
-        placeholder = null,
-    } = $props();
+  interface Props {
+    url: string;
+    multi?: boolean;
+    value?: LessonParentCourse[];
+    placeholder?: string | null;
+  }
 
-    let search = $state("");
-    let highIdx = $state(0);
-    let opts = $state([]);
-    let total = $state(0);
-    let cache = new Map();
+  let {
+    url,
+    multi = true,
+    value = $bindable([]),
+    placeholder = null,
+  }: Props = $props();
 
-    let searchInput;
+  let search = $state("");
+  let highIdx = $state(0);
+  let opts = $state<LessonParentCourse[]>([]);
+  let total = $state(0);
+  let cache = new Map();
 
-    /**
-     * Select a tag, respecting multi.
-     *
-     * @param {Object} tag
-     */
-    const selectTag = (tag) => {
-        if (value.some((o) => Object.keys(tag)[0] in o)) return;
-        if (multi) {
-            value.push(tag);
-        } else {
-            value = [tag];
+  let searchInput: HTMLInputElement;
+
+  const selectTag = (tag: LessonParentCourse, topicId: number) => {
+    // NOTE: Propably a neglegable check. Could just push value if not multi.
+    const topic = tag.topics.find((t) => t.ID === topicId);
+    if (!topic) return;
+
+    if (!multi) {
+      value = [{ ...tag, topics: [topic] }];
+    }
+
+    const exisistingCourse = value.find((c) => c.course_id === tag.course_id);
+
+    if (exisistingCourse) {
+      if (exisistingCourse.topics.some((t) => t.ID === topicId)) return;
+      exisistingCourse.topics.push(topic);
+    } else {
+      value.push({ ...tag, topics: [topic] });
+    }
+  };
+
+  const removeTag = (topicId: number) => {
+    for (let i = value.length - 1; i >= 0; i--) {
+      const idx = value[i].topics.findIndex((t) => t.ID === topicId);
+      if (idx === -1) continue;
+
+      value[i].topics.splice(idx, 1);
+      if (value[i].topics.length === 0) {
+        value.splice(i, 1);
+      }
+      break;
+    }
+  };
+
+  const findOptByIdx = (
+    idx: number,
+  ): { course: LessonParentCourse; topicId: number } | null => {
+    let curr = 0;
+    for (const course of opts) {
+      if (course.topics && Array.isArray(course.topics)) {
+        for (const topic of course.topics) {
+          if (curr === idx) {
+            return { course, topicId: topic.ID };
+          }
+          curr++;
         }
-    };
+      }
+    }
 
-    /**
-     * Remove a tag.
-     *
-     * @param {Object} tag
-     */
-    const removeTag = (tag) => {
-        value = value.filter((v) => v !== tag);
-    };
+    return null;
+  };
 
-    /**
-     * Find an option by global index
-     *
-     * @param {number} idx
-     * @returns {Object|null} topic
-     */
-    const findOptByIdx = (idx) => {
-        let curr = 0;
-        for (const opt of opts) {
-            if (opt.topics && Array.isArray(opt.topics)) {
-                for (const topic of opt.topics) {
-                    if (curr === idx) {
-                        return topic;
-                    }
-                    curr++;
-                }
-            }
+  const debouncePromise = (func: Function, delay: number): Function => {
+    let timeoutId = null;
+    let rejectFn = null;
+
+    return (...args: any): Promise<unknown> => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+
+      const promise = new Promise((res, outerRej) => {
+        rejectFn = outerRej;
+
+        timeoutId = window.setTimeout(async () => {
+          try {
+            const result = await func(...args);
+            res(result);
+            rejectFn = null;
+          } catch (error) {
+            outerRej(error);
+            rejectFn = null;
+          }
+          timeoutId = null;
+        }, delay);
+      });
+
+      return promise;
+    };
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (!total || !(e.target as HTMLInputElement).value || !opts.length)
+        return;
+      const { course, topicId } = findOptByIdx(highIdx);
+      if (course) {
+        selectTag(course, topicId);
+        highIdx = 0;
+        search = "";
+      }
+    } else if (e.key === "Backspace" && !search.length && value.length) {
+      value.pop();
+    } else if (e.key === "ArrowUp" && highIdx > 0) {
+      e.preventDefault();
+      highIdx--;
+    } else if (e.key === "ArrowDown" && highIdx + 1 < total) {
+      e.preventDefault();
+      highIdx++;
+    }
+  };
+
+  const doFetch = async (q = "") => {
+    q = q.toLowerCase().trim();
+
+    if (cache.has(q)) {
+      const { data, total: cachedTotal } = cache.get(q);
+      opts = data;
+      total = cachedTotal;
+      return Promise.resolve(opts);
+    }
+
+    try {
+      let request = addQueryArgs(url + encodeURIComponent(q), {
+        status: "any",
+      });
+      const resp = await lighterFetch<LessonParentCourse[]>({
+        url: request,
+        method: "GET",
+        parse: false,
+      });
+
+      if (!resp.ok) {
+        throw new Error("Error fetching topics");
+      }
+
+      const data = await resp.json();
+      total = parseInt(resp.headers.get("total-topics"));
+
+      let globalIdx = 0;
+      for (const opt of data) {
+        if (opt.topics && Array.isArray(opt.topics)) {
+          for (const topic of opt.topics) {
+            topic._idx = globalIdx++;
+          }
         }
+      }
 
-        return null;
-    };
+      cache.set(q, { data, total });
+      opts = data;
 
-    /**
-     *
-     * @param {Function} func
-     * @param {number} delay
-     * @returns {Function} Debounced function returning a promise.
-     */
-    const debouncePromise = (func, delay) => {
-        let timeoutId = null;
-        let rejectFn = null;
+      return data;
+    } catch {
+      opts = [];
+      total = 0;
+      return [];
+    }
+  };
 
-        /** @param {any} args */
-        return (...args) => {
-            if (timeoutId) {
-                window.clearTimeout(timeoutId);
-            }
-
-            const promise = new Promise((res, outerRej) => {
-                rejectFn = outerRej;
-
-                timeoutId = window.setTimeout(async () => {
-                    try {
-                        const result = await func(...args);
-                        res(result);
-                        rejectFn = null;
-                    } catch (error) {
-                        outerRej(error);
-                        rejectFn = null;
-                    }
-                    timeoutId = null;
-                }, delay);
-            });
-
-            return promise;
-        };
-    };
-
-    const handleKeyDown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            if (!total || !e.target.value || !opts.length) return;
-            const topic = findOptByIdx(highIdx);
-            if (topic) {
-                selectTag(topic);
-                highIdx = 0;
-                search = "";
-            }
-        } else if (e.key === "Backspace" && !search.length && value.length) {
-            value.pop();
-        } else if (e.key === "ArrowUp" && highIdx > 0) {
-            e.preventDefault();
-            highIdx--;
-        } else if (e.key === "ArrowDown" && highIdx + 1 < total) {
-            e.preventDefault();
-            highIdx++;
-        }
-    };
-
-    const doFetch = async (q = "") => {
-        q = q.toLowerCase().trim();
-
-        if (cache.has(q)) {
-            const { data, total: cachedTotal } = cache.get(q);
-            opts = data;
-            total = cachedTotal;
-            return Promise.resolve(opts);
-        }
-
-        try {
-            const resp = await lighterFetch({
-                url: url + encodeURIComponent(q),
-                method: "GET",
-                parse: false,
-            });
-
-            if (!resp.ok) {
-                throw new Error("Error fetching topics");
-            }
-
-            const data = await resp.json();
-            total = parseInt(resp.headers.get("topics_total"));
-
-            let globalIdx = 0;
-            for (const opt of data) {
-                if (opt.topics && Array.isArray(opt.topics)) {
-                    for (const topic of opt.topics) {
-                        topic._idx = globalIdx++;
-                    }
-                }
-            }
-
-            cache.set(q, { data, total });
-            opts = data;
-
-            return data;
-        } catch {
-            opts = [];
-            total = 0;
-            return [];
-        }
-    };
-
-    const debouncedFetch = debouncePromise(doFetch, 350);
+  const debouncedFetch = debouncePromise(doFetch, 350);
 </script>
 
 <div class="search-container tag-search">
-    <div class="search-wrap">
-        <div class="selected-tags">
-            {#each value as opt}
-                {@const [val] = Object.values(opt)}
-                <span class="tag">
-                    {val}
-                    <button
-                        type="button"
-                        class="remove-tag"
-                        onclick={(e) => {
-                            e.stopPropagation();
-                            removeTag(opt);
-                        }}>×</button
-                    >
-                </span>
-            {/each}
-        </div>
-
-        <input
-            type="text"
-            class="search"
-            placeholder={!value.length ? (placeholder ?? "Add tag") : ""}
-            bind:value={search}
-            bind:this={searchInput}
-            onkeydown={handleKeyDown}
-        />
+  <div class="search-wrap">
+    <div class="selected-tags">
+      {#each value as course}
+        {#each course.topics as topic}
+          <span class="tag">
+            {course.course_title} → {topic.title}
+            <button
+              type="button"
+              class="remove-tag"
+              onclick={(e) => {
+                e.stopPropagation();
+                removeTag(topic.ID);
+              }}>×</button
+            >
+          </span>
+        {/each}
+      {/each}
     </div>
 
-    {#if search.trim()}
-        <ul class="dropdown">
-            {#await debouncedFetch(search) then opts}
-                {#each opts as opt}
-                    <li>
-                        {opt.title}
-                        <ul>
-                            {#each opt.topics as topic}
-                                {@const [val] = Object.values(topic)}
-                                <li
-                                    onmousedown={() => selectTag(topic)}
-                                    role="option"
-                                    tabindex="0"
-                                    aria-selected={topic._idx === highIdx}
-                                    class:hl={topic._idx === highIdx}
-                                >
-                                    {val}
-                                </li>
-                            {/each}
-                        </ul>
-                    </li>
-                {/each}
-            {/await}
-        </ul>
-    {/if}
+    <input
+      type="text"
+      class="search"
+      placeholder={!value.length ? (placeholder ?? "Add tag") : ""}
+      bind:value={search}
+      bind:this={searchInput}
+      onkeydown={handleKeyDown}
+    />
+  </div>
+
+  {#if search.trim()}
+    <ul class="dropdown">
+      {#await debouncedFetch(search) then opts}
+        {#each opts as opt}
+          <li>
+            <b>{opt.course_title}</b>
+            <ul>
+              {#each opt.topics as topic}
+                <li
+                  onmousedown={() => selectTag(opt, topic.ID)}
+                  role="option"
+                  tabindex="0"
+                  aria-selected={topic._idx === highIdx}
+                  class:hl={topic._idx === highIdx}
+                >
+                  {topic.title}
+                </li>
+              {/each}
+            </ul>
+          </li>
+        {/each}
+      {/await}
+    </ul>
+  {/if}
 </div>
