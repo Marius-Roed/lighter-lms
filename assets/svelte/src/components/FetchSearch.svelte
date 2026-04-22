@@ -1,6 +1,6 @@
 <script lang="ts">
   import { lighterFetch } from "$lib/api/lighter-fetch.ts";
-  import { addQueryArgs, isEmpty } from "$lib/utils/index.ts";
+  import { addQueryArgs } from "$lib/utils/index.ts";
   import type { LessonParentCourse } from "$types/course.js";
 
   interface Props {
@@ -24,6 +24,9 @@
   let cache = new Map();
 
   let searchInput: HTMLInputElement;
+
+  const tagChosen = (topicId: number): boolean =>
+    value.some((c) => c.topics.some((t) => t.ID === topicId));
 
   const selectTag = (tag: LessonParentCourse, topicId: number) => {
     // NOTE: Propably a neglegable check. Could just push value if not multi.
@@ -210,7 +213,7 @@
     <ul class="dropdown">
       {#await debouncedFetch(search) then opts}
         {#each opts as opt}
-          <li>
+          <li class="opt-course">
             <b>{opt.course_title}</b>
             <ul>
               {#each opt.topics as topic}
@@ -220,6 +223,7 @@
                   tabindex="0"
                   aria-selected={topic._idx === highIdx}
                   class:hl={topic._idx === highIdx}
+                  class:chosen={tagChosen(topic.ID)}
                 >
                   {topic.title}
                 </li>
