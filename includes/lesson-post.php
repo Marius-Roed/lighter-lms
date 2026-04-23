@@ -310,37 +310,29 @@ class Lesson_Post extends Post_Type {
 	 *
 	 * @return int The saved lesson ID.
 	 */
-	public static function save_from_course( array $args, int $parent_id, array $topic ): int {
+	public static function save_from_course( array $args, int $parent_id, array $topic ): int|\WP_Error {
 		$insert_args = array(
 			'post_title'  => $args['title'],
-			'post_status' => $args['postStatus'],
+			'post_status' => $args['status'],
 			'post_type'   => lighter_lms()->lesson_post_type,
 			'meta_input'  => array(
-				'_lighter_sort_order'   => $args['sortOrder'],
-				'_lighter_parent_topic' => $topic['key'],
 				'_lighter_lesson_key'   => $args['key'],
 			),
 		);
 
 		if ( $args['id'] ) {
 			$insert_args['ID'] = $args['id'];
-		}
+        }
 
-		if ( isset( $insert_args['ID'] ) ) {
-			$inserted = wp_update_post( $insert_args );
-		} else {
-			$inserted = wp_insert_post( $insert_args );
-		}
+		$inserted = wp_insert_post( $insert_args );
 
-		if ( $inserted ) {
+		if ( ! is_wp_error( $inserted ) ) {
 			$t      = lighter()->lms->topic->get( $topic['key'] );
-			$l_args = array(
-				'lesson' => $inserted,
-				'parent' => $parent_id,
-				'topic'  => $t->ID,
-			);
-			$less   = new Lessons( $l_args );
-			$less->save();
+            lighter()->lms->lesson->update_topic_relationship( [
+                'topic_id' => $t->ID,
+                'lesson_id' => $inserted,
+                'sort_order' => $args['_lighter_meta'][$topic['key']] ?? 10
+            ] );
 		}
 
 		return $inserted;

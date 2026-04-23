@@ -95,6 +95,24 @@ if ( ! function_exists( 'lighter_attrify' ) ) {
 	}
 }
 
+if ( ! function_exists( 'lighter_get_meta' ) ) {
+    /**
+     * @return The value, null if value not found and fallback is false
+     */
+    function lighter_get_post_meta( int $post_id, string $key, $fallback = false): mixed {
+        $meta = get_post_meta($post_id, '_lighter_lms_' . $key, true);
+
+        if ($meta === "") {
+            if ($fallback && property_exists(lighter_lms()->defaults(), $key)) {
+                return lighter_lms()->defaults()->{$key};
+            }
+            return null;
+        }
+
+        return $meta;
+    }
+}
+
 if ( ! function_exists( 'lighter_get_course_lessons' ) ) {
 	/**
 	 * Get course lessons
@@ -102,51 +120,32 @@ if ( ! function_exists( 'lighter_get_course_lessons' ) ) {
 	 * Retrieves all the lessons for a given course, as well as their meta data.
 	 *
 	 * @param \WP_Post|int $course The course
-	 * @param \WP_User|int $user The user
 	 * @param bool         $with_topics Whether to return the topic field.
+	 * @param \WP_User|int $user The user
 	 *
 	 * @phpstan-import-type CourseData from Types
 	 *
 	 * @return CourseData
 	 */
-	function lighter_get_course_lessons( $course, $user = null, $with_topics = false ) {
+	function lighter_get_course_lessons( $course, $with_topics = false, $user = null ) {
 		$course = get_post( $course );
 
-		$lesson_db = new Lessons( array( 'parent' => $course->ID ) );
-		$lessons   = array_map(
-			fn( $post ) => array(
-				'id'             => $post->ID,
-				'key'            => get_post_meta( $post->ID, '_lighter_lesson_key', true ),
-				'slug'           => $post->post_name,
-				'title'          => $post->post_title,
-				'sortOrder'      => get_post_meta( $post->ID, '_lighter_sort_order', true ),
-				'parentTopicKey' => get_post_meta( $post->ID, '_lighter_parent_topic', true ),
-			),
-			$lesson_db->get_lessons()
-		);
+        if ( $course->post_type !== lighter_lms()->course_post_type ) {
+            _doing_it_wrong(__FUNCTION__, "Cannot get course lessons on non LighterLMS course post.", "1.0.0");
+            return [];
+        }
+
+        $topics = lighter()->lms->course->get_structure( $course->ID );
+
+		if ( $with_topics ) {
+			$data[] = 'topics';
+		}
 
 		$user_access = new User_Access( $user );
 		$owned       = $user_access->get_owned( $course );
 		$progress    = $user_access->get_progress( $course );
 
-		$data = array( 'lessons', 'owned', 'progress' );
-
-		if ( $with_topics ) {
-			$topics_db = new Topics();
-			$topics    = array_map(
-				function ( $row ) {
-					return array(
-						'key'       => $row->topic_key,
-						'title'     => $row->title,
-						'sortOrder' => $row->sort_order,
-						'courseId'  => $row->post_id,
-					);
-				},
-				$topics_db->get_by_course( $course->ID )
-			);
-			usort( $topics, fn( $a, $b ) => (int) $a['sortOrder'] - (int) $b['sortOrder'] );
-			$data[] = 'topics';
-		}
+		$data[] = array( 'lessons', 'owned', 'progress' );
 		return compact( $data );
 	}
 }
@@ -157,7 +156,7 @@ if ( ! function_exists( 'lighter_save_product' ) ) {
 	 *
 	 * Saves a product, optionally to a certain post.
 	 *
-	 * @param object $args The product object to save.
+	 * @param array $args The product object to save.
 	 * @param int?   $post_id The id of the post to save it to. 0 will not save it to a post.
 	 */
 	function lighter_save_product( $args, $post_id = 0 ) {
@@ -179,7 +178,7 @@ if ( ! function_exists( 'ligter_get_course_product' ) ) {
 	 * @return object
 	 */
 	function lighter_get_course_product( $post_id ) {
-		$product_id = get_post_meta( $post_id, '_lighter_product_id', true );
+		$product_id = get_post_meta( $post_id, '_lighter_lms_product_id', true );
 
 		if ( ! $product_id ) {
 			_doing_it_wrong( __FUNCTION__, 'Cannot fetch product of empty product id', '1.0' );
@@ -219,13 +218,13 @@ if ( ! function_exists( 'lighter_get_course_settings' ) ) {
 		}
 
 		$settings = array(
-			'displayHeader'  => (bool) get_post_meta( $post_id, '_course_display_theme_header', true ) ?: lighter_lms()->defaults()->course_hide_theme_header,
-			'displaySidebar' => (bool) get_post_meta( $post_id, '_course_display_theme_sidebar', true ) ?: lighter_lms()->defaults()->course_hide_theme_sidebar,
-			'displayFooter'  => (bool) get_post_meta( $post_id, '_course_display_theme_footer', true ) ?: lighter_lms()->defaults()->course_hide_theme_footer,
+            'displayHeader'  => lighter_get_post_meta( $post_id, 'course_display_theme_header', true ),
+            'displaySidebar' => lighter_get_post_meta( $post_id, 'course_display_theme_sidebar', true ),
+			'displayFooter'  => lighter_get_post_meta( $post_id, 'course_display_theme_footer', true ),
 			'product'        => $product,
-			'showIcons'      => get_post_meta( $post_id, '_lighter_show_lesson_icons', true ) ?: lighter_lms()->defaults()->course_show_lesson_icons,
-			'showProgress'   => get_post_meta( $post_id, '_lighter_show_lesson_prog', true ) ?: lighter_lms()->defaults()->course_show_progress,
-			'syncProductImg' => (bool) get_post_meta( $post_id, '_course_sync_prod_img', true ) ?: lighter_lms()->defaults()->course_sync_prod_img,
+			'showIcons'      => lighter_get_post_meta( $post_id, 'course_show_lesson_icons', true ), 
+			'showProgress'   => lighter_get_post_meta( $post_id, 'course_show_lesson_progess', true ),
+			'syncProductImg' => lighter_get_post_meta( $post_id, 'course_sync_prod_img', true ),
 			'tags'           => wp_get_post_terms( $post_id, 'course-tags', array( 'fields' => 'ids' ) ),
 		);
 
@@ -275,7 +274,7 @@ if ( ! function_exists( 'lighter_course_sidebar' ) ) {
 			return;
 		}
 
-		$course_data = lighter_get_course_lessons( $course, null, true );
+		$course_data = lighter_get_course_lessons( $course, true );
 
 		$sidebar = array(
 			array(
@@ -283,14 +282,6 @@ if ( ! function_exists( 'lighter_course_sidebar' ) ) {
 				'href'  => get_permalink( $post ),
 			),
 		);
-		foreach ( $course_data['topics'] as $topic ) {
-			$filtered = array_filter( $course_data['lessons'], fn( $lesson ) => $lesson['parentTopicKey'] === $topic['key'] );
-			usort( $filtered, fn( $a, $b ) => (int) $a['sortOrder'] - (int) $b['sortOrder'] );
-			$sidebar[] = array(
-				...$topic,
-				'lessons' => array_values( $filtered ),
-			);
-		}
 
 		if ( ! $display ) {
 			ob_start();
@@ -766,3 +757,15 @@ add_action(
 		}
 	}
 );
+
+// TODO: TEMP FUNCTION to convert all `course_description`'s to post excerpt's
+// Will be deleted in the future.
+function lighter_migrate_course_description() {
+    $courses = get_posts([ 'post_type' => lighter_lms()->course_post_type, 'post_status' => 'any' ]);
+
+    foreach ($courses as $course) {
+        $description = get_post_meta( $course->ID, '_course_description', true );
+
+        $course->post_excerpt = $description;
+    }
+}

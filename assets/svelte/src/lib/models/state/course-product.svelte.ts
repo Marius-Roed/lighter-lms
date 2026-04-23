@@ -9,6 +9,7 @@ class BaseProduct<S extends AvailableStore> {
   access = $state<CourseAccess>({});
   autoHide = $state(false);
   name = $state("");
+  id = $state(0);
   price = $state("");
   salePrice = $state<string | null>(null);
   description = $state("");
@@ -28,6 +29,7 @@ class BaseProduct<S extends AvailableStore> {
     this.access = initial?.access ?? {};
     this.autoHide = initial?.autoHide ?? false;
     this.name = initial?.name ?? "";
+    this.id = initial?.id ?? 0;
     this.price = initial?.regular_price ?? "0";
     this.salePrice = initial?.sale_price ?? "";
     this.description = initial?.description ?? "";
@@ -70,6 +72,7 @@ class BaseProduct<S extends AvailableStore> {
       access: this.access,
       auto_hide: this.autoHide,
       name: this.name,
+      id: this.id,
       regular_price: this.price,
       sale_price: this.salePrice,
       description: this.description,

@@ -6,15 +6,15 @@
  * @package LighterLMS
  */
 
-use LighterLMS\Lessons;
 use LighterLMS\User_Access;
 
 /** @var \WP_Post */
 global $post;
 $lesson_id = null;
 
-$lessons_db = new Lessons( array( 'parent' => $post->ID ) );
-$lessons    = $lessons_db->get_lessons();
+$topics = lighter()->lms->course->get_topics( $post->ID );
+
+$lessons[] = array_map(fn($t) => lighter()->lms->topic->get_lessons( $t->ID ) , $topics);
 
 $user_access = new User_Access( get_current_user_id() );
 
@@ -25,8 +25,6 @@ $lesson_data = array_map(
 			'key'            => get_post_meta( $lesson->ID, '_lighter_lesson_key', true ),
 			'slug'           => $lesson->post_name,
 			'title'          => $lesson->post_title,
-			'sortOrder'      => get_post_meta( $lesson->ID, '_lighter_sort_order', true ) ?: 0,
-			'parentTopicKey' => get_post_meta( $lesson->ID, '_lighter_parent_topic', true ),
 		);
 	},
 	$lessons

@@ -7,7 +7,7 @@ use WP_Error;
 final class Lighter_LMS_Schema {
 	private const VERSION = '2';
 
-	private const VERSION_OPTION = 'lighter_lms_schema_version';
+    const VERSION_OPTION = 'lighter_lms_schema_version';
 	private const STATUS_OPTION  = 'lighter_lms_schema_status';
 	private const NOTICE_OPTION  = 'lighter_lms_schema_notice';
 	private const LOCK_TRANSIENT = 'lighter_lms_schema_lock';
@@ -82,7 +82,7 @@ final class Lighter_LMS_Schema {
 
 		$this->set_status(
 			array(
-				'stauts'       => 'completed',
+				'status'       => 'completed',
 				'target'       => self::VERSION,
 				'from'         => $installed,
 				'failed_step'  => '',
@@ -135,12 +135,13 @@ final class Lighter_LMS_Schema {
 			topic_key char(16) NOT NULL,
 			course_id bigint(20) unsigned NOT NULL,
 			title varchar(255) NOT NULL,
-			sort_order int(10) unsigned NOT NULL DEFAULT 0,
+            sort_order bigint(20) unsigned NOT NULL DEFAULT 10,
 			created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			PRIMARY KEY (ID),
 			UNIQUE KEY uq_topic_key (topic_key),
-			KEY idx_course_sort (course_id, sort_order)
+			KEY idx_course_order (course_id, sort_order),
+            KEY idx_course (course_id)
 		) {$charset};";
 
 		$sql_topic_lessons = "CREATE TABLE {$this->topic_lessons_table} (
@@ -203,7 +204,7 @@ final class Lighter_LMS_Schema {
 				ON UPDATE CASCADE"
 		);
 
-		if ( ! $result ) {
+		if ( $result === false ) {
 			return new \WP_Error(
 				'lighter_lms_topic_fk_create_failed',
 				__( 'Could not create the topic relationship constraint.', 'lighterlms' ),
@@ -236,14 +237,14 @@ final class Lighter_LMS_Schema {
 					topic_key,
 					post_id,
 					title,
-					sort_order,
+                    COALESCE(sort_order, 1) * 10,
 					created_at,
 					updated_at
 				FROM {$this->legacy_topics_table}
 				"
 			);
 
-			if ( ! $result ) {
+			if ( $result === false ) {
 				return new \WP_Error(
 					'lighter_lms_topics_copy_failed',
 					__( 'Could not migrate legacy topics', 'ligterlms' ),
@@ -256,7 +257,14 @@ final class Lighter_LMS_Schema {
 		}
 
 		if ( $this->_table_exists( $this->legacy_lessons_table ) ) {
-			$sort_expr = $this->_column_exists( $this->legacy_lessons_table, 'sort_order' ) ? 'sort_order' : '0';
+            $has_topic_sort = $this->_table_exists( $this->legacy_topics_table ) && $this->_column_exists( $this->legacy_topics_table, 'sort_order' );
+            if ( $has_topic_sort ) {
+                $sort_expr = "COALESCE(t.sort_order, 1) * 10";
+                $join = "LEFT JOIN {$this->legacy_topics_table} t ON t.ID = l.topic_id";
+            } else {
+                $sort_expr = "10";
+                $join = "";
+            }
 
 			$this->db->last_error = '';
 
@@ -265,15 +273,16 @@ final class Lighter_LMS_Schema {
 				INSERT IGNORE INTO {$this->topic_lessons_table}
 					(ID, lesson_id, topic_id, sort_order)
 				SELECT
-					ID,
-					lesson_id,
-					topic_id,
+					l.ID,
+					l.lesson_id,
+					l.topic_id,
 					{$sort_expr}
-				FROM {$this->legacy_lessons_table}
+                FROM {$this->legacy_lessons_table} l
+                {$join}
 			"
 			);
 
-			if ( ! $result ) {
+			if ( $result === false ) {
 				return new \WP_Error(
 					'lighter_lms_topic_lessons_copy_failed',
 					__( 'Could not migrate legacy topic lesson relationships', 'lighterlms' ),
@@ -364,13 +373,11 @@ final class Lighter_LMS_Schema {
 	}
 
 	private function _column_exists( string $table, string $column ): bool {
-		$sql = sprintf(
-			'SHOW COLUMNS FROM `%s` LIKE %%s',
-			esc_sql( $table )
-		);
-
 		$found = $this->db->get_var(
-			$this->db->prepare( $sql, $column )
+            $this->db->prepare( 
+                "SHOW COLUMNS FROM `{$table}` LIKE %s",
+                $column
+            )
 		);
 
 		return $found === $column;

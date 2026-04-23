@@ -1,7 +1,7 @@
 interface BaseProduct {
   access: CourseAccess;
   autoHide: boolean;
-  id: number | string;
+  id: number;
   name: string;
   description: string;
   short_description: string;

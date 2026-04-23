@@ -27,10 +27,10 @@ class WC {
 	 *
 	 * Saves a product as a woocommerce product. Updates the product if $args contains 'id'.
 	 *
-	 * @param object $args The product object to save.
+	 * @param array $args The product object to save.
 	 * @param int? $post_id The id of the post to save it to. 0 will not save it to a post.
 	 */
-	public static function save_product( object $args, ?int $post_id ): int {
+	public static function save_product( array $args, ?int $post_id ): int {
 		if ( ! did_action( 'woocommerce_init' ) ) {
 			_doing_it_wrong( __FUNCTION__, 'WooCommerce was not initialised', '1.0' );
 			return 0;
@@ -65,7 +65,7 @@ class WC {
 
 		$product_id = $args['id'];
 
-		$product    = isset( $args['id'] ) ? \wc_get_product_object( 'simple', $args['id'] ) : new \WC_Simple_Product();
+		$product    = isset( $args['id'] ) ? \wc_get_product_object( 'simple', $args['id'] ) : new \WC_Product_Simple();
 		$product_id = $product->get_id();
 
 		$auto_comp     = $args['auto_comp'];

@@ -121,25 +121,19 @@ final class Lighter_LMS {
 		include LIGHTER_LMS_PATH . 'includes/lighter-lms-functions.php';
 	}
 
-	#[Action( 'upgrade_process_complete' )]
-	public function maybe_update_schema( $upgrader, $hook_extra ): void {
+	#[Action( 'admin_init' )]
+	public function maybe_update_schema(): void {
 		global $wpdb;
 
-		if ( empty( $hook_extra['action'] ) || $hook_extra['action'] !== 'update' ) {
-			return;
-		}
-		if ( empty( $hook_extra['type'] ) || $hook_extra['type'] !== 'plugin' ) {
-			return;
-		}
-		if ( empty( $hook_extra['plugins'] ) || ! is_array( $hook_extra['plugins'] ) ) {
-			return;
-		}
-		if ( ! in_array( plugin_basename( LIGHTER_LMS__FILE__ ), $hook_extra['plugins'], true ) ) {
-			return;
-		}
+        if ( version_compare( (string) get_option( Lighter_LMS_Schema::VERSION_OPTION, '0' ), '2', '>=') ) {
+            return;
+        }
 
-		$schema = new Lighter_LMS_Schema( $wpdb );
-		$schema->maybe_upgrade();
+        if ( ! current_user_can( 'activate_plugins' ) ) {
+            return;
+        }
+
+		(new Lighter_LMS_Schema( $wpdb ))->maybe_upgrade();
 	}
 
 	#[Action( 'init_update_checker', 5 )]

@@ -116,19 +116,26 @@ class Lesson_Service {
 	 * @param array{ topic_id: int, lesson_id: int, sort_order: int } $data
 	 */
 	public function create_topic_relationship( array $data ): void {
-		$topics = lighter()->lms->db->topic_lessons->find_by_lesson( $data['lesson_id'] );
+        $allowed_keys = ['topic_id', 'lesson_id', 'sort_order'];
+        $new_data = array_map( 'intval', array_intersect_key( $data, array_flip( $allowed_keys) ) );
+
+        if ( empty ( $new_data ) ) {
+            return;
+        }
+
+		$topics = lighter()->lms->db->topic_lessons->find_by_lesson( $new_data['lesson_id'] );
 		if ( ! $topics ) {
 			return;
 		}
 
 		foreach ( $topics as $topic ) {
-			if ( $topic->ID == $data['topic_id'] ) {
+			if ( $topic->ID == $new_data['topic_id'] ) {
 				return;
 			}
 		}
 
 		try {
-			lighter()->lms->db->topic_lessons->insert( ...$data );
+			lighter()->lms->db->topic_lessons->insert( ...$new_data );
 		} catch ( \Throwable $e ) {
 		}
 	}
@@ -144,7 +151,7 @@ class Lesson_Service {
 			'topic_id' => $topic_id,
 			'lesson_id' => $lesson_id,
 			'sort_order' => $sort_order
-		] = $data;
+		] = array_map('intval', $data);
 
 		$exists = lighter()->lms->db->topic_lessons->find( $topic_id, $lesson_id );
 		if ( ! $exists ) {

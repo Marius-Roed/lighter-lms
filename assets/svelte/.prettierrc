@@ -3,11 +3,11 @@
     "overrides": [
         {
             "files": "*.svelte",
-            "options": { "parser": "svelte" },
+            "options": { "parser": "svelte" }
         },
         {
             "files": [ "*.svelte.js", "*.svelte.ts"],
-            "optiions": { "parser": "typescript" },
+            "options": { "parser": "typescript" }
         }
     ]
 }

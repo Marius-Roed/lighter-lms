@@ -58,8 +58,8 @@ class Topic_Lessons_Repository {
 
 		$sql = "SELECT * FROM {$this->table} WHERE topic_id = %d";
 		if ( ! $include_trashed ) {
-			$sql = "SELECT * FROM {$this->table} tl
-                INNER JOIN {$this->db->posts} p ON p.ID = tl.lesson_id
+			$sql = "SELECT tl.* FROM {$this->table} tl
+                LEFT JOIN {$this->db->posts} p ON p.ID = tl.lesson_id
                 WHERE p.post_status != 'trash' AND tl.topic_id = %d";
 		}
 
