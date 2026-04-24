@@ -89,6 +89,7 @@ class Course_Service
         foreach ($topics as $topic) {
             $lessons = lighter()->lms->db->topic_lessons->find_by_topic(
                 $topic->ID,
+                $with_trashed,
             );
 
             $structure[] = [
@@ -120,6 +121,53 @@ class Course_Service
         }
 
         return lighter()->lms->db->topics->find_by_course($post->ID);
+    }
+
+    /**
+     * Get all lessons for a given course,ordered by topic sort_order,
+     * then lesson sort_order
+     *
+     * @return \WP_Post[]
+     */
+    public function get_flat_lessons(
+        int|\WP_Post $post,
+        bool $unique = false,
+    ): array {
+        $post = get_post($post);
+
+        if ($post->post_type !== lighter_lms()->course_post_type) {
+            _doing_it_wrong(
+                __FUNCTION__,
+                "Cannot get lessons on post of type \"{$post->post_type}\"",
+                "1.0.0",
+            );
+            return [];
+        }
+
+        $lesson_ids = lighter()->lms->db->topic_lessons->find_course_lesson_ids(
+            $post->ID,
+        );
+
+        if (empty($lesson_ids)) {
+            return [];
+        }
+
+        if ($unique) {
+            $lesson_ids = array_unique($lesson_ids);
+        }
+        $lesson_ids = array_values($lesson_ids);
+
+        $args = [
+            "post_type" => lighter_lms()->lesson_post_type,
+            "post__in" => array_map("intval", $lesson_ids),
+            "orderby" => "post__in",
+            "numberposts" => -1,
+            "post_status" => "any",
+        ];
+
+        $posts = get_posts($args);
+
+        return $posts;
     }
 
     public function get_settings(int|\WP_Post $post): array

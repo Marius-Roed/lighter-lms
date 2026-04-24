@@ -2,7 +2,7 @@
 
 namespace LighterLMS;
 
-defined( 'ABSPATH' ) || exit;
+defined("ABSPATH") || exit();
 
 use DateTime;
 
@@ -11,386 +11,524 @@ use DateTime;
  *
  * @param int|\WP_User|null [$user_id=null] The ID of the user. Defaults to current logged in user.
  */
-class User_Access {
+class User_Access
+{
+    private string $owned_courses = "_lighter_lms_owned_courses";
+    private string $course_progress = "_lighter_lms_course_progress";
 
-	private string $owned_courses   = '_lighter_owned_courses';
-	private string $course_progress = '_lighter_course_progress';
+    protected \WP_User $user;
+    protected array $owned = [];
 
-	protected \WP_User $user;
-	protected array $owned = array();
+    public function __construct($user = null)
+    {
+        if ($user === "add-new-user" || $user === "add-exisiting-user") {
+            return;
+        }
+        $this->set_user($user);
+    }
 
-	public function __construct( $user = null ) {
-		if ( $user === 'add-new-user' || $user === 'add-exisiting-user' ) {
-			return;
-		}
-		$this->user  = isset( $user ) ? ( is_int( $user ) ? new \WP_User( $user ) : $user ) : wp_get_current_user();
-		$owned       = get_user_meta( $this->user->ID, $this->owned_courses, true );
-		$this->owned = $owned ? json_decode( $owned, true ) : array();
-	}
+    public function set_user(\WP_User|int|null $user)
+    {
+        $this->user = isset($user)
+            ? (is_int($user)
+                ? new \WP_User($user)
+                : $user)
+            : wp_get_current_user();
+        $owned = get_user_meta($this->user->ID, $this->owned_courses, true);
+        $this->owned = $owned ? json_decode($owned, true) : [];
+    }
 
-	/**
-	 * Grant course access
-	 *
-	 * Grants the user access to a course.
-	 *
-	 * @param int $course_id The ID of the course to grant access to.
-	 * @param string $access_type Which type of access to give the user. Accepts "full" | "drip" | "partial".
-	 * @param array $unlock The custom lessons which should be granted access to. Only used when `$access_type` is "partial"
-	 * @param DateTime $start_date The start date.
-	 * @param string $drip_interval The drip interval.
-	 * @param DateTime $expires When access should expire.
-	 */
-	public function grant_course_access( $course_id, $access_type = 'full', $unlock = array(), $start_date = null, $drip_interval = null, $expires = null ) {
-		if ( ! $this->user->ID ) {
-			return;
-		}
-		$lesson_query = new Lessons( array( 'parent' => $course_id ) );
-		// TODO: Don't trust $access_type. Lessons should be source of truth.
-		$lessons = $access_type == 'partial' ? $unlock : array_map( fn( $post ) => $post->ID, $lesson_query->get_lessons() );
-		$exists  = false;
-		foreach ( $this->owned as &$entry ) {
-			if ( $entry['course_id'] == $course_id ) {
-				$exists               = true;
-				$entry['lessons']     = $lessons;
-				$entry['access_type'] = $access_type;
-				$entry['expires']     = $expires;
-				break;
-			}
-		}
+    /**
+     * Grant course access
+     *
+     * Grants the user access to a course.
+     *
+     * @param int $course_id The ID of the course to grant access to.
+     * @param string $access_type Which type of access to give the user. Accepts "full" | "drip" | "partial".
+     * @param int[] $unlock The custom lessons which should be granted access to. Only used when `$access_type` is "partial"
+     * @param DateTime $start_date The start date.
+     * @param string $drip_interval The drip interval.
+     * @param DateTime $expires When access should expire.
+     */
+    public function grant_course_access(
+        $course_id,
+        $access_type = "full",
+        $unlock = [],
+        $start_date = null,
+        $drip_interval = null,
+        $expires = null,
+    ) {
+        if (!$this->user->ID) {
+            return;
+        }
+        $all_lessons = lighter()->lms->course->get_flat_lessons($course_id);
 
-		if ( ! $exists ) {
-			$this->owned[] = array(
-				'course_id'     => $course_id,
-				'lessons'       => $lessons,
-				'access_type'   => $access_type,
-				'start_date'    => $start_date ?: current_time( 'mysql' ),
-				'drip_interval' => $drip_interval,
-				'expires'       => $expires,
-			);
-		}
-		$this->owned = $this->unique_owned( $this->owned );
-		update_user_meta( $this->user->ID, $this->owned_courses, wp_json_encode( $this->owned ) );
+        $lessons =
+            $access_type == "partial"
+                ? $unlock
+                : array_map(fn($post) => $post->ID, $all_lessons);
 
-		$progress = get_user_meta( $this->user->ID, $this->course_progress, true );
-		$progress = $progress ? json_decode( $progress, true ) : array();
-		switch ( $access_type ) {
-			case 'full':
-				$unlocked_lessons = $lessons;
-				break;
-			case 'drip':
-				$unlocked_lessons = count( $lessons[0] ) > 2 ? array_slice( $lessons[0], 0, 2 ) : $lessons[0];
-				break;
-			case 'partial':
-				$unlocked_lessons = $unlock;
-				break;
-			default:
-				$unlocked_lessons = $lessons;
-				break;
-		}
-		if ( ! isset( $progress[ $course_id ] ) ) {
-			$progress[ $course_id ] = array(
-				'max_unlocked_lesson' => count( $unlocked_lessons ),
-				'unlocked_lessons'    => $unlocked_lessons,
-				'completed_lessons'   => array(),
-				'completion_date'     => null,
-			);
-		} else {
-			$progress[ $course_id ]['unlocked_lessons']    = $unlocked_lessons;
-			$progress[ $course_id ]['max_unlocked_lesson'] = count( $unlocked_lessons );
-		}
-		update_user_meta( $this->user->ID, $this->course_progress, wp_json_encode( $progress ) );
-		delete_transient( 'lighter_lms_access_check_' . $this->user->ID . '_*' );
-	}
+        $exists = false;
 
-	/**
-	 * Revoke course access
-	 *
-	 * Revokes the users access to a specific course
-	 * NOTE: This leaves the progress on the course, should the user get access again at a later point.
-	 *
-	 * @param int $course_id The id of the course to revoke
-	 */
-	public function revoke_course_access( $course_id ) {
-		if ( ! $this->user->ID ) {
-			return;
-		}
+        switch ($access_type) {
+            case "full":
+                $unlocked_lessons = $lessons;
+                break;
+            case "drip":
+                $unlocked_lessons =
+                    count($lessons[0]) > 2
+                        ? array_slice($lessons[0], 0, 2)
+                        : $lessons[0];
+                break;
+            case "partial":
+                $unlocked_lessons = $unlock;
+                break;
+            default:
+                $unlocked_lessons = $lessons;
+                break;
+        }
 
-		$exists = false;
-		foreach ( $this->owned as &$entry ) {
-			if ( $entry['course_id'] == $course_id ) {
-				$exists               = true;
-				$entry['access_type'] = 'revoked';
-				$entry['expires']     = strtotime( 'yesterday' );
-				break;
-			}
-		}
+        foreach ($this->owned as &$entry) {
+            if ($entry["course_id"] == $course_id) {
+                $exists = true;
+                $entry["lessons"] = $unlocked_lessons;
+                $entry["access_type"] = $access_type;
+                $entry["expires"] = $expires;
+                break;
+            }
+        }
 
-		if ( ! $exists ) {
-			error_log(
-				sprintf(
-					"Lighter LMS: Tried to revoke course access for user (%d) on course they don\'t own: %d (%s)",
-					$this->user->ID,
-					$course_id,
-					get_the_title( $course_id )
-				)
-			);
-			return;
-		}
+        if (!$exists) {
+            $this->owned[] = [
+                "course_id" => $course_id,
+                "lessons" => $unlocked_lessons,
+                "access_type" => $access_type,
+                "start_date" => $start_date ?: current_time("mysql"),
+                "drip_interval" => $drip_interval,
+                "expires" => $expires,
+            ];
+        }
 
-		unset( $this->owned[ $course_id ] );
+        $this->owned = $this->unique_owned($this->owned);
 
-		update_user_meta( $this->user->ID, $this->owned_courses, wp_json_encode( $this->owned ) );
+        update_user_meta(
+            $this->user->ID,
+            $this->owned_courses,
+            wp_json_encode($this->owned),
+        );
 
-		$progress = get_user_meta( $this->user->ID, $this->course_progress, true );
+        $progress = get_user_meta(
+            $this->user->ID,
+            $this->course_progress,
+            true,
+        );
+        $progress = $progress ? json_decode($progress, true) : [];
 
-		if ( ! $progress || ! $progress[ $course_id ] ) {
-			error_log(
-				sprintf(
-					'Lighter LMS: Tried to revoke course access for user (%d) on course with no progress found. Access may not be revoked correctly. Exiting silently',
-					$this->user->ID
-				)
-			);
-			delete_transient( 'lighter_lms_access_check_' . $this->user->ID . '_*' );
-			return;
-		}
+        if (!isset($progress[$course_id])) {
+            $progress[$course_id] = [
+                "completed_lessons" => [],
+                "completion_date" => null,
+            ];
+        }
 
-		$progress = json_decode( $progress, true );
+        update_user_meta(
+            $this->user->ID,
+            $this->course_progress,
+            wp_json_encode($progress),
+        );
 
-		$progress[ $course_id ]['unlocked_lessons']    = array();
-		$progress[ $course_id ]['max_unlocked_lesson'] = 0;
+        delete_transient("lighter_lms_access_check_" . $this->user->ID . "_*");
+    }
 
-		update_user_meta( $this->user->ID, $this->course_progress, wp_json_encode( $progress ) );
+    /**
+     * Revoke course access
+     *
+     * Revokes the users access to a specific course
+     * NOTE: This leaves the progress on the course, should the user get access again at a later point.
+     *
+     * @param int $course_id The id of the course to revoke
+     */
+    public function revoke_course_access($course_id)
+    {
+        if (!$this->user->ID) {
+            return;
+        }
 
-		delete_transient( 'lighter_lms_access_check_' . $this->user->ID . '_*' );
-	}
+        $exists = false;
+        foreach ($this->owned as &$entry) {
+            if ($entry["course_id"] == $course_id) {
+                $exists = true;
+                $entry["access_type"] = "revoked";
+                $entry["expires"] = strtotime("yesterday");
+                break;
+            }
+        }
 
-	/**
-	 * Update user course access
-	 *
-	 * Updates the user course access. Grants or revokes based on lessons supplied.
-	 *
-	 * @param int|\WP_Post $course_id The ID or WP_Post object of the course.
-	 */
-	public function update_course_access( $course, $lessons = array() ) {
-		$course = get_post( $course );
+        if (!$exists) {
+            error_log(
+                sprintf(
+                    "Lighter LMS: Tried to revoke course access for user (%d) on course they don\'t own: %d (%s)",
+                    $this->user->ID,
+                    $course_id,
+                    get_the_title($course_id),
+                ),
+            );
+            return;
+        }
 
-		if ( ! $course || $course->post_type !== lighter_lms()->course_post_type ) {
-			return;
-		}
+        unset($this->owned[$course_id]);
 
-		$lessons = array_filter( $lessons, fn( $l ) => $l !== 'false' );
+        update_user_meta(
+            $this->user->ID,
+            $this->owned_courses,
+            wp_json_encode($this->owned),
+        );
 
-		if ( ! $lessons ) {
-			return $this->revoke_course_access( $course->ID );
-		} else {
-			$this->grant_course_access( $course->ID, 'partial', array_keys( $lessons ) );
-		}
-	}
+        $progress = get_user_meta(
+            $this->user->ID,
+            $this->course_progress,
+            true,
+        );
 
-	/**
-	 * Check user course access
-	 *
-	 * Checks whether the user has access to a course. Will default to global $post.
-	 *
-	 * @param int|\WP_Post|null $course_id The ID or Post object of the course to check the access of. Will default to the global $post if none is provided
-	 *
-	 * @return bool Whether the user has access to the specified course.
-	 */
-	public function check_course_access( $course_id = null ) {
-		if ( ! $this->user->ID || ! is_user_logged_in() ) {
-			return false;
-		}
+        if (!$progress || !$progress[$course_id]) {
+            error_log(
+                sprintf(
+                    "Lighter LMS: Tried to revoke course access for user (%d) on course with no progress found. Access may not be revoked correctly. Exiting silently",
+                    $this->user->ID,
+                ),
+            );
+            delete_transient(
+                "lighter_lms_access_check_" . $this->user->ID . "_*",
+            );
+            return;
+        }
 
-		if ( $this->user->has_cap( 'manage_options' ) ) {
-			return true;
-		}
+        $progress = json_decode($progress, true);
 
-		$post       = get_post( $course_id );
-		$cache_key  = 'lighter_lms_access_check_' . $this->user->ID . '_' . $post->ID;
-		$has_access = get_transient( $cache_key );
-		if ( false !== $has_access ) {
-			return $has_access;
-		}
+        $progress[$course_id]["unlocked_lessons"] = [];
+        $progress[$course_id]["max_unlocked_lesson"] = 0;
 
-		foreach ( $this->owned as $entry ) {
-			if ( $entry['course_id'] == $post->ID ) {
-				if ( $entry['expires'] && current_time( 'timestamp' ) > strtotime( $entry['expires'] ) ) {
-					return false;
-				} elseif ( $entry['access_type'] == 'revoked' ) {
-					return false;
-				}
-				$has_access = true;
-				break;
-			}
-		}
+        update_user_meta(
+            $this->user->ID,
+            $this->course_progress,
+            wp_json_encode($progress),
+        );
 
-		if ( isset( $has_access ) ) {
-			set_transient( $cache_key, $has_access, HOUR_IN_SECONDS );
-			return $has_access;
-		}
-		set_transient( $cache_key, false, HOUR_IN_SECONDS );
-		return false;
-	}
+        delete_transient("lighter_lms_access_check_" . $this->user->ID . "_*");
+    }
 
-	/**
-	 * Check user lesson access
-	 *
-	 * Checks the users access of a courses lesson.
-	 *
-	 * @param int $lesson_id
-	 * @param int $course_id
-	 *
-	 * @return bool Whether the user has access
-	 */
-	public function check_lesson_access( $lesson_id, $course_id ) {
-		if ( $this->user->has_cap( 'manage_options' ) ) {
-			return true;
-		}
+    /**
+     * Update user course access
+     *
+     * Updates the user course access. Grants or revokes based on lessons supplied.
+     *
+     * @param int|\WP_Post $course_id The ID or WP_Post object of the course.
+     */
+    public function update_course_access($course, $lessons = [])
+    {
+        $course = get_post($course);
 
-		$has_course_access = $this->check_course_access( $course_id );
+        if (
+            !$course ||
+            $course->post_type !== lighter_lms()->course_post_type
+        ) {
+            return;
+        }
 
-		if ( ! $has_course_access ) {
-			return false;
-		}
+        $lessons = array_filter($lessons, fn($l) => $l !== "false");
 
-		$progress = get_user_meta( $this->user->ID, $this->course_progress, true );
-		$progress = $progress ? json_decode( $progress, true ) : array();
+        if (!$lessons) {
+            return $this->revoke_course_access($course->ID);
+        } else {
+            $this->grant_course_access(
+                $course->ID,
+                "partial",
+                array_keys($lessons),
+            );
+        }
+    }
 
-		if ( ! isset( $progress[ $course_id ] ) ) {
-			return false;
-		}
+    /**
+     * Check user course access
+     *
+     * Checks whether the user has access to a course. Will default to global $post.
+     *
+     * @param int|\WP_Post|null $course_id The ID or Post object of the course to check the access of. Will default to the global $post if none is provided
+     *
+     * @return bool Whether the user has access to the specified course.
+     */
+    public function check_course_access($course_id = null)
+    {
+        if (!$this->user->ID || !is_user_logged_in()) {
+            return false;
+        }
 
-		if ( in_array( $lesson_id, $progress[ $course_id ]['unlocked_lessons'] ) ) {
-			return true;
-		}
+        if ($this->user->has_cap("manage_options")) {
+            return true;
+        }
 
-		return false;
-	}
+        $post = get_post($course_id);
+        $cache_key =
+            "lighter_lms_access_check_" . $this->user->ID . "_" . $post->ID;
+        $has_access = get_transient($cache_key);
+        if ($has_access !== false) {
+            return $has_access;
+        }
 
-	/**
-	 * Get user owned courses
-	 *
-	 * Returns the owned object of all courses, or the specific course if supplied.
-	 *
-	 * @param int|\WP_Post|null $course The course to return the owned object of. Optional.
-	 *
-	 * @return object|array
-	 */
-	public function get_owned( $course = null ) {
-		if ( empty( $this->owned ) ) {
-			return array();
-		}
+        foreach ($this->owned as $entry) {
+            if ($entry["course_id"] == $post->ID) {
+                if (
+                    $entry["expires"] &&
+                    current_time("timestamp") > strtotime($entry["expires"])
+                ) {
+                    return false;
+                } elseif ($entry["access_type"] == "revoked") {
+                    return false;
+                }
+                $has_access = true;
+                break;
+            }
+        }
 
-		if ( ! $course ) {
-			return $this->owned;
-		}
+        if (isset($has_access)) {
+            set_transient($cache_key, $has_access, HOUR_IN_SECONDS);
+            return $has_access;
+        }
+        set_transient($cache_key, false, HOUR_IN_SECONDS);
+        return false;
+    }
 
-		$course = get_post( $course );
+    /**
+     * Check user lesson access
+     *
+     * Checks the users access of a courses lesson.
+     *
+     * @param int $lesson_id
+     * @param int $course_id
+     *
+     * @return bool Whether the user has access
+     */
+    public function check_lesson_access($lesson_id, $course_id)
+    {
+        if ($this->user->has_cap("manage_options")) {
+            return true;
+        }
 
-		if ( ! $course || $course->post_type !== lighter_lms()->course_post_type ) {
-			return array();
-		}
+        $has_course_access = $this->check_course_access($course_id);
 
-		$course_id = $course->ID;
-		$filtered  = array_filter(
-			$this->owned,
-			fn( $access ) => $access['course_id'] == $course_id
-		);
+        if (!$has_course_access) {
+            return false;
+        }
 
-		return $filtered ? reset( $filtered ) : array();
-	}
+        foreach ($this->owned as $entry) {
+            if ($entry["course_id"] == $course_id) {
+                $course = $entry;
+                break;
+            }
+        }
 
-	/**
-	 * Get user owned courses specified by keys
-	 *
-	 * Returns partial user owned object, by the specified key(s). Valid keys are: "course_id", "lessons", "access_type", "drip_interval", "expires", "start_date".
-	 *
-	 * @param string|array $key The key or keys to return
-	 *
-	 * @return array<object>
-	 */
-	public function get_owned_key( $key ) {
-		if ( empty( $this->owned ) ) {
-			return array();
-		}
+        return isset($course) && in_array($lesson_id, $course["lessons"]);
+    }
 
-		$keys = (array) $key;
+    public function check_owned(int|\WP_Post $course): bool
+    {
+        if (current_user_can("manage_options")) {
+            return true;
+        }
 
-		return array_map(
-			fn( $own ) => array_intersect_key( $own, array_flip( $keys ) ),
-			$this->owned
-		);
-	}
+        $course = get_post($course);
 
-	/**
-	 * Get user courses progress.
-	 *
-	 * Returns the progress object of all courses, or the specific course if supplied.
-	 *
-	 * @param int|\WP_Post|null $course The course to return the progress object of. Optional.
-	 *
-	 * @return object
-	 */
-	public function get_progress( $course = null ) {
-		$progress = get_user_meta( $this->user->ID, $this->course_progress, true );
-		$progress = $progress ? json_decode( $progress, true ) : array();
+        if ($course->post_type !== lighter_lms()->course_post_type) {
+            _doing_it_wrong(
+                __FUNCTION__,
+                "LighterLMS: Cannot check owned on post of type \"{$course->post_type}\"",
+                "1.0.0",
+            );
+            return false;
+        }
 
-		if ( $course ) {
-			$course   = get_post( $course );
-			$progress = isset( $progress[ $course->ID ] ) ? $progress[ $course->ID ] : array();
-		}
+        $owned = null;
+        foreach ($this->owned as $row) {
+            if ($row["course_id"] === $course->ID) {
+                $owned = $row;
+                break;
+            }
+        }
 
-		return $progress;
-	}
+        return $owned && $owned["access_type"] !== "revoked";
+    }
 
-	/**
-	 * Marks a lesson as completed.
-	 *
-	 * @param \WP_Post|int $course
-	 * @param \WP_Post|int $lesson
-	 *
-	 * @return int 1 for success 0 for failure.
-	 */
-	public function complete_lesson( $course, $lesson ) {
-		$course = get_post( $course );
-		$lesson = get_post( $lesson );
+    /**
+     * Get user owned courses
+     *
+     * Returns the owned object of all courses, or the specific course if supplied.
+     *
+     * @param int|\WP_Post|null $course The course to return the owned object of. Optional.
+     *
+     * @return object|array
+     */
+    public function get_owned($course = null)
+    {
+        if (empty($this->owned)) {
+            return [];
+        }
 
-		// TODO: Check user owns course and lesson.
+        if (!$course) {
+            return $this->owned;
+        }
 
-		$progress = get_user_meta( $this->user->ID, $this->course_progress, true );
-		$progress = $progress ? json_decode( $progress, true ) : array();
+        $course = get_post($course);
 
-		$completed                                    = $progress[ $course->ID ]['completed_lessons'] ?: array();
-		$completed[]                                  = $lesson->ID;
-		$completed                                    = array_unique( $completed, SORT_NUMERIC );
-		$progress[ $course->ID ]['completed_lessons'] = $completed;
+        if (
+            !$course ||
+            $course->post_type !== lighter_lms()->course_post_type
+        ) {
+            return [];
+        }
 
-		if ( ! update_user_meta( $this->user->ID, $this->course_progress, wp_json_encode( $progress ) ) ) {
-			return 0;
-		}
+        $course_id = $course->ID;
+        $filtered = array_filter(
+            $this->owned,
+            fn($access) => $access["course_id"] == $course_id,
+        );
 
-		return 1;
-	}
+        return $filtered ? reset($filtered) : [];
+    }
 
-	/**
-	 * Get unique rows of owned course objects
-	 *
-	 * @param array $rows Array of owned course objects
-	 * @return mixed[]
-	 */
-	public static function unique_owned( $rows ) {
-		$owned = array();
-		foreach ( $rows as $row ) {
-			$id = $row['course_id'] ?? null;
-			if ( $id === null ) {
-				continue;
-			}
+    public function check_completed_lesson(
+        int|\WP_Post $lesson,
+        int|\WP_Post|null $course = null,
+    ): bool {
+        if (isset($course)) {
+            $course = get_post($course);
 
-			$date = $row['start_date'] ?? '1970-01-01 00:00:00';
-			if ( ! isset( $owned[ $id ] ) || new DateTime( $date ) > new DateTime( $owned[ $id ]['start_date'] ) ) {
-				$owned[ $id ] = $row;
-			}
-		}
-		return array_values( $owned );
-	}
+            if ($course->post_type !== lighter_lms()->course_post_type) {
+                return false;
+            }
+        }
+
+        $progress = $this->get_progress($course);
+
+        $lesson = get_post($lesson);
+
+        return in_array($lesson->ID, $progress["completed_lessons"]);
+    }
+
+    /**
+     * Get user owned courses specified by keys
+     *
+     * Returns partial user owned object, by the specified key(s).
+     * Valid keys are: "course_id", "lessons", "access_type", "drip_interval", "expires", "start_date".
+     *
+     * @param string|array $key The key or keys to return
+     *
+     * @return array<object>
+     */
+    public function get_owned_key($key)
+    {
+        if (empty($this->owned)) {
+            return [];
+        }
+
+        $keys = (array) $key;
+
+        return array_map(
+            fn($own) => array_intersect_key($own, array_flip($keys)),
+            $this->owned,
+        );
+    }
+
+    /**
+     * Get user courses progress.
+     *
+     * Returns the progress object of all courses, or the specific course if supplied.
+     *
+     * @param int|\WP_Post|null $course The course to return the progress object of. Optional.
+     *
+     * @return object
+     */
+    public function get_progress($course = null)
+    {
+        $progress = get_user_meta(
+            $this->user->ID,
+            $this->course_progress,
+            true,
+        );
+        $progress = $progress ? json_decode($progress, true) : [];
+
+        if ($course) {
+            $course = get_post($course);
+            $progress = isset($progress[$course->ID])
+                ? $progress[$course->ID]
+                : [];
+        }
+
+        return $progress;
+    }
+
+    /**
+     * Marks a lesson as completed.
+     *
+     * @param \WP_Post|int $course
+     * @param \WP_Post|int $lesson
+     *
+     * @return int 1 for success 0 for failure.
+     */
+    public function complete_lesson($course, $lesson)
+    {
+        $course = get_post($course);
+        $lesson = get_post($lesson);
+
+        // TODO: Check user owns course and lesson.
+
+        $progress = get_user_meta(
+            $this->user->ID,
+            $this->course_progress,
+            true,
+        );
+        $progress = $progress ? json_decode($progress, true) : [];
+
+        $completed = $progress[$course->ID]["completed_lessons"] ?: [];
+        $completed[] = $lesson->ID;
+        $completed = array_unique($completed, SORT_NUMERIC);
+        $progress[$course->ID]["completed_lessons"] = $completed;
+
+        if (
+            !update_user_meta(
+                $this->user->ID,
+                $this->course_progress,
+                wp_json_encode($progress),
+            )
+        ) {
+            return 0;
+        }
+
+        return 1;
+    }
+
+    /**
+     * Get unique rows of owned course objects
+     *
+     * @param array $rows Array of owned course objects
+     * @return mixed[]
+     */
+    public static function unique_owned($rows)
+    {
+        $owned = [];
+        foreach ($rows as $row) {
+            $id = $row["course_id"] ?? null;
+            if ($id === null) {
+                continue;
+            }
+
+            $date = $row["start_date"] ?? "1970-01-01 00:00:00";
+            if (
+                !isset($owned[$id]) ||
+                new DateTime($date) > new DateTime($owned[$id]["start_date"])
+            ) {
+                $owned[$id] = $row;
+            }
+        }
+        return array_values($owned);
+    }
 }
