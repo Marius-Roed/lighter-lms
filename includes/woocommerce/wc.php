@@ -2,12 +2,16 @@
 
 namespace LighterLMS\WooCommerce;
 
-defined("ABSPATH") || exit();
+use LighterLMS\Attributes\Action;
+use LighterLMS\Attributes\Filter;
+use LighterLMS\Traits\Lighter_LMS_Hooks;
 
-use LighterLMS\User_Access;
+defined("ABSPATH") || exit();
 
 class WC
 {
+    use Lighter_LMS_Hooks;
+
     public function __construct()
     {
         if (!did_action("woocommerce_init")) {
@@ -19,23 +23,7 @@ class WC
             return;
         }
 
-        add_action("woocommerce_order_status_processing", [
-            $this,
-            "auto_complete",
-        ]);
-        add_action("pre_get_posts", [$this, "hide_products"]);
-        add_action("woocommerce_payment_complete", [$this, "give_access"]);
-        add_action("woocommerce_order_action_lighter_give_access", [
-            $this,
-            "admin_give_access",
-        ]);
-
-        add_filter(
-            "woocommerce_order_actions",
-            [$this, "order_actions"],
-            10,
-            2,
-        );
+        $this->register_hooks();
     }
 
     /**
@@ -249,6 +237,7 @@ class WC
      *
      * @param int The woocommerce order ID.
      */
+    #[Action("woocommerce_order_status_processing")]
     public function auto_complete(int $order_id): void
     {
         $order = \wc_get_order($order_id);
@@ -284,6 +273,7 @@ class WC
      *
      * @param \WP_Query $query The query.
      */
+    #[Action("pre_get_posts")]
     public function hide_products(\WP_Query $query): void
     {
         if (!$query->is_main_query() || current_user_can("edit_posts")) {
@@ -331,6 +321,7 @@ class WC
      * @param array $actions The actions
      * @param \WC_Order $order
      */
+    #[Filter("woocommerce_order_actions", accepted_args: 2)]
     public function order_actions(array $actions, \WC_Order $order): array
     {
         $contains_course = false;
@@ -375,6 +366,7 @@ class WC
      *
      * @param \WC_Order $order The order
      */
+    #[Action("woocommerce_order_action_lighter_give_access")]
     public function admin_give_access(\WC_Order $order): null
     {
         $order_id = $order->get_id();
@@ -388,6 +380,7 @@ class WC
      *
      * @param int $order_id The order ID.
      */
+    #[Action("woocommerce_payment_complete")]
     public static function give_access(int $order_id): void
     {
         $order = \wc_get_order($order_id);
@@ -400,7 +393,7 @@ class WC
             return;
         }
 
-        $user = new User_Access($user_id);
+        lighter()->lms->user->set_user($user_id);
         $granted = [];
 
         foreach ($order->get_items() as $item) {
@@ -426,10 +419,10 @@ class WC
                 continue;
             }
             foreach ($courses as $course_id) {
-                if (!$user->get_owned($course_id)) {
+                if (!lighter()->lms->user->get_owned($course_id)) {
                     continue;
                 }
-                $user->grant_course_access($course_id);
+                lighter()->lms->user->grant_course_access($course_id);
                 $granted[] = $course_id;
             }
         }
