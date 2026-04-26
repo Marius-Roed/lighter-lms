@@ -74,3 +74,32 @@ export const POSTSTATUS = [
   "trash",
 ] as const;
 export type PostStatus = (typeof POSTSTATUS)[number];
+
+export const debouncePromise = (func: Function, delay: number): Function => {
+  let timeoutId: number | null = null;
+  let rejectFn = null;
+
+  return (...args: any): Promise<unknown> => {
+    if (timeoutId) {
+      window.clearTimeout(timeoutId);
+    }
+
+    const promise = new Promise((res, outerRej) => {
+      rejectFn = outerRej;
+
+      timeoutId = window.setTimeout(async () => {
+        try {
+          const result = await func(...args);
+          res(result);
+          rejectFn = null;
+        } catch (error) {
+          outerRej(error);
+          rejectFn = null;
+        }
+        timeoutId = null;
+      }, delay);
+    });
+
+    return promise;
+  };
+};

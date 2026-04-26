@@ -1,3 +1,4 @@
+import type { Product } from "$types/product.js";
 import type { Course } from "./course-post.svelte.ts";
 import {
   createCourseProduct,
@@ -53,6 +54,10 @@ export class CourseSettings<S extends AvailableStore> {
 
   createEmptyProduct(course: () => Course): void {
     this.product = createCourseProduct(this.store, course);
+  }
+
+  setProduct(course: () => Course, product: Product<typeof this.store>) {
+    this.product = createCourseProduct(this.store, course, product);
   }
 
   getHiddenData(): object {

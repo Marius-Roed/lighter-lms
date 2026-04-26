@@ -1,6 +1,6 @@
 <script lang="ts">
   import { lighterFetch } from "$lib/api/lighter-fetch.ts";
-  import { addQueryArgs } from "$lib/utils/index.ts";
+  import { addQueryArgs, debouncePromise } from "$lib/utils/index.ts";
   import type { LessonParentCourse } from "$types/course.js";
 
   interface Props {
@@ -76,35 +76,6 @@
     }
 
     return null;
-  };
-
-  const debouncePromise = (func: Function, delay: number): Function => {
-    let timeoutId = null;
-    let rejectFn = null;
-
-    return (...args: any): Promise<unknown> => {
-      if (timeoutId) {
-        window.clearTimeout(timeoutId);
-      }
-
-      const promise = new Promise((res, outerRej) => {
-        rejectFn = outerRej;
-
-        timeoutId = window.setTimeout(async () => {
-          try {
-            const result = await func(...args);
-            res(result);
-            rejectFn = null;
-          } catch (error) {
-            outerRej(error);
-            rejectFn = null;
-          }
-          timeoutId = null;
-        }, delay);
-      });
-
-      return promise;
-    };
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {

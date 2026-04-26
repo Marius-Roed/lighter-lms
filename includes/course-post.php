@@ -172,7 +172,7 @@ class Course_Post extends Post_Type
         if (!empty($product)) {
             $product["slug"] = $slug;
             $product["tags"] = $tags;
-            $saved_prod = lighter_save_product($product, $post->ID);
+            $saved_prod = lighter_lms_save_product($product, $post->ID);
 
             $img_id = $product["images"][0]["id"] ?? false;
             if ($img_id && $sync_prod_img) {

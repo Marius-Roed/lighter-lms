@@ -160,7 +160,7 @@ if (!function_exists("lighter_lms_get_full_course")) {
     }
 }
 
-if (!function_exists("lighter_save_product")) {
+if (!function_exists("lighter_lms_save_product")) {
     /**
      * Save product
      *
@@ -169,7 +169,7 @@ if (!function_exists("lighter_save_product")) {
      * @param array $args The product object to save.
      * @param int?   $post_id The id of the post to save it to. 0 will not save it to a post.
      */
-    function lighter_save_product($args, $post_id = 0)
+    function lighter_lms_save_product($args, $post_id = 0)
     {
         $store = lighter_lms()->defaults()->store;
 
@@ -179,7 +179,7 @@ if (!function_exists("lighter_save_product")) {
     }
 }
 
-if (!function_exists("ligter_get_course_product")) {
+if (!function_exists("lighter_lms_get_course_product")) {
     /**
      * Gets a product
      *
@@ -188,7 +188,7 @@ if (!function_exists("ligter_get_course_product")) {
      * @param int $post_id
      * @return object
      */
-    function lighter_get_course_product($post_id)
+    function lighter_lms_get_course_product($post_id)
     {
         $product_id = get_post_meta($post_id, "_lighter_lms_product_id", true);
 
@@ -207,7 +207,7 @@ if (!function_exists("ligter_get_course_product")) {
     }
 }
 
-if (!function_exists("lighter_get_course_settings")) {
+if (!function_exists("lighter_lms_get_course_settings")) {
     /**
      * Get course settings
      *
@@ -216,7 +216,7 @@ if (!function_exists("lighter_get_course_settings")) {
      * @param WP_Post|int $post Post id or post object. Defaults to the global post.
      * @return array The settings as an associative array.
      */
-    function lighter_get_course_settings($post = 0)
+    function lighter_lms_get_course_settings($post = 0)
     {
         $course = get_post($post);
 
@@ -236,7 +236,7 @@ if (!function_exists("lighter_get_course_settings")) {
             $screen->base === "post" &&
             $screen->action !== "add"
         ) {
-            $product = lighter_get_course_product($post_id);
+            $product = lighter_lms_get_course_product($post_id);
         }
 
         $settings = [
@@ -294,7 +294,7 @@ if (!function_exists("lighter_get_course_settings")) {
     }
 }
 
-if (!function_exists("lighter_get_course_downloads")) {
+if (!function_exists("lighter_lms_get_course_downloads")) {
     /**
      * Retrieves the downloadable files for a course.
      *
@@ -302,7 +302,7 @@ if (!function_exists("lighter_get_course_downloads")) {
      *
      * @return array<>
      */
-    function lighter_get_course_downloads(WP_Post|int $post): array
+    function lighter_lms_get_course_downloads(WP_Post|int $post): array
     {
         $post = get_post($post);
 
