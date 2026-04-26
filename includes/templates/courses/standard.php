@@ -92,6 +92,12 @@ if (lighter_get_post_meta($post->ID, "course_display_theme_sidebar", true)) {
                     value="<?php echo esc_attr($post->ID); ?>"
                     id="course_id"
                 />
+                <input
+                    type="hidden"
+                    name="user_id"
+                    value="<?php echo esc_attr(get_current_user_id()); ?>"
+                    id="user_id"
+                />
                 <button
                     type="submit"
                     class="lighter-btn complete-lesson-btn"

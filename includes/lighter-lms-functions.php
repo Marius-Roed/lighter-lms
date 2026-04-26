@@ -1,10 +1,7 @@
 <?php
 
 use LighterLMS\Import_Scheduler;
-use LighterLMS\Types;
-use LighterLMS\Lessons;
 use LighterLMS\Randflake;
-use LighterLMS\Topics;
 use LighterLMS\User_Access;
 use LighterLMS\WooCommerce\WC;
 
@@ -152,8 +149,8 @@ if (!function_exists("lighter_lms_get_full_course")) {
         foreach ($topics as $topic) {
             foreach ($topic["lessons"] as &$lesson) {
                 $lesson->completed = lighter()->lms->user->check_completed_lesson(
-                    $course->ID,
                     $lesson->ID,
+                    $course->ID,
                 );
                 $lesson->owned = lighter()->lms->user->check_owned($lesson->ID);
             }
@@ -627,13 +624,12 @@ if (!function_exists("lighter_sanitize_access")) {
             return [];
         }
 
-        $topic_db = new Topics();
         $access_obj = [];
 
         foreach ($access as $key => $post_ids) {
-            $topic = $topic_db->get($key);
+            $topic = lighter()->lms->topic->get($key);
 
-            if (empty($topic) || $topic->post_id != $post_id) {
+            if ($topic && $topic->course_id != $post_id) {
                 continue;
             }
 
@@ -678,6 +674,7 @@ if (!function_exists("lighter_sanitize_access")) {
     }
 }
 
+// TODO: Move the following functions to their own file
 add_action(
     "lighter_lms_import_user",
     function ($row, $opts) {
@@ -891,6 +888,41 @@ function lighter_lms_update()
     foreach ($courses as $course) {
         $description = get_post_meta($course->ID, "_course_description", true);
 
-        $course->post_excerpt = $description;
+        wp_update_post(["ID" => $course->ID, "post_excerpt" => $description]);
+
+        // TODO: update post meta names
+        $restricted = get_post_meta(
+            $course->ID,
+            "_lighter_is_restricted",
+            true,
+        );
+        $product_id = get_post_meta($course->ID, "_lighter_product_id", true);
+
+        update_post_meta(
+            $course->ID,
+            "_lighter_lms_course_restricted",
+            $restricted,
+        );
+        update_post_meta($course->ID, "_lighter_lms_product_id", $product_id);
+
+        delete_post_meta($course->ID, "_lighter_is_restricted");
+        delete_post_meta($course->ID, "_lighter_product_id");
+    }
+
+    $lessons = get_posts([
+        "post_type" => lighter_lms()->lesson_post_type,
+        "post_status" => "any",
+        "numberposts" => -1,
+    ]);
+
+    foreach ($lessons as $lesson) {
+        $key = get_post_meta($lesson->ID, "_lighter_lesson_key");
+
+        update_post_meta($lesson->ID, "_lighter_lms_lesson_key", $key);
+
+        delete_post_meta($lesson->ID, "_lighter_sort_order");
+        delete_post_meta($lesson->ID, "_lighter_parent_topic");
+        delete_post_meta($lesson->ID, "_lighter_course_parent");
+        delete_post_meta($lesson->ID, "_lighter_lesson_key");
     }
 }

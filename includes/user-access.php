@@ -320,6 +320,10 @@ class User_Access
             return false;
         }
 
+        if ($lesson_id === $course_id) {
+            return $has_course_access;
+        }
+
         foreach ($this->owned as $entry) {
             if ($entry["course_id"] == $course_id) {
                 $course = $entry;
@@ -411,7 +415,8 @@ class User_Access
 
         $lesson = get_post($lesson);
 
-        return in_array($lesson->ID, $progress["completed_lessons"]);
+        return $progress &&
+            in_array($lesson->ID, $progress["completed_lessons"] ?? []);
     }
 
     /**
@@ -460,7 +465,7 @@ class User_Access
             $course = get_post($course);
             $progress = isset($progress[$course->ID])
                 ? $progress[$course->ID]
-                : [];
+                : $progress;
         }
 
         return $progress;

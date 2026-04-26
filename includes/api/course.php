@@ -2,103 +2,120 @@
 
 namespace LighterLMS\API;
 
-defined( 'ABSPATH' ) || exit;
+defined("ABSPATH") || exit();
 
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
 
-class Course extends Base_Controller {
+class Course extends Base_Controller
+{
+    public function register_routes(): void
+    {
+        register_rest_route($this->namespace, "/courses/(?P<id>\d+)", [
+            [
+                "methods" => "GET",
+                "callback" => [$this, "get_course"],
+                "permission_callback" => [$this, "can_read"],
+                "args" => [
+                    "id" => [
+                        "validate_callback" => fn($v) => is_numeric($v),
+                        "sanitize_callback" => "absint",
+                    ],
+                    "topics" => [
+                        "required" => false,
+                        "type" => "boolean",
+                        "description" =>
+                            "Appends an array of all topics and their lessons.",
+                        "validate_callback" => fn($v) => wp_validate_boolean(
+                            $v,
+                        ),
+                        "sanitze_callback" => "wp_validate_boolean",
+                    ],
+                ],
+            ],
+            [
+                "methods" => "DELETE",
+                "callback" => [$this, "delete_course"],
+                "permission_callback" => [$this, "can_delete"],
+            ],
+        ]);
+    }
 
-	public function register_routes(): void {
-		register_rest_route(
-			$this->namespace,
-			'/courses/(?P<id>\d+)',
-			array(
-				array(
-					'methods'             => 'GET',
-					'callback'            => array( $this, 'get_course' ),
-					'permission_callback' => array( $this, 'can_read' ),
-					'args'                => array(
-						'id'     => array(
-							'validate_callback' => fn( $v ) => is_numeric( $v ),
-							'sanitize_callback' => 'absint',
-						),
-						'topics' => array(
-							'required'          => false,
-							'type'              => 'boolean',
-							'description'       => 'Appends an array of all topics and their lessons.',
-							'validate_callback' => fn( $v ) => wp_validate_boolean( $v ),
-							'sanitze_callback'  => 'wp_validate_boolean',
-						),
-					),
-				),
-				array(
-					'methods'             => 'DELETE',
-					'callback'            => array( $this, 'delete_course' ),
-					'permission_callback' => array( $this, 'can_delete' ),
-				),
-			)
-		);
-	}
+    public function can_read(WP_REST_Request $request): bool
+    {
+        return current_user_can("read_post", $request->get_param("id"));
+    }
 
-	public function can_read( WP_REST_Request $request ): bool {
-		return current_user_can( 'read_post', $request->get_param( 'id' ) );
-	}
+    public function can_delete(WP_REST_Request $request): bool
+    {
+        return current_user_can("delete_post", $request->get_param("id"));
+    }
 
-	public function can_delete( WP_REST_Request $request ): bool {
-		return current_user_can( 'delete_post', $request->get_param( 'id' ) );
-	}
+    public function get_course(
+        WP_REST_Request $request,
+    ): WP_REST_Response|WP_Error {
+        $post = $this->get_post_or_error(
+            $request->get_param("id"),
+            lighter_lms()->course_post_type,
+        );
 
-	public function get_course( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$post = $this->get_post_or_error( $request->get_param( 'id' ), lighter_lms()->course_post_type );
+        if (is_wp_error($post)) {
+            return $post;
+        }
 
-		if ( is_wp_error( $post ) ) {
-			return $post;
-		}
+        $data = $this->format_post($post);
+        if ($request->get_param("topics")) {
+            $data["topics"] = lighter()->lms->course->get_topics($post->ID);
+        }
 
-		$data = $this->format_post( $post );
-		if ( $request->get_param( 'topics' ) ) {
-			$data['topics'] = lighter()->lms->course->get_topics( $post->ID );
-		}
+        return $this->success($data);
+    }
 
-		return $this->success( $data );
-	}
+    public function delete_course(
+        WP_REST_Request $request,
+    ): WP_REST_Response|WP_Error {
+        $post = $this->get_post_or_error(
+            $request->get_param("id"),
+            lighter_lms()->course_post_type,
+        );
 
-	public function delete_course( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		$post = $this->get_post_or_error( $request->get_param( 'id' ), lighter_lms()->course_post_type );
+        if (is_wp_error($post)) {
+            return $post;
+        }
 
-		if ( is_wp_error( $post ) ) {
-			return $post;
-		}
+        // TODO: DELETE Topics and maybe lessons.
 
-		// TODO: DELETE Topics and maybe lessons.
+        return $this->success([
+            "deleted" => true,
+            "id" => $post->ID,
+        ]);
+    }
 
-		return $this->success(
-			array(
-				'deleted' => true,
-				'id'      => $post->ID,
-			)
-		);
-	}
+    public function prepare_course_item(
+        WP_REST_Response $response,
+        \WP_Post $post,
+        WP_REST_Request $request,
+    ): WP_REST_Response {
+        $data = $response->get_data();
 
-	public function prepare_course_item( WP_REST_Response $response, \WP_Post $post, WP_REST_Request $request ): WP_REST_Response {
-		$data = $response->get_data();
+        if (!isset($data["title"])) {
+            $data["title"]["rendered"] = get_the_title($post);
+            if ($request->get_param("context") === "edit") {
+                $data["title"]["raw"] = $post->post_title;
+            }
+        }
 
-		if ( ! isset( $data['title'] ) ) {
-			$data['title']['rendered'] = get_the_title( $post );
-			if ( $request->get_param( 'context' ) === 'edit' ) {
-				$data['title']['raw'] = $post->post_title;
-			}
-		}
+        if ($request->get_param("full_structure")) {
+            $topics = lighter()->lms->course->get_topics($post);
+            $topics = array_map(
+                fn($t) => lighter()->lms->topic->normalise_for_rest($t, true),
+                $topics,
+            );
+            $data["topics"] = $topics;
+        }
 
-		if ( $request->get_param( 'full_structure' ) ) {
-			$topics         = lighter()->lms->course->get_topics( $post );
-			$topics         = array_map( fn( $t ) => lighter()->lms->topic->normalise_for_rest( $t, true ), $topics );
-			$data['topics'] = $topics;
-		}
-
-		$response->set_data( $data );
-		return $response;
-	}
+        $response->set_data($data);
+        return $response;
+    }
 }

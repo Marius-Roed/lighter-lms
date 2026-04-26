@@ -105,11 +105,6 @@ class Course_Post extends Post_Type
             return;
         }
 
-        file_put_contents(
-            LIGHTER_LMS_PATH . "/log.log",
-            var_export($_POST, true),
-        );
-
         if (isset($_POST["topics"])) {
             foreach ($_POST["topics"] as $topic) {
                 $data = [
@@ -184,7 +179,7 @@ class Course_Post extends Post_Type
                 set_post_thumbnail($post->ID, $img_id);
             }
 
-            update_post_meta($post->ID, "_lighter_lms_is_restricted", true);
+            update_post_meta($post->ID, "_lighter_lms_course_restricted", true);
         }
 
         update_post_meta(
@@ -249,7 +244,7 @@ class Course_Post extends Post_Type
         global $post;
         $is_restricted = get_post_meta(
             $post->ID,
-            "_lighter_lms_is_restricted",
+            "_lighter_lms_course_restricted",
             true,
         );
         $is_restricted = wp_validate_boolean($is_restricted);
