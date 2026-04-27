@@ -185,32 +185,32 @@ class Course_Post extends Post_Type
         update_post_meta(
             $post->ID,
             "_lighter_lms_course_display_theme_header",
-            $header,
+            (int) $header,
         );
         update_post_meta(
             $post->ID,
             "_lighter_lms_course_display_theme_sidebar",
-            $sidebar,
+            (int) $sidebar,
         );
         update_post_meta(
             $post->ID,
             "_lighter_lms_course_display_theme_footer",
-            $footer,
+            (int) $footer,
         );
         update_post_meta(
             $post->ID,
             "_lighter_lms_course_show_lesson_icons",
-            $show_icons,
+            (int) $show_icons,
         );
         update_post_meta(
             $post->ID,
             "_lighter_lms_course_show_lesson_progess",
-            $show_progress,
+            (int) $show_progress,
         );
         update_post_meta(
             $post->ID,
             "_lighter_lms_course_sync_prod_img",
-            $sync_prod_img,
+            (int) $sync_prod_img,
         );
 
         if ($thumbnail && !$sync_prod_img) {
