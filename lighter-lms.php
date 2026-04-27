@@ -8,28 +8,28 @@
  * Author URI: https://github.com/marius-roed
  * Requires PHP: 8.2
  * Requires at least: 5.3
- * Tested up to: 6.9
+ * Tested up to: 6.9.4
  * Text Domain: lighterlms
  *
  * @package Lighter
  */
 
-defined( 'ABSPATH' ) || exit;
+defined("ABSPATH") || exit();
 
-define( 'LIGHTER_LMS__FILE__', __FILE__ );
-define( 'LIGHTER_LMS_PATH', plugin_dir_path( LIGHTER_LMS__FILE__ ) );
-define( 'LIGHTER_LMS_URL', plugin_dir_url( LIGHTER_LMS__FILE__ ) );
-define( 'LIGHTER_LMS_VERSION', '1.0.0-alpha.21' );
-define( 'LIGHTER_LMS_REQUIRED_MU_VERSION', '1.0.0' );
+define("LIGHTER_LMS__FILE__", __FILE__);
+define("LIGHTER_LMS_PATH", plugin_dir_path(LIGHTER_LMS__FILE__));
+define("LIGHTER_LMS_URL", plugin_dir_url(LIGHTER_LMS__FILE__));
+define("LIGHTER_LMS_VERSION", "1.0.0-alpha.21");
+define("LIGHTER_LMS_REQUIRED_MU_VERSION", "1.0.0");
 
 // Autoloader
-require_once LIGHTER_LMS_PATH . 'includes/autoloader.php';
+require_once LIGHTER_LMS_PATH . "includes/autoloader.php";
 \LighterLMS\Autoloader::register();
 
 \LighterLMS\Core\Activation::register_hooks();
 
-if ( class_exists( 'Lighter' ) ) {
-	lighter()->register( 'lms', \LighterLMS\Core\Lighter_LMS::get_instance() );
+if (class_exists("Lighter")) {
+    lighter()->register("lms", \LighterLMS\Core\Lighter_LMS::get_instance());
 } else {
-	\LighterLMS\Core\Lighter_LMS::get_instance();
+    \LighterLMS\Core\Lighter_LMS::get_instance();
 }

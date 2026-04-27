@@ -273,7 +273,7 @@ final class Lighter_LMS
                 "new_version" => $remote_version,
                 "url" => "https://github.com/marius-roed/lighter-lms",
                 "package" => $package_url,
-                "tested" => "6.9.1",
+                "tested" => "6.9.4",
                 "requires" => "5.3",
                 "requires_php" => "8.2",
                 "icons" => [],

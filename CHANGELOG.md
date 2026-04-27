@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file
 
+## [1.0.0-alpha.21] - 2026-04-28
+
+### Added
+
+- A new MU Plugin as a general entry point for usage of plugin functions and services.
+- General service files for Topic, Course, Lesson in both PHP and JS.
+- WP `add_action` and `apply_filter` PHP attributes.
+- Cache db queries.
+- Save updates via API in course editor.
+- Schema migration from "v0/1" → [v2](includes/db/lighter-lms-schema.php).
+- Different product types in [`course-product.svelte.ts`](assets/svelte/src/lib/models/state/course-product.svelte.ts)
+
+### Fixes
+
+- Move lessons.
+- Edit dialog move between all lessons.
+- User access null parameter.
+- Lessons can now be added to multiple topics.
+- Product description not updating on chosen product.
+- Standard template fails to load header and footer if not specified.
+
+### General
+
+- Moved all `.svelte` and `svelte.js` files to Typescript.
+- More consistent naming of options and meta keys.
+- Standardised API responses.
+
 ## [1.0.0-alpha.20] - 2026-02-06
 
 ### Added
