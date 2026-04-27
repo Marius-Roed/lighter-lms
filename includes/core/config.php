@@ -2,7 +2,7 @@
 
 namespace LighterLMS\Core;
 
-defined( 'ABSPATH' ) || exit;
+defined("ABSPATH") || exit();
 
 use LighterLMS\Third_Party\Builders;
 use LighterLMS\Third_Party\Stores;
@@ -13,7 +13,6 @@ use WP_Query;
  * @property string $admin_url
  * @property bool $development
  * @property string $course_post_type
- * @property string $connected_store
  * @property string $course_slug
  * @property string $lesson_post_type
  * @property string $topics_table
@@ -25,176 +24,191 @@ use WP_Query;
  * @property string[] $post_types
  * @property string $standard_template
  */
-class Config {
+class Config
+{
+    private static ?self $_instance = null;
 
+    private array $_settings = [];
 
-	private static ?self $_instance = null;
+    public static function get_instance(): self
+    {
+        if (null === self::$_instance) {
+            self::$_instance = new self();
+        }
 
-	private array $_settings = array();
+        return self::$_instance;
+    }
 
-	public static function get_instance(): self {
-		if ( null === self::$_instance ) {
-			self::$_instance = new self();
-		}
+    public function __construct()
+    {
+        $admin_url = "lighter-lms";
+        $course_post_type = "lighter_courses";
+        $lesson_post_type = "lighter_lessons";
 
-		return self::$_instance;
-	}
+        $this->_settings = [
+            "path" => LIGHTER_LMS_PATH,
+            "url" => LIGHTER_LMS_URL,
+            "version" => LIGHTER_LMS_VERSION,
+            "course_post_type" => $course_post_type,
+            "lesson_post_type" => $lesson_post_type,
+            "topics_table" => "lighter_lms_topics",
+            "topic_lessons_table" => "lighter_lms_topic_lessons",
+            "machineId" => apply_filters("lighterlms_use_machine_id", 0),
+            "post_types" => [$course_post_type, $lesson_post_type],
+            "course_slug" => "kurser", // TODO: Make editable
+            "standard_template" =>
+                LIGHTER_LMS_PATH . "/includes/templates/courses/standard.php",
+            "admin_page_path" => "admin.php?page=" . $admin_url,
+            "admin_url" => $admin_url,
+            "development" => $this->detect_dev(),
+        ];
+    }
 
-	public function __construct() {
-		$admin_url        = 'lighter-lms';
-		$course_post_type = 'lighter_courses';
-		$lesson_post_type = 'lighter_lessons';
+    public function defaults(): Defaults
+    {
+        return Defaults::get_instance();
+    }
 
-		$this->_settings = array(
-			'path'                => LIGHTER_LMS_PATH,
-			'url'                 => LIGHTER_LMS_URL,
-			'version'             => LIGHTER_LMS_VERSION,
-			'course_post_type'    => $course_post_type,
-			'lesson_post_type'    => $lesson_post_type,
-			'topics_table'        => 'lighter_lms_topics',
-			'topic_lessons_table' => 'lighter_lms_topic_lessons',
-			'machineId'           => apply_filters( 'lighterlms_use_machine_id', 0 ),
-			'post_types'          => array( $course_post_type, $lesson_post_type ),
-			'course_slug'         => 'kurser', // TODO: Make editable
-			'standard_template'   => LIGHTER_LMS_PATH . '/includes/templates/courses/standard.php',
-			'admin_page_path'     => 'admin.php?page=' . $admin_url,
-			'admin_url'           => $admin_url,
-			'development'         => $this->detect_dev(),
-		);
-	}
+    public function __get(string $key): mixed
+    {
+        if (!array_key_exists($key, $this->_settings)) {
+            error_log(
+                "Warning: Lighter LMS config key ({$key}) does not exist!",
+            );
+            return null;
+        }
 
-	public function defaults(): Defaults {
-		return Defaults::get_instance();
-	}
+        return $this->_settings[$key];
+    }
 
-	public function __get( string $key ): mixed {
-		if ( ! array_key_exists( $key, $this->_settings ) ) {
-			error_log( "Warning: Lighter LMS config key ({$key}) does not exist!" );
-			return null;
-		}
+    public function all(): array
+    {
+        return $this->_settings;
+    }
 
-		return $this->_settings[ $key ];
-	}
+    /**
+     * Gets all courses.
+     *
+     * Gets all the courses in an associated list of course->topics->lessons.
+     * @param int $limit The number of courses to get. Default is -1, all posts.
+     */
+    public function get_courses(int $limit = -1): array
+    {
+        $courses = [];
+        $args = [
+            "post_type" => $this->course_post_type,
+            "post_status" => "any",
+            "posts_per_page" => $limit,
+        ];
 
-	public function all(): array {
-		return $this->_settings;
-	}
+        $query = new WP_Query($args);
 
-	/**
-	 * Gets all courses.
-	 *
-	 * Gets all the courses in an associated list of course->topics->lessons.
-	 * @param int $limit The number of courses to get. Default is -1, all posts.
-	 */
-	public function get_courses( int $limit = -1 ): array {
-		$courses = array();
-		$args    = array(
-			'post_type'      => $this->course_post_type,
-			'post_status'    => 'any',
-			'posts_per_page' => $limit,
-		);
+        if (!$query->have_posts()) {
+            wp_reset_postdata();
+            return $courses;
+        }
 
-		$query = new WP_Query( $args );
+        while ($query->have_posts()) {
+            $query->the_post();
+            global $post;
 
-		if ( ! $query->have_posts() ) {
-			wp_reset_postdata();
-			return $courses;
-		}
+            $topics = lighter()->lms->topic->get_by_course($post->ID);
+            $topics = array_map(function ($t) {
+                $lessons = lighter()->lms->topic->get_lessons($t->ID);
+                return [
+                    "key" => $t->topic_key,
+                    "post_id" => $t->course_id,
+                    "title" => $t->title,
+                    "sort_order" => $t->sort_order,
+                    "lessons" => $lessons,
+                ];
+            }, $topics);
 
-		while ( $query->have_posts() ) {
-			$query->the_post();
-			global $post;
+            $courses[] = [
+                "id" => $post->ID,
+                "title" => $post->post_title,
+                "image" => [
+                    "src" => get_post_thumbnail_id($post->ID)
+                        ? wp_get_attachment_image_src(
+                            get_post_thumbnail_id($post->ID),
+                            [200, 200],
+                        )[0]
+                        : null,
+                ],
+                "topics" => [...$topics],
+            ];
+        }
 
-			$topics = lighter()->lms->topic->get_by_course( $post->ID );
-			$topics = array_map(
-				function ( $t ) {
-					$lessons = lighter()->lms->topic->get_lessons( $t->ID );
-					return array(
-						'key'        => $t->topic_key,
-						'post_id'    => $t->course_id,
-						'title'      => $t->title,
-						'sort_order' => $t->sort_order,
-						'lessons'    => $lessons,
-					);
-				},
-				$topics
-			);
+        wp_reset_postdata();
+        return $courses;
+    }
 
-			$courses[] = array(
-				'id'     => $post->ID,
-				'title'  => $post->post_title,
-				'image'  => array(
-					'src' => get_post_thumbnail_id( $post->ID ) ? wp_get_attachment_image_src( get_post_thumbnail_id( $post->ID ), array( 200, 200 ) )[0] : null,
-				),
-				'topics' => array(
-					...$topics,
-				),
-			);
-		}
+    /**
+     * Determine whether the active theme is `$theme`.
+     * Will return the theme name if `$theme` is not specified.
+     *
+     * @param string $theme The theme name to compare to.
+     *
+     * @return bool|string
+     */
+    public function is_theme(string $theme = ""): bool|string
+    {
+        $current_theme_name = "";
+        $current_theme = wp_get_theme();
 
-		wp_reset_postdata();
-		return $courses;
-	}
+        if ($current_theme->exists() && $current_theme->parent()) {
+            $parent_theme = $current_theme->parent();
 
-	/**
-	 * Determine whether the active theme is `$theme`.
-	 * Will return the theme name if `$theme` is not specified.
-	 *
-	 * @param string $theme The theme name to compare to.
-	 *
-	 * @return bool|string
-	 */
-	public function is_theme( string $theme = '' ): bool|string {
-		$current_theme_name = '';
-		$current_theme      = wp_get_theme();
+            if ($parent_theme->exists()) {
+                $current_theme_name = $parent_theme->get_stylesheet();
+            }
+        } elseif ($current_theme->exists()) {
+            $current_theme_name = $current_theme->get_stylesheet();
+        }
 
-		if ( $current_theme->exists() && $current_theme->parent() ) {
-			$parent_theme = $current_theme->parent();
+        if (!$theme || empty($theme)) {
+            return $current_theme_name;
+        }
 
-			if ( $parent_theme->exists() ) {
-				$current_theme_name = $parent_theme->get_stylesheet();
-			}
-		} elseif ( $current_theme->exists() ) {
-			$current_theme_name = $current_theme->get_stylesheet();
-		}
+        return $theme === $current_theme_name;
+    }
 
-		if ( ! $theme || empty( $theme ) ) {
-			return $current_theme_name;
-		}
+    private function detect_dev(): bool
+    {
+        if (
+            $_SERVER["REMOTE_ADDR"] == "127.0.0.1" ||
+            strpos($_SERVER["SERVER_NAME"], ".local")
+        ) {
+            return true;
+        }
 
-		return $theme === $current_theme_name;
-	}
+        return false;
+    }
 
-	private function detect_dev(): bool {
-		if ( $_SERVER['REMOTE_ADDR'] == '127.0.0.1' || strpos( $_SERVER['SERVER_NAME'], '.local' ) ) {
-			return true;
-		}
+    /**
+     * Get page builders
+     *
+     * Gets all the active page builder plugin on the site. Accessible properties
+     * are "name", "slug", "foreground" and "background". Defaults to "name".
+     *
+     * @param string $property
+     * @return array
+     */
+    public function get_builders(string $property = "name"): array
+    {
+        if (!current_user_can("manage_options")) {
+            return [];
+        }
 
-		return false;
-	}
+        return Builders::get_builders($property);
+    }
 
-	/**
-	 * Get page builders
-	 *
-	 * Gets all the active page builder plugin on the site. Accessible properties
-	 * are "name", "slug", "foreground" and "background". Defaults to "name".
-	 *
-	 * @param string $property
-	 * @return array
-	 */
-	public function get_builders( string $property = 'name' ): array {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return array();
-		}
+    public function get_stores(string $property = "name"): array
+    {
+        if (!current_user_can("manage_options")) {
+            return [];
+        }
 
-		return Builders::get_builders( $property );
-	}
-
-	public function get_stores( string $property = 'name' ): array {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return array();
-		}
-
-		return Stores::get_stores( $property );
-	}
+        return Stores::get_stores($property);
+    }
 }

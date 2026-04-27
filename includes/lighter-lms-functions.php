@@ -300,7 +300,8 @@ if (!function_exists("lighter_lms_get_course_downloads")) {
      *
      * @param WP_Post|int $course The course
      *
-     * @return array<>
+     * @phpstan-import-type DownloadFile from Types
+     * @return DownloadFile[]
      */
     function lighter_lms_get_course_downloads(WP_Post|int $post): array
     {
@@ -309,7 +310,18 @@ if (!function_exists("lighter_lms_get_course_downloads")) {
         if ($post->post_type !== lighter_lms()->course_post_type) {
             return [];
         }
-        return [];
+
+        $downloads = [];
+        $product_id = get_post_meta($post->ID, "_lighter_lms_product_id", true);
+
+        if (lighter_lms()->defaults()->store === "woocommerce") {
+            $product = WC::get_product($product_id);
+            if ($product->downloads) {
+                $downloads[] = [...$product->downloads];
+            }
+        }
+
+        return $downloads;
     }
 }
 
@@ -562,7 +574,7 @@ if (!function_exists("lighter_postlist_js_obj")) {
     }
 }
 
-if (!function_exists("lighter_get_lesson_settings")) {
+if (!function_exists("lighter_lms_get_lesson_settings")) {
     function lighter_get_lesson_settings($post = 0)
     {
         $post = get_post($post);
@@ -592,7 +604,7 @@ if (!function_exists("lighter_get_lesson_settings")) {
     }
 }
 
-if (!function_exists("lihgter_grant_course_access")) {
+if (!function_exists("lighter_lms_grant_course_access")) {
     /**
      * Give course access to a specified user
      *
@@ -600,7 +612,7 @@ if (!function_exists("lihgter_grant_course_access")) {
      * @param int|\WP_User|null $user The ID or user object to give access to. Defaults to the logged in user.
      * @param int[]             $lessons Array of lesson IDs to give access to.
      */
-    function lighter_grant_course_access($course_id, $lessons, $user = null)
+    function lighter_lms_grant_course_access($course_id, $lessons, $user = null)
     {
         $user = new User_Access($user);
         $user->grant_course_access($course_id, "partial", $lessons);

@@ -25,6 +25,7 @@ export class CourseAPI {
       url: "wp/v2/lighter_lessons",
       method: "POST",
       data,
+      parse: true,
     });
   }
 
@@ -33,6 +34,7 @@ export class CourseAPI {
       path: `lesson/${lessonId}`,
       method: "PUT",
       data: data.toRestData(),
+      parse: true,
     });
   }
 
@@ -41,6 +43,7 @@ export class CourseAPI {
       url: `wp/v2/lighter_lessons/${lessonId}`,
       method: "PATCH",
       data: { title },
+      parse: true,
     });
   }
 
@@ -49,6 +52,7 @@ export class CourseAPI {
       url: `wp/v2/lighter_lessons/${lessonId}`,
       method: "PATCH",
       data: { status },
+      parse: true,
     });
   }
 
@@ -57,6 +61,7 @@ export class CourseAPI {
       path: "lesson/updateOrder",
       method: "PUT",
       data: { to, from },
+      parse: true,
     });
   }
 
@@ -64,6 +69,7 @@ export class CourseAPI {
     return lighterFetch({
       url: `wp/v2/lighter_lessons/${lessonKey}`,
       method: "DELETE",
+      parse: true,
     });
   }
 
@@ -74,6 +80,7 @@ export class CourseAPI {
       path: `course/${this.#courseId}/topic`,
       method: "POST",
       data: data.toRestData(),
+      parse: true,
     });
   }
 
@@ -82,6 +89,7 @@ export class CourseAPI {
       path: `course/${this.#courseId}/topic/${topicKey}`,
       method: "PATCH",
       data: data.toRestData(),
+      parse: true,
     });
   }
 
@@ -90,6 +98,7 @@ export class CourseAPI {
       path: `course/${this.#courseId}/topic/${topicKey}`,
       method: "PATCH",
       data: { title },
+      parse: true,
     });
   }
 
@@ -98,6 +107,7 @@ export class CourseAPI {
       path: `course/${this.#courseId}/topic-order`,
       method: "PUT",
       data: { order: topicKeys },
+      parse: true,
     });
   }
 
@@ -106,6 +116,7 @@ export class CourseAPI {
       path: `course/${this.#courseId}/topic-move`,
       method: "PUT",
       data: { topic_key: topicKey, reordered },
+      parse: true,
     });
   }
 
@@ -113,6 +124,7 @@ export class CourseAPI {
     return lighterFetch({
       path: `course/${this.#courseId}/topic/${topicKey}`,
       method: "DELETE",
+      parse: true,
     });
   }
 
@@ -121,6 +133,7 @@ export class CourseAPI {
     return lighterFetch({
       path: addQueryArgs(url, { withLessons }),
       method: "GET",
+      parse: true,
     });
   }
 }

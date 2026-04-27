@@ -164,6 +164,9 @@ export class CourseService {
       .createLesson(placeholder)
       .then((realLesson) => {
         lesson.update(realLesson);
+        if (this.settings.product && this.settings.product.access[topicKey]) {
+          this.settings.product.access[topicKey].push(realLesson.id);
+        }
       })
       .catch(() => {
         topic.removeLesson(placeholder.lighter_lesson_key);
@@ -220,6 +223,15 @@ export class CourseService {
     });
 
     this.course.addTopic(placeholder);
+
+    /*
+    if (this.settings.product) {
+      this.settings.product.access = {
+        ...this.settings.product?.access,
+        [placeholder.key]: [],
+      };
+    }
+    */
   }
 
   createTopic(title: string, lessons: LessonData[] = []): void {
@@ -238,6 +250,12 @@ export class CourseService {
       .then((real) => {
         this.course.removeTopic(placeholder.key);
         this.course.addTopic(real);
+        if (this.settings.product) {
+          this.settings.product.access = {
+            ...this.settings.product?.access,
+            [real.key]: [],
+          };
+        }
       })
       .catch((e) => {
         console.error(e);

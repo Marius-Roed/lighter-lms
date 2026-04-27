@@ -5,7 +5,7 @@
   import type { HTMLAttributes } from "svelte/elements";
   import { SvelteMap } from "svelte/reactivity";
 
-  let { ...restProps }: HTMLAttributes<HTMLDivElement> & { cd?: Function } =
+  let { ...restProps }: HTMLAttributes<HTMLDivElement> & { cb?: Function } =
     $props();
 
   const service = getCourseService();

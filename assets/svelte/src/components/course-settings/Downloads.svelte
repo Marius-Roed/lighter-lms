@@ -1,7 +1,6 @@
 <script lang="ts">
   import Editable from "$components/Editable.svelte";
-  import settings from "$lib/settings.svelte";
-  import { getCourseService } from "$lib/utils/index.ts";
+  import { getCourseService, isEmpty } from "$lib/utils/index.ts";
 
   const service = getCourseService();
 
@@ -26,15 +25,6 @@
 
     return ext.replace(/^\.+/, "").toLowerCase();
   };
-
-  function isEmpty(obj: Object) {
-    for (const prop in obj) {
-      if (obj.hasOwnProperty(prop)) {
-        return false;
-      }
-    }
-    return true;
-  }
 
   function openMediaModal(idx: number) {
     if (!wp || !wp.media) {
@@ -62,7 +52,7 @@
       // @ts-ignore
       const attachment = frame.state().get("selection").first().toJSON();
 
-      settings.product.downloads[idx] = {
+      service.settings.product.downloads[idx] = {
         file: attachment.url,
         name: attachment.title,
       };
@@ -117,14 +107,14 @@
         type="button"
         class="lighter-btn"
         onclick={() => {
-          if (downloads) {
-            downloads.push({ name: "", file: "" });
-          } else {
-            settings.product.downloads = [{ name: "", file: "" }];
+          if (service.settings.product?.downloads) {
+            service.settings.product.downloads.push([{ name: "", file: "" }]);
+          } else if (service.settings.product) {
+            service.settings.product.downloads = [{ name: "", file: "" }];
           }
         }}>Add first file</button
       >
-      {#if isEmpty(settings.product)}
+      {#if isEmpty(service.settings.product)}
         or
         <button
           type="button"

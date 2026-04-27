@@ -4,8 +4,8 @@
   import SideModal from "$components/SideModal.svelte";
   import Switch from "$components/Switch.svelte";
   import type { CourseProductInstance } from "$lib/models/state/course-product.svelte.ts";
-  import { capitalize, setProduct, isEmpty } from "$lib/settings.svelte";
-  import { getCourseService } from "$lib/utils/index.ts";
+  import { capitalize } from "$lib/settings.svelte";
+  import { getCourseService, isEmpty } from "$lib/utils/index.ts";
   import { onMount } from "svelte";
 
   const service = getCourseService();
@@ -22,68 +22,42 @@
   let showMore = $state(false);
 
   let frame: Media;
-
-  function initTextEditor(id: string, cb: (arg: any) => unknown) {
-    let editorSettings = {
-      tinymce: {
-        wpautop: true,
-        wp_keep_scroll_position: true,
-        mediaButtons: true,
-        quicktags: true,
-        height: 300,
-        plugins: [
-          "lists link image charmap",
-          "media",
-          "wordpress",
-          "wpview",
-          "wplink",
-          "wpdialogs",
-          "wpeditimage",
-          "wpemoji",
-          "wptextpattern",
-          "wpgallery",
-        ].join(" "),
-        toolbar1:
-          "formatselect | bold italic | bullist numlist | link unlink image | wp_adv",
-      },
+  let editorSettings = {
+    tinymce: {
+      wpautop: true,
+      wp_keep_scroll_position: true,
+      mediaButtons: true,
       quicktags: true,
-    };
-
-    if (typeof wp !== undefined && wp.editor) {
-      wp.editor.initialize(id, editorSettings);
-
-      const editor = tinymce.get(id);
-      if (editor) {
-        editor.on("change", function () {
-          const content = editor.getContent({ format: "html" });
-          if (cb) {
-            cb(content);
-          }
-        });
-      }
-    }
-  }
+      height: 300,
+      plugins: [
+        "lists link image charmap",
+        "media",
+        "wordpress",
+        "wpview",
+        "wplink",
+        "wpdialogs",
+        "wpeditimage",
+        "wpemoji",
+        "wptextpattern",
+        "wpgallery",
+      ].join(" "),
+      toolbar1:
+        "formatselect | bold italic | bullist numlist | link unlink image | wp_adv",
+    },
+    quicktags: true,
+  };
 
   onMount(() => {
-    initEditors();
+    if (typeof wp !== undefined && wp.editor) {
+      wp.editor.initialize("product_desc", editorSettings);
+      wp.editor.initialize("product_short_desc", editorSettings);
+    }
 
     return () => {
       wp.editor.remove("product_desc");
       wp.editor.remove("product_short_desc");
     };
   });
-
-  function initEditors() {
-    wp.editor.remove("product_desc");
-    wp.editor.remove("product_short_desc");
-
-    initTextEditor("product_desc", (v: string) => {
-      service.settings.product.description = v;
-    });
-    initTextEditor("product_short_desc", (v: string) => {
-      service.settings.product.shortDescription = v;
-    });
-  }
 
   function openImageModal() {
     if (!wp || !wp.media) {
@@ -124,10 +98,11 @@
   }
 
   function initialiseProduct() {
-    setProduct();
-    wp.editor.remove("product_desc");
-    wp.editor.remove("product_short_desc");
-    queueMicrotask(initEditors);
+    service.settings.createEmptyProduct(() => service.course);
+    if (typeof tinymce !== undefined) {
+      tinymce.get("product_desc").setContent("");
+      tinymce.get("product_short_desc").setContent("");
+    }
   }
 </script>
 
@@ -137,11 +112,23 @@
       in {capitalize(LighterLMS.globals.store)}
     {/if}
   </h3>
-  <ProductSearch cb={() => queueMicrotask(initEditors)} />
+  <ProductSearch
+    cb={() => {
+      if (typeof tinymce !== undefined) {
+        tinymce
+          .get("product_desc")
+          .setContent(service.settings.product.description);
+        tinymce
+          .get("product_short_desc")
+          .setContent(service.settings.product.shortDescription);
+      }
+    }}
+  />
   <button
     type="button"
     class="lighter-btn transparent"
-    onclick={() => service.settings.createEmptyProduct()}>Create product</button
+    onclick={() => service.settings.createEmptyProduct(() => service.course)}
+    >Create product</button
   >
 </div>
 

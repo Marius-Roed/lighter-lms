@@ -107,9 +107,12 @@ class WC
 
         $img_id = $args["images"][0]["id"] ?? false;
 
-        $args["downloads"] = empty($args["downloads"])
-            ? []
-            : $args["downloads"];
+        $args["downloads"] = array_values(
+            array_filter(
+                $args["downloads"] ?: [],
+                fn($d) => !empty($d["file"]),
+            ),
+        );
 
         unset($args["auto_comp"]);
         unset($args["auto_hide"]);
@@ -187,19 +190,20 @@ class WC
             (object) [];
 
         $image_id = $product->get_image_id();
-        $image = [
-            [
-                "src" => wp_get_attachment_url($image_id) ?: null,
-                "alt" =>
-                    get_post_meta(
+        $image_src = wp_get_attachment_url($image_id);
+        if ($image_src) {
+            $image = [
+                [
+                    "src" => $image_src,
+                    "alt" => get_post_meta(
                         $image_id,
                         "_wp_attachment_image_alt",
                         true,
-                    ) ?:
-                    null,
-                "id" => $image_id ?: null,
-            ],
-        ];
+                    ),
+                    "id" => $image_id,
+                ],
+            ];
+        }
 
         $downloads = array_values(
             array_map(
@@ -219,8 +223,8 @@ class WC
             "name" => $product->get_name("edit"),
             "regular_price" => $product->get_regular_price("edit"),
             "sale_price" => $product->get_sale_price("edit"),
-            "images" => $image,
-            "downloads" => $downloads,
+            "images" => $image ?? null,
+            "downloads" => count($downloads) ? $downloads : null,
             "description" => $product->get_description("edit"),
             "short_description" => $product->get_short_description("edit"),
             "stock_quantity" => $product->get_stock_quantity("edit"),

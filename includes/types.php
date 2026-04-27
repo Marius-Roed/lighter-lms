@@ -44,6 +44,12 @@ namespace LighterLMS;
  *  topics: ?TopicsShape
  * }
  *
+ * @phpstan-type DownloadFile array{
+ *  id: string,
+ *  name: string,
+ *  file: string,
+ * }
+ *
  * @phpstan-type PostNorm array{
  *  id: int,
  *  title: string,

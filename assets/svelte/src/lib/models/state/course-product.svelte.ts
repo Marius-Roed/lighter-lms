@@ -26,7 +26,7 @@ class BaseProduct<S extends AvailableStore> {
   constructor(store: S, course: () => Course, initial?: Product<S>) {
     this.store = store;
     this.#course = course;
-    this.access = initial?.access ?? {};
+    this.access = initial?.access ?? this.initAccess(course());
     this.autoHide = initial?.autoHide ?? false;
     this.name = initial?.name ?? "";
     this.id = initial?.id ?? 0;
@@ -65,6 +65,14 @@ class BaseProduct<S extends AvailableStore> {
         this.#prevTopicKeys = nextKeys;
       });
     });
+  }
+
+  initAccess(course: Course): CourseAccess {
+    let access: CourseAccess = {};
+    course.sortedTopics?.forEach((t) => {
+      access[t.key] = t.sortedLessons?.map((l) => l.id) ?? [];
+    });
+    return access;
   }
 
   getHiddenData(): Object {
