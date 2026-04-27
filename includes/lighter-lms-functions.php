@@ -575,7 +575,7 @@ if (!function_exists("lighter_postlist_js_obj")) {
 }
 
 if (!function_exists("lighter_lms_get_lesson_settings")) {
-    function lighter_get_lesson_settings($post = 0)
+    function lighter_lms_get_lesson_settings($post = 0)
     {
         $post = get_post($post);
 
@@ -910,15 +910,12 @@ function lighter_lms_update()
         );
         $product_id = get_post_meta($course->ID, "_lighter_product_id", true);
 
+        update_post_meta($course->ID, "_lighter_lms_product_id", $product_id);
         update_post_meta(
             $course->ID,
             "_lighter_lms_course_restricted",
-            $restricted,
+            filter_var($restricted, FILTER_VALIDATE_BOOLEAN),
         );
-        update_post_meta($course->ID, "_lighter_lms_product_id", $product_id);
-
-        delete_post_meta($course->ID, "_lighter_is_restricted");
-        delete_post_meta($course->ID, "_lighter_product_id");
     }
 
     $lessons = get_posts([
@@ -928,13 +925,8 @@ function lighter_lms_update()
     ]);
 
     foreach ($lessons as $lesson) {
-        $key = get_post_meta($lesson->ID, "_lighter_lesson_key");
+        $key = get_post_meta($lesson->ID, "_lighter_lesson_key", true);
 
         update_post_meta($lesson->ID, "_lighter_lms_lesson_key", $key);
-
-        delete_post_meta($lesson->ID, "_lighter_sort_order");
-        delete_post_meta($lesson->ID, "_lighter_parent_topic");
-        delete_post_meta($lesson->ID, "_lighter_course_parent");
-        delete_post_meta($lesson->ID, "_lighter_lesson_key");
     }
 }
