@@ -166,7 +166,7 @@
     option {
       padding: 0.25rem 0.5rem;
 
-      &:checkmark {
+      &::checkmark {
         float: right;
       }
 

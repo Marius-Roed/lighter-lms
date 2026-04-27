@@ -4,27 +4,34 @@
 - Usage: <Switch checked={yourSetting} name="Form name" onLabel="disable me" [offLabel="enable me"] />
 -->
 
-<script>
-    let {
-        checked = $bindable(),
-        name,
-        onLabel,
-        offLabel = null,
-        ...props
-    } = $props();
+<script lang="ts">
+  interface Props {
+    checked: boolean;
+    name: string;
+    onLabel: string;
+    offLabel?: string;
+  }
 
-    offLabel = offLabel ?? onLabel;
+  let {
+    checked = $bindable(),
+    name,
+    onLabel,
+    offLabel = null,
+    ...props
+  }: Props = $props();
+
+  offLabel = offLabel ?? onLabel;
 </script>
 
 <label class="lighter-switch">
-    <input
-        type="checkbox"
-        bind:checked
-        {name}
-        role="switch"
-        aria-checked={checked}
-        {...props}
-    />
-    <span class="lighter-slider"></span>
-    {checked ? onLabel : offLabel}
+  <input
+    type="checkbox"
+    bind:checked
+    {name}
+    role="switch"
+    aria-checked={checked}
+    {...props}
+  />
+  <span class="lighter-slider"></span>
+  {checked ? onLabel : offLabel}
 </label>

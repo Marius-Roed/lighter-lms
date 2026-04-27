@@ -21,9 +21,9 @@ export default { course, settings };
 
 // FIX: This hack shouldn't be done. Maybe we use the wp autosave by default
 document.getElementById("save-post")?.addEventListener("click", (e) => {
-  if (window.wp?.autosave?.server) {
-    window.wp.autosave.server.postChanged = () => false;
+  if (wp?.autosave?.server) {
+    wp.autosave.server.postChanged = () => false;
   }
 
-  window.wpCookies?.set?.("wp-saving-post", "saved");
+  wpCookies?.set?.("wp-saving-post", "saved");
 });

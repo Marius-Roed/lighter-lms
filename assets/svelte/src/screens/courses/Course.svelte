@@ -66,7 +66,7 @@
         const data = JSON.parse(raw) as TopicData;
         if (!data) return;
 
-        if (data.course !== service.course.id) {
+        if (data.courseId !== service.course.id) {
           list.querySelector(`[data-lighter-key="${data.key}"]`)?.remove();
         }
       });
