@@ -8,10 +8,12 @@ class Lesson_Content
 {
     public static function get_builder(int $post_id): string
     {
+        $active_plugins = (array) get_option("active_plugins", []);
+
         if (
             get_post_meta($post_id, "_elementor_edit_mode", true) ===
                 "builder" &&
-            did_action("elementor_loaded")
+            in_array("elementor/elementor.php", $active_plugins, true)
         ) {
             return "elementor";
         }
