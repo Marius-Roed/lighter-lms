@@ -14,10 +14,16 @@ $lessons = lighter()->lms->course->get_flat_lessons($post);
 
 $image_size = apply_filters("lighter_course_image_size", "lighter_course_main");
 
-if (lighter_get_post_meta($post->ID, "course_display_theme_header", true)) {
+if (
+    lighter_get_post_meta($post->ID, "course_display_theme_header", true) ??
+    lighter_lms()->defaults()->course_display_theme_header
+) {
     get_header();
 }
-if (lighter_get_post_meta($post->ID, "course_display_theme_sidebar", true)) {
+if (
+    lighter_get_post_meta($post->ID, "course_display_theme_sidebar", true) ??
+    lighter_lms()->defaults()->course_display_theme_sidebar
+) {
     get_sidebar();
 }
 ?>
@@ -112,7 +118,8 @@ if (lighter_get_post_meta($post->ID, "course_display_theme_sidebar", true)) {
 </main>
 
 <?php if (
-    lighter_get_post_meta($post->ID, "course_display_theme_footer", true)
+    lighter_get_post_meta($post->ID, "course_display_theme_footer", true) ??
+    lighter_lms()->defaults()->course_display_theme_footer
 ) {
     get_footer();
 } else {

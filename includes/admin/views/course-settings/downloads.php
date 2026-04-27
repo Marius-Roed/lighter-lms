@@ -37,7 +37,7 @@ $downloads = lighter_lms_get_course_downloads($post);
                 $download["file"],
             ); ?>" />
         </td>
-        <td align="center"><?php echo esc_html($fileType); ?></td>
+        <td align="center"><?php echo esc_html($file_type); ?></td>
         <td>
             <button type="button" class="lighter-btn transparent hide-if-no-js">Choose file</button>
         </td>

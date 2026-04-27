@@ -143,15 +143,15 @@ class Course_Post extends Post_Type
         $product = $args["product"] ?? [];
         $header = wp_validate_boolean(
             $args["display_header"] ??
-                lighter_lms()->defaults()->course_hide_theme_header,
+                lighter_lms()->defaults()->course_display_theme_header,
         );
         $footer = wp_validate_boolean(
             $args["display_footer"] ??
-                lighter_lms()->defaults()->course_hide_theme_footer,
+                lighter_lms()->defaults()->course_display_theme_footer,
         );
         $sidebar = wp_validate_boolean(
             $args["display_sidebar"] ??
-                lighter_lms()->defaults()->course_hide_theme_sidebar,
+                lighter_lms()->defaults()->course_display_theme_sidebar,
         );
         $show_icons = wp_validate_boolean(
             $args["show_icons"] ??

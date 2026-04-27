@@ -2,7 +2,7 @@
 
 namespace LighterLMS\Core;
 
-defined( 'ABSPATH' ) || exit;
+defined("ABSPATH") || exit();
 
 /**
  * @property string $currency
@@ -11,72 +11,85 @@ defined( 'ABSPATH' ) || exit;
  * @property bool $course_limit_stock
  * @property bool $course_show_lesson_icons
  * @property bool $course_show_progress
- * @property bool $course_hide_theme_header
- * @property bool $course_hide_theme_sidebar
- * @property bool $course_hide_theme_footer
+ * @property bool $course_display_theme_header
+ * @property bool $course_display_theme_sidebar
+ * @property bool $course_display_theme_footer
  * @property string $editor
  * @property string $store
  */
-class Defaults {
+class Defaults
+{
+    private static ?self $_instance = null;
 
-	private static ?self $_instance = null;
+    private array $_settings = [];
+    private bool $_isDirty = false;
 
-	private array $_settings = array();
-	private bool $_isDirty   = false;
+    public static function get_instance(): self
+    {
+        if (self::$_instance === null) {
+            self::$_instance = new self();
+        }
 
-	public static function get_instance(): self {
-		if ( self::$_instance === null ) {
-			self::$_instance = new self();
-		}
+        return self::$_instance;
+    }
 
-		return self::$_instance;
-	}
+    public function __construct()
+    {
+        $this->_settings = [
+            "currency" => "USD",
+            "course_auto_complete" => true,
+            "course_auto_hide" => true,
+            "course_limit_stock" => false,
+            "course_show_lesson_icons" => false,
+            "course_show_progress" => true,
+            "course_display_theme_header" => true,
+            "course_display_theme_sidebar" => false,
+            "course_dislay_theme_footer" => true,
+            "course_sync_prod_img" => true,
+            "editor" => get_option(
+                "lighter_lms_default_builder",
+                "classic-editor",
+            ),
+            "store" => get_option("lighter_lms_default_store"),
+        ];
+    }
 
-	public function __construct() {
-		$this->_settings = array(
-			'currency'                  => 'USD',
-			'course_auto_complete'      => true,
-			'course_auto_hide'          => true,
-			'course_limit_stock'        => false,
-			'course_show_lesson_icons'  => false,
-			'course_show_progress'      => true,
-			'course_display_theme_header'  => true,
-			'course_display_theme_sidebar' => false,
-			'course_dislay_theme_footer'  => true,
-			'course_sync_prod_img'      => true,
-			'editor'                    => get_option( 'lighter_lms_default_builder', 'classic-editor' ),
-			'store'                     => get_option( 'lighter_lms_default_store' ),
-		);
-	}
+    public function __get(string $key): mixed
+    {
+        if (array_key_exists($key, $this->_settings)) {
+            return $this->_settings[$key];
+        }
 
-	public function __get( string $key ): mixed {
-		if ( array_key_exists( $key, $this->_settings ) ) {
-			return $this->_settings[ $key ];
-		}
+        $config = Config::get_instance();
+        $fallback = $config->$key ?? null;
+        if ($fallback !== null) {
+            _doing_it_wrong(
+                __FUNCTION__,
+                "Called a key on defaults that did not exist. Falling back to config.",
+                "1.0",
+            );
+            return $fallback;
+        }
 
-		$config   = Config::get_instance();
-		$fallback = $config->$key ?? null;
-		if ( $fallback !== null ) {
-			_doing_it_wrong( __FUNCTION__, 'Called a key on defaults that did not exist. Falling back to config.', '1.0' );
-			return $fallback;
-		}
+        error_log("Warning: Lighter LMS Defaults key ({$key}) does not exist.");
+        return null;
+    }
 
-		error_log( "Warning: Lighter LMS Defaults key ({$key}) does not exist." );
-		return null;
-	}
+    public function all(): array
+    {
+        return $this->_settings;
+    }
 
-	public function all(): array {
-		return $this->_settings;
-	}
+    public function isDirty(): bool
+    {
+        return $this->_isDirty;
+    }
 
-	public function isDirty(): bool {
-		return $this->_isDirty;
-	}
-
-	public function persist(): void {
-		if ( $this->_isDirty ) {
-			update_option( 'lighter_lms_defaults', $this->_settings );
-			$this->_isDirty = false;
-		}
-	}
+    public function persist(): void
+    {
+        if ($this->_isDirty) {
+            update_option("lighter_lms_defaults", $this->_settings);
+            $this->_isDirty = false;
+        }
+    }
 }

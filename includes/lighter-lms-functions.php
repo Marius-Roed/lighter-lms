@@ -1,5 +1,6 @@
 <?php
 
+use LighterLMS\DB\Lighter_LMS_Schema;
 use LighterLMS\Import_Scheduler;
 use LighterLMS\Randflake;
 use LighterLMS\User_Access;
@@ -317,7 +318,7 @@ if (!function_exists("lighter_lms_get_course_downloads")) {
         if (lighter_lms()->defaults()->store === "woocommerce") {
             $product = WC::get_product($product_id);
             if ($product->downloads) {
-                $downloads[] = [...$product->downloads];
+                $downloads = $product->downloads;
             }
         }
 
@@ -928,5 +929,28 @@ function lighter_lms_update()
         $key = get_post_meta($lesson->ID, "_lighter_lesson_key", true);
 
         update_post_meta($lesson->ID, "_lighter_lms_lesson_key", $key);
+
+        $sort_order = get_post_meta($lesson->ID, "_lighter_sort_order", true);
+        $parent_key = get_post_meta($lesson->ID, "_lighter_parent_topic", true);
+        $topic = lighter()->lms->db->topics->find($parent_key);
+        if (
+            $sort_order &&
+            $topic &&
+            !lighter()->lms->db->topic_lessons->find($topic->ID, $lesson->ID)
+        ) {
+            lighter()->lms->lesson->update_topic_relationship([
+                "topic_id" => $topic->ID,
+                "lesson_id" => $lesson->ID,
+                "sort_order" => ($sort_order + 1) * 10,
+            ]);
+        }
     }
+}
+
+function lighter_lms_migrate_db_to_v2()
+{
+    global $wpdb;
+    $schema = new Lighter_LMS_Schema($wpdb);
+
+    $schema->maybe_upgrade("2");
 }
