@@ -7,7 +7,6 @@ defined("ABSPATH") || exit();
 use LighterLMS\Attributes\Action;
 use LighterLMS\Attributes\Filter;
 use LighterLMS\Traits\Lighter_LMS_Hooks;
-use LighterLMS\User_Access;
 
 final class Admin
 {
@@ -96,13 +95,15 @@ final class Admin
                 } elseif (
                     in_array($screen_id, ["user", "user-edit", "profile"])
                 ) {
+                    $user = $screen_id === "profile" ? get_current_user_id() : 0;
                     $user = isset($_GET["user_id"])
                         ? (int) wp_unslash($_GET["user_id"])
-                        : null;
-                    $user_access = new User_Access($user);
+                        : $user;
+
+                    lighter()->lms->user->set_user($user);
                     $obj["user"] = [
                         "courses" => lighter_lms()->get_courses(),
-                        "owns" => $user_access->get_owned_key([
+                        "owns" => lighter()->lms->user->get_owned_key([
                             "course_id",
                             "lessons",
                         ]),
@@ -214,11 +215,11 @@ final class Admin
     #[Action("edit_user_profile", 5)]
     #[Action("show_user_profile", 5)]
     #[Action("user_new_form", 5)]
-    public function user_access(\WP_User $user): void
+    public function user_access(\WP_User|string $user): void
     {
         if (
             is_string($user)
-                ? $user !== "add-new-user"
+                ? $user === "add-new-user"
                 : !current_user_can("edit_user", $user->ID)
         ) {
             return;
@@ -249,16 +250,18 @@ final class Admin
             return;
         }
 
-        $courses = $_POST["lighter-courses"] ?? false;
+        $courses = $_POST["lighter-courses"] ?? [];
+
+        file_put_contents( LIGHTER_LMS_PATH . '/log.log', var_export($courses, true) );
 
         if (!$courses) {
             return;
         }
 
-        $ua = new User_Access($user_id);
+        lighter()->lms->user->set_user($user_id);
 
         foreach ($courses as $course_id => $lessons) {
-            $ua->update_course_access($course_id, $lessons);
+            lighter()->lms->user->update_course_access($course_id, $lessons);
         }
     }
 

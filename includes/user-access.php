@@ -19,7 +19,7 @@ class User_Access
     protected \WP_User $user;
     protected array $owned = [];
 
-    public function __construct($user = null)
+    public function __construct(int|\WP_User|null $user = null)
     {
         if ($user === "add-new-user" || $user === "add-exisiting-user") {
             return;
@@ -27,7 +27,7 @@ class User_Access
         $this->set_user($user);
     }
 
-    public function set_user(\WP_User|int|null $user)
+    public function set_user(\WP_User|int|null $user): void
     {
         $this->user = isset($user)
             ? (is_int($user)
@@ -146,13 +146,21 @@ class User_Access
      * Revokes the users access to a specific course
      * NOTE: This leaves the progress on the course, should the user get access again at a later point.
      *
-     * @param int $course_id The id of the course to revoke
+     * @param int $course The id of the course to revoke
      */
-    public function revoke_course_access($course_id)
+    public function revoke_course_access(int|\WP_Post $course): void
     {
         if (!$this->user->ID) {
             return;
         }
+
+        $course = get_post( $course );
+
+        if ($course->post_type !== lighter_lms()->course_post_type) {
+            // TODO: Maybe exit.
+        }
+
+        $course_id = $course->ID;
 
         $exists = false;
         foreach ($this->owned as &$entry) {
@@ -193,7 +201,7 @@ class User_Access
         if (!$progress || !$progress[$course_id]) {
             error_log(
                 sprintf(
-                    "Lighter LMS: Tried to revoke course access for user (%d) on course with no progress found. Access may not be revoked correctly. Exiting silently",
+                    "Lighter LMS: Tried to revoke course access for user (%d) on course with no progress found. Access may not be revoked correctly.",
                     $this->user->ID,
                 ),
             );
@@ -222,9 +230,10 @@ class User_Access
      *
      * Updates the user course access. Grants or revokes based on lessons supplied.
      *
-     * @param int|\WP_Post $course_id The ID or WP_Post object of the course.
+     * @param int|\WP_Post $course The ID or WP_Post object of the course.
+     * @param array $lessons Array of lessons to grant access to
      */
-    public function update_course_access($course, $lessons = [])
+    public function update_course_access(int|\WP_Post $course, array $lessons = []): void
     {
         $course = get_post($course);
 
@@ -235,16 +244,16 @@ class User_Access
             return;
         }
 
-        $lessons = array_filter($lessons, fn($l) => $l !== "false");
+        $lessons = array_filter(array_map('intval', $lessons));
 
-        if (!$lessons) {
-            return $this->revoke_course_access($course->ID);
-        } else {
+        if ($lessons) {
             $this->grant_course_access(
                 $course->ID,
                 "partial",
                 array_keys($lessons),
             );
+        } elseif ($this->check_owned($course) ) {
+            $this->revoke_course_access($course->ID);
         }
     }
 
@@ -257,7 +266,7 @@ class User_Access
      *
      * @return bool Whether the user has access to the specified course.
      */
-    public function check_course_access($course_id = null)
+    public function check_course_access(int|\WP_Post|null $course_id = null): bool
     {
         if (!$this->user->ID || !is_user_logged_in()) {
             return false;
@@ -308,7 +317,7 @@ class User_Access
      *
      * @return bool Whether the user has access
      */
-    public function check_lesson_access($lesson_id, $course_id)
+    public function check_lesson_access(int $lesson_id, int $course_id): bool
     {
         if ($this->user->has_cap("manage_options")) {
             return true;
@@ -336,7 +345,7 @@ class User_Access
 
     public function check_owned(int|\WP_Post $course): bool
     {
-        if (current_user_can("manage_options")) {
+        if ($this->user->has_cap("manage_options")) {
             return true;
         }
 
@@ -369,9 +378,9 @@ class User_Access
      *
      * @param int|\WP_Post|null $course The course to return the owned object of. Optional.
      *
-     * @return object|array
+     * @return array
      */
-    public function get_owned($course = null)
+    public function get_owned(int|\WP_Post|null $course = null): array
     {
         if (empty($this->owned)) {
             return [];
@@ -396,7 +405,7 @@ class User_Access
             fn($access) => $access["course_id"] == $course_id,
         );
 
-        return $filtered ? reset($filtered) : [];
+        return array_values($filtered);
     }
 
     public function check_completed_lesson(
@@ -427,9 +436,9 @@ class User_Access
      *
      * @param string|array $key The key or keys to return
      *
-     * @return array<object>
+     * @return object[]
      */
-    public function get_owned_key($key)
+    public function get_owned_key(string|array $key): array
     {
         if (empty($this->owned)) {
             return [];
@@ -450,9 +459,9 @@ class User_Access
      *
      * @param int|\WP_Post|null $course The course to return the progress object of. Optional.
      *
-     * @return object
+     * @return object|array
      */
-    public function get_progress($course = null)
+    public function get_progress(int|\WP_Post|null $course = null): object|array
     {
         $progress = get_user_meta(
             $this->user->ID,
@@ -477,9 +486,9 @@ class User_Access
      * @param \WP_Post|int $course
      * @param \WP_Post|int $lesson
      *
-     * @return int 1 for success 0 for failure.
+     * @return bool true for success false for failure.
      */
-    public function complete_lesson($course, $lesson)
+    public function complete_lesson(int|\WP_Post $course, int|\WP_Post $lesson): bool
     {
         $course = get_post($course);
         $lesson = get_post($lesson);
@@ -505,10 +514,10 @@ class User_Access
                 wp_json_encode($progress),
             )
         ) {
-            return 0;
+            return false;
         }
 
-        return 1;
+        return true;
     }
 
     /**
@@ -517,7 +526,7 @@ class User_Access
      * @param array $rows Array of owned course objects
      * @return mixed[]
      */
-    public static function unique_owned($rows)
+    public static function unique_owned(array $rows): array
     {
         $owned = [];
         foreach ($rows as $row) {

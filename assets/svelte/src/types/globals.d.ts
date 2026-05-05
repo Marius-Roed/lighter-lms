@@ -2,6 +2,7 @@ import type { Post } from "$lib/posts.svelte.js";
 import type { Product } from "$lib/settings.svelte.js";
 import type { PostStatus } from "$lib/utils/index.ts";
 import type { CourseData } from "./course.d.ts";
+import type { UserCourse } from "./user.js";
 
 export {};
 
@@ -37,7 +38,7 @@ declare global {
       settings: object;
     };
     user?: {
-      courses: Course[];
+      courses: UserCourse[];
       owns: {
         course_id: number;
         lessons: number[];

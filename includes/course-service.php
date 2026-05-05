@@ -24,9 +24,21 @@ class Course_Service
         return $post_id;
     }
 
-    public function get(int $id): ?\WP_Post
+    public function get(?int $id = null): null|\WP_Post|array
     {
-        return get_post($id);
+        if ($id) {
+            $course = get_post($id);
+            if ($course->post_type !== lighter_lms()->course_post_type) {
+                _doing_it_wrong(__FUNCTION__, "Cannot call get on a non LighterLMS course post type", "1.0.0");
+                return null;
+            }
+            return $course;
+        }
+        return get_posts([
+            'post_type' => lighter_lms()->course_post_type,
+            'post_status' => 'any',
+            'numberposts' => -1,
+        ]);
     }
 
     public function save(int $id, array $data): int
