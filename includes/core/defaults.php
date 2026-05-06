@@ -44,7 +44,7 @@ class Defaults
             "course_show_progress" => true,
             "course_display_theme_header" => true,
             "course_display_theme_sidebar" => false,
-            "course_dislay_theme_footer" => true,
+            "course_display_theme_footer" => true,
             "course_sync_prod_img" => true,
             "editor" => get_option(
                 "lighter_lms_default_builder",
