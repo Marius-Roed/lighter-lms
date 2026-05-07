@@ -97,11 +97,8 @@ final class Lighter_LMS
 
         $this->includes();
 
-        // add_action( 'upgrade_process_complete', array( $this, 'maybe_update_schema' ), 10, 2 );
-
         do_action("lighter_lms_before_load");
 
-        // add_action( 'init', array( $this, 'init_update_checker' ), 5 );
         add_action("admin_post_save_lighter_lms_settings", [
             Settings::class,
             "save",

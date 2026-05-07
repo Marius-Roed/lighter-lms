@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file
 
+## [1.0.0-alpha.22] - 2026-05-07
+
+### Fixes
+
+- User access saving issues.
+- Default display footer typo.
+- Lesson display on frontend.
+- Lesson access check on frontend sidebar.
+
 ## [1.0.0-alpha.21] - 2026-04-28
 
 ### Added
