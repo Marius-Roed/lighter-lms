@@ -101,7 +101,7 @@ if (!function_exists("lighter_attrify")) {
 
 if (!function_exists("lighter_get_meta")) {
     /**
-     * @return The value, null if value not found and fallback is false
+     * @return ?mixed The value, null if value not found and fallback is false
      */
     function lighter_get_post_meta(
         int $post_id,
@@ -153,7 +153,7 @@ if (!function_exists("lighter_lms_get_full_course")) {
                     $lesson->ID,
                     $course->ID,
                 );
-                $lesson->owned = lighter()->lms->user->check_owned($lesson->ID);
+                $lesson->owned = lighter()->lms->user->check_lesson_access($lesson->ID, $course->ID);
             }
         }
 
@@ -168,7 +168,7 @@ if (!function_exists("lighter_lms_save_product")) {
      * Saves a product, optionally to a certain post.
      *
      * @param array $args The product object to save.
-     * @param int?   $post_id The id of the post to save it to. 0 will not save it to a post.
+     * @param ?int  $post_id The id of the post to save it to. 0 will not save it to a post.
      */
     function lighter_lms_save_product($args, $post_id = 0)
     {

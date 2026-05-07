@@ -150,4 +150,54 @@ class Lesson_Content
 
         return array_filter($styles);
     }
+
+    public static function post_content(\WP_Post|int $post, bool $display): ?array { 
+        $post = get_post($post);
+        $supported_builders = [
+            "elementor" => "handle_elementor_content",
+            "beaver-builder" => "handle_beaver_builder_content",
+            "divi" => "handle_divi_content",
+            "gutenberg" => "handle_gutenberg_content",
+            "breakdance" => "handle_breakdance_content",
+            "bricks" => "handle_bricks_content",
+        ];
+        $builder = self::get_builder($post->ID);
+        $temp = $post;
+
+        global $wp_query, $post;
+        setup_postdata($temp);
+
+        if ($builder && isset($supported_builders[$builder])) {
+            $func = [self::class, $supported_builders[$builder]];
+            $content = call_user_func($func, $temp->ID, $temp);
+        } else {
+            $content = self::get_content($temp);
+        }
+
+        wp_reset_postdata();
+
+        $styles = self::get_styles($temp->ID, $builder);
+        $styles = array_filter(array_map(function($style) {
+            $css_path = str_replace(
+                site_url('/'),
+                ABSPATH,
+                $style
+            );
+
+            if ( file_exists( $css_path ) ) {
+                return file_get_contents($css_path);
+            }
+            return null;
+        }, $styles));
+
+        if ($display) {
+            foreach ($styles as $style) {
+                echo $style;
+            }
+                echo $content;
+            return null;
+        }
+
+        return [$content, $styles];
+    }
 }

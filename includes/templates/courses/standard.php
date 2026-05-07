@@ -6,6 +6,8 @@
  * @package LighterLMS
  */
 
+use LighterLMS\Lesson_Content;
+
 /** @var \WP_Post */
 global $post;
 $lesson_id = null;
@@ -38,9 +40,10 @@ if (
 		<div class="the-content" id="the-content">
 			<?php if (isset($_GET["lesson"])):
        echo '<div class="lighter-lesson-wrap">';
+       $found = false;
        foreach ($lessons as $lesson) {
            if (
-               strtolower(sanitize_key($lesson->post_name)) == $_GET["lesson"]
+               $lesson->post_name == strtolower(sanitize_key($_GET["lesson"]))
            ) {
                $lesson_id = $lesson->ID;
                if (
@@ -49,10 +52,17 @@ if (
                        $post->ID,
                    )
                ) {
-                   echo get_the_content(post: $lesson_id);
+                   Lesson_Content::post_content($lesson_id, true);
+                   $found = true;
                }
                break;
            }
+       }
+       if (!$found) {
+           printf(
+               '<p>%s</p>',
+               esc_html__('You do not have access to this lesson.', 'lighterlms')
+           );
        }
        echo "</div>";
    else:
