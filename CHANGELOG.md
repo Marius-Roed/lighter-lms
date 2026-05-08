@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file
 
+## [1.0.0-alpha.23] - 2026-05-08
+
+### Fixes
+
+- Access not granted on WooCommerce purchase.
+- Access not granted on WooCommerce admin action.
+
 ## [1.0.0-alpha.22] - 2026-05-07
 
 ### Fixes
