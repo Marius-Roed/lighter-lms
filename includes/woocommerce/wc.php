@@ -32,7 +32,7 @@ class WC
      * Saves a product as a woocommerce product. Updates the product if $args contains 'id'.
      *
      * @param array $args The product object to save.
-     * @param int? $post_id The id of the post to save it to. 0 will not save it to a post.
+     * @param ?int $post_id The id of the post to save it to. 0 will not save it to a post.
      */
     public static function save_product(array $args, ?int $post_id): int
     {
@@ -239,7 +239,7 @@ class WC
     /**
      * Auto complete orders with courses marked as auto complete.
      *
-     * @param int The woocommerce order ID.
+     * @param int $order_id The woocommerce order ID.
      */
     #[Action("woocommerce_order_status_processing")]
     public function auto_complete(int $order_id): void
@@ -407,7 +407,7 @@ class WC
                 "status" => "publish",
                 "fields" => "ids",
                 "numberposts" => -1,
-                "meta_key" => "_lighter_product_id",
+                "meta_key" => "_lighter_lms_product_id",
                 "meta_value" => $product_id,
                 "meta_compare" => "=",
             ]);
@@ -423,7 +423,7 @@ class WC
                 continue;
             }
             foreach ($courses as $course_id) {
-                if (!lighter()->lms->user->get_owned($course_id)) {
+                if (lighter()->lms->user->get_owned($course_id)) {
                     continue;
                 }
                 lighter()->lms->user->grant_course_access($course_id);
