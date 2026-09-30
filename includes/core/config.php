@@ -49,6 +49,7 @@ class Config
             "path" => LIGHTER_LMS_PATH,
             "url" => LIGHTER_LMS_URL,
             "version" => LIGHTER_LMS_VERSION,
+            "connected_store" => null,
             "course_post_type" => $course_post_type,
             "lesson_post_type" => $lesson_post_type,
             "topics_table" => "lighter_lms_topics",
