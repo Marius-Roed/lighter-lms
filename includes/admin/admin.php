@@ -385,20 +385,6 @@ final class Admin
     #[Action("admin_enqueue_scripts")]
     public function admin_app(string $hook_suffix): void
     {
-        wp_enqueue_style(
-            "lighter-dia-editor",
-            LIGHTER_LMS_URL . "assets/css/dialog-editor.css",
-            [],
-            LIGHTER_LMS_VERSION,
-        );
-        wp_enqueue_style(
-            "lighter-lms-admin",
-            LIGHTER_LMS_URL . "assets/css/admin.css",
-            [],
-            LIGHTER_LMS_VERSION,
-            false,
-        );
-
         $handle = "lighter-lms";
 
         $screen_map = [
@@ -450,6 +436,21 @@ final class Admin
         if (!isset($screen_map[$screen_id])) {
             return;
         }
+
+        wp_enqueue_style(
+            "lighter-dia-editor",
+            LIGHTER_LMS_URL . "assets/css/dialog-editor.css",
+            [],
+            LIGHTER_LMS_VERSION,
+        );
+        wp_enqueue_style(
+            "lighter-lms-admin",
+            LIGHTER_LMS_URL . "assets/css/admin.css",
+            [],
+            LIGHTER_LMS_VERSION,
+            false,
+        );
+
 
         // wp_enqueue_script('lighterlms-object', LIGHTER_LMS_URL . 'assets/js/lighterlms.js', [], LIGHTER_LMS_VERSION, true);
         wp_enqueue_script(
