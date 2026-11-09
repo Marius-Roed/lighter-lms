@@ -222,13 +222,12 @@ abstract class Post_Type
         $screen = get_current_screen();
 
         if (
-            "edit" !== $screen->base &&
+            $screen &&
+            "edit" === $screen->base &&
             in_array($screen->post_type, lighter_lms()->post_types)
         ) {
-            return $classes;
+            $classes[] = "lighter-post";
         }
-
-        $classes[] = "lighter-post";
 
         return $classes;
     }
